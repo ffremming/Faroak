@@ -1,0 +1,36 @@
+package ressurser.main;
+import javax.swing.JFrame;
+
+import ressurser.main.GUIMenu.MenuPanel;
+
+public class Main{
+    public static void main(String[] args) {
+    JFrame vindu = new JFrame();
+    
+    //make a new panel - where yoi can choose generation
+
+    
+
+    vindu.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    vindu.setResizable(true);
+    vindu.setTitle("nytt vindu");
+    
+    MenuPanel menu = new MenuPanel(vindu);
+    vindu.setSize(20*32,32*15);
+
+    vindu.getContentPane().add(menu);
+    vindu.setLocationRelativeTo(null);
+    vindu.setVisible(true);
+    vindu.toFront();
+   
+    //vindu.setFocusable(true);
+
+    //GamePanel gamePanel = new GamePanel();
+    //vindu.setSize(gamePanel.skjermBredde,gamePanel.skjermHoyde);
+    //vindu.add(gamePanel);
+    
+    
+
+    //gamePanel.startGameThreaad();
+    }
+}
