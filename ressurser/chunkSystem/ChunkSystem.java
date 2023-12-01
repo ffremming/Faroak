@@ -2,6 +2,7 @@ package ressurser.chunkSystem;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.swing.JFrame;
 
@@ -10,7 +11,9 @@ import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.tile.Tile;
+import ressurser.chunkSystem.terrainGeneration.ProceduralGeneration;
 import ressurser.main.GamePanel;
+
 
 
 public class ChunkSystem {
@@ -23,9 +26,11 @@ public class ChunkSystem {
     //renderdistance is the distance from the player to the border of where entities is rendered.
     int renderDistance ;
     TreeNode mother;
+    ProceduralGeneration proceduralGen;
     //
-    final int SIZEPOW = 11;// 2^10 == 1024 338997 chunks.
+    final int SIZEPOW = 5;// 5072 chunks.
 
+    HashMap <String,Tile> tileHashMap = new HashMap<String,Tile>();
 
 
 
@@ -36,11 +41,12 @@ public class ChunkSystem {
      */
     public ChunkSystem(GamePanel panel){
         this.panel = panel;
-
+        proceduralGen = new ProceduralGeneration();
         //this should be lower. but not sure yet.
         renderDistance = 32*panel.tileSize;
         System.out.println((int)Math.pow(2,SIZEPOW)*panel.tileSize/panel.tileSize);
-        mother = new TreeNode(this,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,(int)Math.pow(2,SIZEPOW)*panel.tileSize,(int)Math.pow(2,SIZEPOW)*panel.tileSize,5);
+
+        mother = new TreeNode(this,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,(int)Math.pow(2,SIZEPOW)*panel.tileSize,(int)Math.pow(2,SIZEPOW)*panel.tileSize,1);
 
     }
 
@@ -90,7 +96,7 @@ public class ChunkSystem {
 
         semiStaticEntitiesRendered.clear();
 
-        ArrayList<Chunk> chunks = getAllChunks(entity);
+        ArrayList<Chunk> chunks = getAllChunksInRenderDistance(entity);
 
         for (Chunk chunk:chunks){
             semiStaticEntitiesRendered.addAll(chunk.getEntities());
@@ -101,9 +107,11 @@ public class ChunkSystem {
 
     /**
      * returns a list of all chunks within render distance
+     * should be a part of the render system 
+     * when a entity wants chunk -> check if loaded - > if not, load
      */
 
-    private ArrayList<Chunk> getAllChunks(BaseEntity entity){
+    private ArrayList<Chunk> getAllChunksInRenderDistance(BaseEntity entity){
 
         int centerX = entity.getWorldX();
         int centerY = entity.getWorldY();
@@ -121,6 +129,20 @@ public class ChunkSystem {
         return chunkList;
     }
 
+    /**
+     * returns arraylist with all chunks in system.
+     */
+    private ArrayList<Chunk> getAllChunksInSystem(){
+        ArrayList<Chunk> chunkList = new ArrayList<>();
+        mother.getAllChunks(chunkList);
+        return chunkList;
+    }
+
+    /**
+     * 
+     */
+    
+
 
     public ArrayList<BaseEntity> getSemiStaticEntitiesRendered(){
       return semiStaticEntitiesRendered;
@@ -130,7 +152,13 @@ public class ChunkSystem {
      * works with all entities, tiles and whatnot.
      */
     public void addEntity(BaseEntity entity){
-        mother.addEntity(entity);
+        try{
+            mother.addEntity(entity);
+        }
+        catch(OutOfChunkBounds e){
+
+        }
+        
     }
 
     /**
@@ -168,6 +196,7 @@ public class ChunkSystem {
         return getEntitiesInBound(new Rectangle(row*panel.tileSize,col*panel.tileSize,panel.tileSize,panel.tileSize)).size() > 0;
     }
 
+    
 
 
     public boolean isEmpty(HitBox bounds){
@@ -182,7 +211,7 @@ public class ChunkSystem {
         ChunkSystem cS = new ChunkSystem(panel);
         
 
-        
+        cS.addEntitiesToChunk(0,0,500);
 
         short w = 32;
         BaseEntity ent = new BaseEntity(panel,"name",641, 520, w, (short)64,(short)28,(short)40,(short)2,(short)24);
@@ -190,15 +219,81 @@ public class ChunkSystem {
         cS.addEntity(ent2);
         cS.addEntity(ent);
 
-        System.out.println(cS.getAllChunks(ent).size()); 
-
+        System.out.println(cS.getAllChunksInRenderDistance(ent).size()); 
+        
         cS.updateSemiStaticEntitiesRendered(ent);
         cS.removeEntitiesInBound(ent.getHitBox());
         cS.updateSemiStaticEntitiesRendered(ent);
 
         //removeEntitiesInBound()
         System.out.println(cS.getEntitiesInBound(ent.getHitBox()));
-       System.out.println(cS.semiStaticEntitiesRendered);
+       System.out.println(cS.semiStaticEntitiesRendered.size());
+
+        System.out.println(cS.getAllChunksInSystem());
+
+        cS.writeALlInfo();
+    }
+    /**
+     * i have to figure out what kind of coords this is - worldX or row
+     * this is moved down to chunk. 
+     */
+    private Tile getSingelTile(int worldX,int worldY){
+        
+        //loader algorithm..
+
+        //method returns biome type- which is a streubg
+        String biomeType =  proceduralGen.calculateBiomeString(worldX, worldY);
+        return new Tile(panel,biomeType,worldX,worldY);
+        
     }
 
+    private void addEntitiesToChunk(int startX,int startY, int width){
+        for (int x = 0;x<width;x+= panel.tileSize){
+            for (int y = 0;y<width;y+=panel.tileSize){
+                addEntity(getSingelTile(startX+x,startY+y));
+            }
+        }
+    }
+
+    private void isLoaded(int worldX,int worldY){
+
+    }
+
+    private void writeALlInfo(){
+        for (Chunk chunk:getAllChunksInSystem()){
+            chunk.writeInfo();
+        }
+    }
+
+    //came up with different idea.
+    private void loadTileHashMap(){
+        /* 
+        tileHashMap.put("snowyTundra",ice);
+        tileHashMap.put("snowyTaiga",ice);
+        tileHashMap.put("plains",green);
+        tileHashMap.put("desert",sand);
+        tileHashMap.put("snowyTundra",ice);
+        tileHashMap.put("seasonalForest",sForest);
+        tileHashMap.put("savanna",savannaC);
+        tileHashMap.put("forest",darkGreen);
+        tileHashMap.put("rainForest",rainFr);
+        tileHashMap.put("swamp",moss);
+        tileHashMap.put("swamp",moss);
+        tileHashMap.put("swamp",new Tile(panel,"ocean",))*/
+
+
+    }
+
+
+    /**
+     * some prototype theory written 1.des 2023
+     */
+    private void prototype(){
+
+
+        //entity require update around itself.
+        //system check player position, and tries to load all chunks within the player position
+
+        //if a chunk i not loaded, the system should load the chunk. this is done thought procedural generation.
+    }
 }

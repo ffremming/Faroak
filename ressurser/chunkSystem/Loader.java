@@ -10,5 +10,10 @@ public class Loader {
     }
 
 
+    public void load(int startX,int startY){
+        
+    }
+
+
     
 }

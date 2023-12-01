@@ -20,6 +20,8 @@ public class TreeNode {
 
     final int CHUNKSIZE = 16;
 
+    boolean loaded;
+
     private TreeNode [] children = new TreeNode[4];
 
     public TreeNode(ChunkSystem chunkS,int startXValue,int startYValue,int width,int height,int level){
@@ -43,8 +45,6 @@ public class TreeNode {
 
     protected void addChildren(){
 
-        
-
         if (width == CHUNKSIZE*2*chunkS.panel.tileSize){      //to create chunks at bottom lvl
             children[0] = (new Chunk(chunkS,startXValue,startYValue,width/2,height/2,level));
             children[1] = (new Chunk(chunkS,startXValue+width/2,startYValue,width/2,height/2,level));
@@ -56,18 +56,21 @@ public class TreeNode {
             children[1] = (new TreeNode(chunkS,startXValue+width/2,startYValue,width/2,height/2,level));
             children[2] = (new TreeNode(chunkS,startXValue,startYValue+height/2,width/2,height/2,level));
             children[3] = (new TreeNode(chunkS,startXValue+width/2,startYValue+height/2,width/2,height/2,level));
-
         }
-
-
-        
     }
+
+    
 
     public boolean hasChildren(){
         return children[0]!= null;
     }
 
-
+    protected void getAllChunks(ArrayList<Chunk> list){
+        for(int i=0; i<children.length; i++) {
+                children[i].getAllChunks(list);
+            
+        }
+    }
 
 
     protected void getAllChunks(Rectangle rect,ArrayList<Chunk> list){
@@ -84,7 +87,7 @@ public class TreeNode {
     }
 
 
-    public void addEntity(BaseEntity entity){
+    public void addEntity(BaseEntity entity) throws OutOfChunkBounds{
         for(int i=0; i<children.length; i++) {
             if (children[i].rect.contains(entity.getHitBox())||children[i].rect.intersects(entity.getHitBox())){
                 children[i].addEntity(entity);

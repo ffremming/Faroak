@@ -49,6 +49,7 @@ public class Tile extends BaseEntity{
 
 
     //idea that every tile contain gameobject, but not implementet. should not be done yet.
+    //well, could work for static objects, but not so good with non-statics. would not do this.
     public void addGameObject(GameObject go){
         
     }
