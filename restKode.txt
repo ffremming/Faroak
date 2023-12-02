@@ -2,8 +2,8 @@
 
         //lage game loop som kjører for verdiene fra worldx1 - worldx2, og worldy1 -worldy2;
          
-        int bX = panel.skjermBredde/2;
-        int hX = panel.skjermBredde/2;
+        int bX = panel.screenWidth/2;
+        int hX = panel.screenWidth/2;
         /* 
         for (int i = (this.panel.spiller.worldX-bX)/64;i < (this.panel.spiller.worldX+bX)/64;i++){
             for (int j = (this.panel.spiller.worldY-hX)/64;j < (this.panel.spiller.worldY+hX)/64;j++){
@@ -461,7 +461,7 @@ public void getMap(String mapName){
             int screenY = (worldRow * tileSize)-(spiller.worldY)+spiller.screenY;
 
             //tegner bare tiles som blir brukt:
-            if ((screenY + tileSize > 0 && screenX+tileSize> 0)&&((screenY - tileSize < panel.skjermHoyde)&&(screenX - tileSize < panel.skjermBredde))){
+            if ((screenY + tileSize > 0 && screenX+tileSize> 0)&&((screenY - tileSize < panel.screenHeight)&&(screenX - tileSize < panel.screenWidth))){
                 int tegn = map[panel.activeMap][worldRow][worldCol];
                 //if ( tegn == 0){tile[map[worldRow][worldCol]].image = hentBildeVann(worldRow,worldCol);}
                

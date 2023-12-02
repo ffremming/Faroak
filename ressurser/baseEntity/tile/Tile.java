@@ -78,9 +78,7 @@ public class Tile extends BaseEntity{
         east = tile;
     }
 
-    public void setCollision(Boolean boolean1) {
-        collision = boolean1;
-    }
+    
 
     public void setAnimated(Boolean boolean1) {
         animated = boolean1;

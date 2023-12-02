@@ -1,6 +1,7 @@
 package ressurser.baseEntity;
 
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 
 import ressurser.main.GamePanel;
 
@@ -25,10 +26,11 @@ public class BaseEntity {
 
     HitBox hitBox;
     int hitBoxWidth,hitBoxHeight,relativeXValue,relativeYValue;
-    protected SpriteHandler spriteHandler;
+    
 
     //hard collision is collision that is non passable
     boolean hardCollision = false;
+    
     
     
     boolean interactable;
@@ -38,21 +40,28 @@ public class BaseEntity {
     //might need to change to sprite.
     public boolean animated;
 
-    public BaseEntity(GamePanel panel,String name,int worldX,int worldY,short width,short height,short hitBoxWidth,short hitBoxHeight,short relativeXPLus,short relativeYPlus){
+    public BaseEntity(GamePanel panel,String name,int worldX,int worldY,short width,short height,short hitBoxWidth,short hitBoxHeight,int i,int j){
         this.panel = panel;
+
 
         this.worldX = worldX;
         this.worldY = worldY;
         this.width = width;
         this.height = height;
+        this.name = name;
+
+        //chance that some values is not initialized..
 
 
 
-        hitBox = new HitBox(this, hitBoxWidth, hitBoxWidth, relativeXPLus, relativeYPlus);
+        hitBox = new HitBox(this, hitBoxWidth, hitBoxWidth, i, j);
 
         //spriteHandler = new SpriteHandler(this);
         //sprite = new Sprite(this,"filenavn",worldX,worldY,width,height);
     } 
+    public BufferedImage getImage(){
+        panel... getImages(this);
+    }
 
 
     /*
@@ -96,7 +105,7 @@ public class BaseEntity {
         return nameID;
     }
 
-
+    //got to check out if this actually works.. a functions should be made to decide what col u are in.
     public int getRow() {
         return worldX/panel.tileSize;
     }
@@ -117,5 +126,8 @@ public class BaseEntity {
 
     public boolean hardCollision(BaseEntity be){
         return (collision(be) && be.hardCollision);
+    }
+    public Boolean getAnimated() {
+        return animated;
     }
 }

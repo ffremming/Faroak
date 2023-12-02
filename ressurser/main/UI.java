@@ -39,8 +39,8 @@ public class UI {
         this.panel = gp;
         panel.textString = "yoyo";
         getArrowSprite();
-        menuX = panel.skjermBredde-6*panel.tileSize;
-        menuY= panel.skjermHoyde+panel.tileSize*2;
+        menuX = panel.screenWidth-6*panel.tileSize;
+        menuY= panel.screenHeight+panel.tileSize*2;
         
     }
 
@@ -119,20 +119,20 @@ public class UI {
     public void drawDialoge(){
         Color c = new Color(122,176,255,200);
         g2.setColor(c);
-        g2.fillRoundRect(45,panel.skjermHoyde-105,  panel.skjermBredde - 45*2, 60,  10, 10);
+        g2.fillRoundRect(45,panel.screenHeight-105,  panel.screenWidth - 45*2, 60,  10, 10);
         g2.setColor(Color.white); 
         g2.setStroke(new BasicStroke(5));
-        g2.drawRoundRect(50,panel.skjermHoyde-100,  panel.skjermBredde - 50*2, 50,  10, 10);
+        g2.drawRoundRect(50,panel.screenHeight-100,  panel.screenWidth - 50*2, 50,  10, 10);
         g2.setFont(new Font("Arial",Font.PLAIN,20));
-        g2.drawString(dialogueString,50+30,panel.skjermHoyde-100+30+2);
+        g2.drawString(dialogueString,50+30,panel.screenHeight-100+30+2);
 
 
     }
     public void drawOptionBox(){
         Color c = new Color(122,176,255);
         g2.setColor(c);
-        int x = panel.skjermBredde - 150;
-        int y = panel.skjermHoyde-190;
+        int x = panel.screenWidth - 150;
+        int y = panel.screenHeight-190;
         g2.fillRoundRect(x,y,  100, 80,  10, 10);
         g2.setColor(Color.white); 
         g2.setStroke(new BasicStroke(5));
@@ -145,8 +145,8 @@ public class UI {
 
     private void drawYesArrow(){
         g2.setColor(Color.blue);
-                int x = panel.skjermBredde-150+20;
-                int y = panel.skjermHoyde-190+25;
+                int x = panel.screenWidth-150+20;
+                int y = panel.screenHeight-190+25;
         
                 int x2 = x+5;
                 int y2 = y;
@@ -156,8 +156,8 @@ public class UI {
     
     private void drawNoArrow(){
         g2.setColor(Color.blue);
-                int x = panel.skjermBredde-150+20;
-                int y = panel.skjermHoyde-190+55;
+                int x = panel.screenWidth-150+20;
+                int y = panel.screenHeight-190+55;
         
                 int x2 = x+5;
                 int y2 = y;
@@ -185,19 +185,19 @@ public class UI {
         Color c = new Color(122,176,255);
         
         g2.setColor(c);
-        g2.fillRoundRect(45,panel.skjermHoyde-105,  panel.skjermBredde - 45*2, 60,  10, 10);
+        g2.fillRoundRect(45,panel.screenHeight-105,  panel.screenWidth - 45*2, 60,  10, 10);
         g2.setColor(Color.white); 
         
 
-        g2.fillRoundRect(50,panel.skjermHoyde-100,  panel.skjermBredde - 50*2, 50,  10, 10);
+        g2.fillRoundRect(50,panel.screenHeight-100,  panel.screenWidth - 50*2, 50,  10, 10);
         g2.setColor(Color.blue);
-        g2.drawRoundRect( 50,panel.skjermHoyde-100,  panel.skjermBredde - 50*2, 50,  10, 10);
+        g2.drawRoundRect( 50,panel.screenHeight-100,  panel.screenWidth - 50*2, 50,  10, 10);
         g2.setColor(Color.black);
-        g2.drawRoundRect(45,panel.skjermHoyde-105,  panel.skjermBredde - 45*2, 60,  10, 10);
+        g2.drawRoundRect(45,panel.screenHeight-105,  panel.screenWidth - 45*2, 60,  10, 10);
         
 
         g2.setFont(new Font("Arial",Font.PLAIN,20));
-        g2.drawString(panel.textString,50+30,panel.skjermHoyde-100+30+2);
+        g2.drawString(panel.textString,50+30,panel.screenHeight-100+30+2);
 
     }
 
@@ -220,7 +220,7 @@ public class UI {
         
         g2.drawImage(boardSprite,x,y,null);
 
-        //g2.drawImage(boardSprite,panel.skjermBredde-200,panel.skjermHoyde-panel.tileSize*12,null);
+        //g2.drawImage(boardSprite,panel.screenWidth-200,panel.screenHeight-panel.tileSize*12,null);
     }
 
     public void drawSubMenuItems(boolean arrow){
@@ -400,8 +400,8 @@ public class UI {
         }
     }
     private void drawItemBar(){
-        int x = (panel.skjermBredde-475)/2;
-        int y = panel.skjermHoyde-100;
+        int x = (panel.screenWidth-475)/2;
+        int y = panel.screenHeight-100;
         g2.setFont(new Font("Chalkduster",1,12));
         g2.setColor(Color.black);
 

@@ -141,7 +141,7 @@ public class NPC extends Entity{
         int screenY = (worldY )-(panel.spiller.worldY)+panel.spiller.screenY;
 
             //tegner bare tiles som blir brukt:
-            if ((screenY + panel.tileSize > 0 && screenX+panel.tileSize> 0)&&((screenY - panel.tileSize < panel.skjermHoyde)&&(screenX - panel.tileSize < panel.skjermBredde))){
+            if ((screenY + panel.tileSize > 0 && screenX+panel.tileSize> 0)&&((screenY - panel.tileSize < panel.screenHeight)&&(screenX - panel.tileSize < panel.screenWidth))){
                 
                 //if ( tegn == 0){tile[map[worldRow][worldCol]].image = hentBildeVann(worldRow,worldCol);}
                 g2.drawImage(aktivtbilde,screenX,screenY-32 ,bredde,hoyde,null);

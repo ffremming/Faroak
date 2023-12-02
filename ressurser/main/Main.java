@@ -26,7 +26,7 @@ public class Main{
     //vindu.setFocusable(true);
 
     //GamePanel gamePanel = new GamePanel();
-    //vindu.setSize(gamePanel.skjermBredde,gamePanel.skjermHoyde);
+    //vindu.setSize(gamePanel.screenWidth,gamePanel.screenHeight);
     //vindu.add(gamePanel);
     
     

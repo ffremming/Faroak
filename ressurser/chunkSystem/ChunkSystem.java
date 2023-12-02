@@ -21,7 +21,7 @@ public class ChunkSystem {
     GamePanel panel;
 
     //updates all entities that should be rendered.
-    ArrayList<BaseEntity> semiStaticEntitiesRendered = new ArrayList<BaseEntity>();
+    public ArrayList<BaseEntity> semiStaticEntitiesRendered = new ArrayList<BaseEntity>();
     
     //renderdistance is the distance from the player to the border of where entities is rendered.
     int renderDistance ;
@@ -211,7 +211,7 @@ public class ChunkSystem {
         ChunkSystem cS = new ChunkSystem(panel);
         
 
-        cS.addEntitiesToChunk(0,0,500);
+        
 
         short w = 32;
         BaseEntity ent = new BaseEntity(panel,"name",641, 520, w, (short)64,(short)28,(short)40,(short)2,(short)24);
@@ -229,39 +229,32 @@ public class ChunkSystem {
         System.out.println(cS.getEntitiesInBound(ent.getHitBox()));
        System.out.println(cS.semiStaticEntitiesRendered.size());
 
-        System.out.println(cS.getAllChunksInSystem());
-
+        
+        cS.generateTileInAllChunks();
         cS.writeALlInfo();
+
+        
     }
     /**
      * i have to figure out what kind of coords this is - worldX or row
      * this is moved down to chunk. 
      */
-    private Tile getSingelTile(int worldX,int worldY){
-        
-        //loader algorithm..
+    
 
-        //method returns biome type- which is a streubg
-        String biomeType =  proceduralGen.calculateBiomeString(worldX, worldY);
-        return new Tile(panel,biomeType,worldX,worldY);
-        
-    }
-
-    private void addEntitiesToChunk(int startX,int startY, int width){
-        for (int x = 0;x<width;x+= panel.tileSize){
-            for (int y = 0;y<width;y+=panel.tileSize){
-                addEntity(getSingelTile(startX+x,startY+y));
-            }
-        }
-    }
-
+    
     private void isLoaded(int worldX,int worldY){
-
+        //TODO
     }
 
     private void writeALlInfo(){
         for (Chunk chunk:getAllChunksInSystem()){
             chunk.writeInfo();
+        }
+    }
+
+    private void generateTileInAllChunks(){
+        for (Chunk chunk:getAllChunksInSystem()){
+            chunk.load();
         }
     }
 

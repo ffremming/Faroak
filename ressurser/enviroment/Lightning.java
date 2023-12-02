@@ -35,7 +35,7 @@ public class Lightning {
         
 
         g2.setPaint(gradient);
-        g2.fillRect(0, 0, panel.skjermBredde, panel.skjermHoyde);
+        g2.fillRect(0, 0, panel.screenWidth, panel.screenHeight);
        
         
     }
@@ -51,11 +51,11 @@ public class Lightning {
             gradient = new RadialGradientPaint(center, radius, fractions, colors);
 
             g2.setPaint(gradient);
-            g2.fillRect(0,0,panel.skjermBredde,panel.skjermHoyde);
+            g2.fillRect(0,0,panel.screenWidth,panel.screenHeight);
         } else {
             g2.setColor(new Color(0,2,20,verdi));
             //g2.setPaint(gradient);
-            g2.fillRect(0, 0, panel.skjermBredde, panel.skjermHoyde);
+            g2.fillRect(0, 0, panel.screenWidth, panel.screenHeight);
         }
         
         
@@ -64,12 +64,12 @@ public class Lightning {
 
     public void newWithHoles(){
             // Create a BufferedImage with an alpha channel
-            BufferedImage filter = new BufferedImage(panel.skjermBredde, panel.skjermHoyde, BufferedImage.TYPE_INT_ARGB);
+            BufferedImage filter = new BufferedImage(panel.screenWidth, panel.screenHeight, BufferedImage.TYPE_INT_ARGB);
 
             // Fill the BufferedImage with a semi-transparent black color
             Graphics2D g2d = filter.createGraphics();
             g2d.setColor(new Color(0, 0, 0, 128));
-            g2d.fillRect(0, 0, panel.skjermBredde, panel.skjermHoyde);
+            g2d.fillRect(0, 0, panel.screenWidth, panel.screenHeight);
             g2d.dispose();
 
             // Draw the "holes" in the filter

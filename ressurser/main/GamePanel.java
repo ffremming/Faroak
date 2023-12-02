@@ -1,6 +1,8 @@
 package ressurser.main;
 
 import ressurser.Tiles.TileManager;
+import ressurser.chunkSystem.ChunkSystem;
+import ressurser.chunkSystem.ChunkSystem;
 import ressurser.drawing.DrawingManager;
 import ressurser.entity.EntityHandler;
 import ressurser.entity.spiller.Spiller;
@@ -38,8 +40,8 @@ public class GamePanel extends JPanel implements Runnable{
     public boolean gameOption = false;
     public boolean arrowYes = false;
     
-    public final int skjermHoyde = tileSize/2 *18;
-    public final int skjermBredde = tileSize/2 *26;
+    public final int screenHeight = tileSize/2 *18;
+    public final int screenWidth = tileSize/2 *26;
     
 
     int aktivStreng = 1;
@@ -47,6 +49,7 @@ public class GamePanel extends JPanel implements Runnable{
    
 
     public Thread gameThread; 
+    public Graphics2D g ;
 
     // object components:
     public TerrainGenSimplex terrainGen;
@@ -54,7 +57,8 @@ public class GamePanel extends JPanel implements Runnable{
     public TileManager tileM;
     public DungeonManager dungeonM;
     public ImagePainter imageP;
-
+    
+    public ChunkSystem chunkSystem;
     public PlayInteractionManager interactionPlay;
     public MenuInteraction interactionMenu;
     public InventoryInteraction interactionInventory;
@@ -107,13 +111,16 @@ public class GamePanel extends JPanel implements Runnable{
     
     public GamePanel(JFrame frame,boolean newGame){
         this.frame = frame;
+        this.g=(Graphics2D) frame.getGraphics();
         
         this.newGame = newGame;
-        this.setPreferredSize(new Dimension(skjermBredde,skjermHoyde));
+        this.setPreferredSize(new Dimension(screenWidth,screenHeight));
         this.setBackground(Color.black);
         this.setDoubleBuffered(true);
         
-        
+        //important - needs to make all this mess cleaner
+        this.chunkSystem = new ChunkSystem(this);
+
         generateMap();
         
         setUpObjects();

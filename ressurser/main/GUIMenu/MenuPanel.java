@@ -71,7 +71,7 @@ public class MenuPanel extends JPanel {
             
             
             frame.getContentPane().add(gamePanel);
-            frame.setSize(gamePanel.skjermBredde,gamePanel.skjermHoyde);
+            frame.setSize(gamePanel.screenWidth,gamePanel.screenHeight);
             frame.add(gamePanel);
             gamePanel.requestFocusInWindow();
           

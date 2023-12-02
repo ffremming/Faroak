@@ -56,6 +56,20 @@ public class DrawingManager {
         g2.dispose();
     }
 
+    public void draw2(Graphics g){
+
+        
+       
+        Graphics2D g2 = (Graphics2D)g;
+        
+        
+       
+
+
+        
+        g2.dispose();
+    }
+
     public void drawRelative(Sprite sprite,Graphics2D g2){
         //g2.drawImage()
 

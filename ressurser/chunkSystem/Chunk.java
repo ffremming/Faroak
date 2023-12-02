@@ -14,7 +14,7 @@ public class Chunk extends TreeNode{
 
     // is the chunk loaded. When the game is started the chunk will not be loaded. When chunk is rendered/loaded, boolean value is set true. 
     // this boolean needs to be stored in harddrive. If already loaded, do not need procedural generation of entites, because these is already loaded.
-    boolean loaded = false;
+    boolean generated = false;
 
     //i want all chunks to always forget the tile contents, but always remember entities(not tiles)
 
@@ -90,8 +90,8 @@ public class Chunk extends TreeNode{
     @Override
     public void addEntity(BaseEntity entity){
 
-        if (entity instanceof Tile){
-            addTile((Tile) entity,entity.getRow(),entity.getCol());
+        if (entity instanceof Tile && false){   //TODO not supposed to be like this, problem with the incex allocation system.
+            addTile((Tile) entity,entity.getRow()-startXValue/chunkS.panel.tileSize ,entity.getCol()-startXValue/chunkS.panel.tileSize);
         } else {
             entities.add(entity);
         }
@@ -111,6 +111,7 @@ public class Chunk extends TreeNode{
         System.out.println("entities:"+ entities.size() +"coords: x:"+startXValue+"y:"+startYValue+"\n" );
         for (BaseEntity entity :entities){
             System.out.println(entity.getName());
+            
         }
         System.out.println("");
     }
@@ -124,6 +125,7 @@ public class Chunk extends TreeNode{
     private void initialLoad(){
        generateTiles();
        generateEntities();
+       generated = true;
     }
     /*generate tiles, should be used every time a chunk is loaded */
     private void generateTiles(){
@@ -144,9 +146,15 @@ public class Chunk extends TreeNode{
     /**
      * adds tiles, and load entities from file
      */
-    private void load(){
-        generateTiles();
-        loadEntitiesFromFile();
+    void load(){
+        if (generated){
+            generateTiles();
+            loadEntitiesFromFile();
+        }
+        else{
+            initialLoad();
+        }
+        
     }
 
     private Tile getSingelTile(int worldX,int worldY){
@@ -154,13 +162,16 @@ public class Chunk extends TreeNode{
         //loader algorithm..
         //method returns biome type- which is a streubg
         String biomeType =  chunkS.proceduralGen.calculateBiomeString(worldX, worldY);
+        
         return new Tile(chunkS.panel,biomeType,worldX,worldY);
         
     }
 
     private void addEntitiesToChunk(int startX,int startY, int width){
+       
         for (int x = 0;x<width;x+= chunkS.panel.tileSize){
             for (int y = 0;y<width;y+=chunkS.panel.tileSize){
+                
                 addEntity(getSingelTile(startX+x,startY+y));
             }
         }
