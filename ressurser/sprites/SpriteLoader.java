@@ -26,7 +26,7 @@ public class SpriteLoader {
 
     public static void main(String[] args) {
         
-            System.out.println(loadImages("grass"));
+            System.out.println(loadImages("water"));
         
            
            
