@@ -141,7 +141,7 @@ public class Program {
         int maxWorldRow = xy[0];
         int maxWorldCol = xy[1];
 
-        //System.out.println(maxWorldRow+","+maxWorldCol);
+       
 
         boolean venstreOppe = false;
         boolean venstreMidt = false;
@@ -349,9 +349,7 @@ public class Program {
 
     return 0;
     }
-        //System.out.println(venstreOppe+","+mitreOppe+","+hoyreOppe);
-       // System.out.println(venstreMidt+","+mitreMidt+","+hoyreMidt);
-        //System.out.println(venstreNede+","+mitreNede+","+hoyreNede);
+       
        
 
     //funkjson som tar inn en array med int tall og konverterer det til et tekstdokument.
@@ -402,7 +400,7 @@ public class Program {
                     if (mapL[y][x+1].equals(type)){ hoyre = true;}
                 }
 
-                //System.out.println(mapL[y-1][x]);
+            
                 
                 
                

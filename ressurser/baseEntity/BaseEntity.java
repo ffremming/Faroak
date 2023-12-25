@@ -24,7 +24,7 @@ public class BaseEntity {
 
     protected short height;
 
-    HitBox hitBox;
+    protected HitBox hitBox;
     int hitBoxWidth,hitBoxHeight,relativeXValue,relativeYValue;
     
 
@@ -59,8 +59,22 @@ public class BaseEntity {
         //spriteHandler = new SpriteHandler(this);
         //sprite = new Sprite(this,"filenavn",worldX,worldY,width,height);
     } 
+    /**
+     * for unusual objects that doesnt need position or other.
+     */
+    public BaseEntity (GamePanel panel,String name){
+        this.panel = panel;
+        this.name = name;
+        worldX = 0;
+        worldY = 0;
+        width = 0;
+        height = 0;
+        hitBoxWidth = 0;
+        hitBoxHeight = 0;
+    }
+
     public BufferedImage getImage(){
-        panel... getImages(this);
+        return panel.imageContainer.getImage(name);
     }
 
 
@@ -129,5 +143,11 @@ public class BaseEntity {
     }
     public Boolean getAnimated() {
         return animated;
+    }
+    public short getWidth() {
+        return width;
+    }
+    public short getHeight() {
+        return width;
     }
 }

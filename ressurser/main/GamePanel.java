@@ -2,7 +2,8 @@ package ressurser.main;
 
 import ressurser.Tiles.TileManager;
 import ressurser.chunkSystem.ChunkSystem;
-import ressurser.chunkSystem.ChunkSystem;
+
+import ressurser.drawing.Camera;
 import ressurser.drawing.DrawingManager;
 import ressurser.entity.EntityHandler;
 import ressurser.entity.spiller.Spiller;
@@ -50,6 +51,7 @@ public class GamePanel extends JPanel implements Runnable{
 
     public Thread gameThread; 
     public Graphics2D g ;
+    public Camera camera;
 
     // object components:
     public TerrainGenSimplex terrainGen;
@@ -57,6 +59,7 @@ public class GamePanel extends JPanel implements Runnable{
     public TileManager tileM;
     public DungeonManager dungeonM;
     public ImagePainter imageP;
+    public ImageContainer imageContainer;
     
     public ChunkSystem chunkSystem;
     public PlayInteractionManager interactionPlay;
@@ -119,7 +122,7 @@ public class GamePanel extends JPanel implements Runnable{
         this.setDoubleBuffered(true);
         
         //important - needs to make all this mess cleaner
-        this.chunkSystem = new ChunkSystem(this);
+        
 
         generateMap();
         
@@ -135,29 +138,32 @@ public class GamePanel extends JPanel implements Runnable{
     }
 
     private void generateMap(){
+        imageContainer = new ImageContainer();
+        chunkSystem = new ChunkSystem(this);
         spriteLoader = new SpriteLoader(this);
         mapH = new MapHandler(this);
         spiller = new Spiller(this,textString, 2000,500,(short) 40,(short) 128,(short) 48,(short) 48, (short)8,(short)( 128-48));
         terrainGen = new TerrainGenSimplex(mapH.mapWidth,mapH.mapHeight,true);
-        imageP = new ImagePainter();
-        objM = new ObjectManager(this,newGame);
-        tileM = new TileManager(this,newGame);
+        //imageP = new ImagePainter();
+        //objM = new ObjectManager(this,newGame);
+        //tileM = new TileManager(this,newGame);
     }
    
     private void setUpObjects(){
-        dungeonM = new DungeonManager(this);
-        interactionPlay = new PlayInteractionManager(this);
+        camera = new Camera(this,"camera");
+        //dungeonM = new DungeonManager(this);
+        //interactionPlay = new PlayInteractionManager(this);
 
         input = new KeyHandler(this);
         //Smouse = new MouseHandler(this);
-        menu = new Meny(this);
-        collisionC = new CollisionChecker(this);
-        entityH = new EntityHandler(this);
-        light = new Lightning(this);
+        //menu = new Meny(this);
+        //collisionC = new CollisionChecker(this);
+        //entityH = new EntityHandler(this);
+        //light = new Lightning(this);
         enviromentM = new EnviromentManager(this);
-        itemB = new ItemBar(this);
+        //itemB = new ItemBar(this);
         drawingM = new DrawingManager(this);
-        menuStateUI = new MenuState(this);
+        //menuStateUI = new MenuState(this);
     }
 
 
@@ -192,7 +198,7 @@ public class GamePanel extends JPanel implements Runnable{
         
         }  
 
-        System.out.println(tileM.tileMap[mapH.activeMapType][mapH.activeMapNumber][0][0]);
+        
     }
     
     //has to be changed
@@ -214,7 +220,8 @@ public class GamePanel extends JPanel implements Runnable{
 
     public void paintComponent(Graphics g){
         super.paintComponents(g); 
-        drawingM.draw(g);
+        
+        camera.draw();
     }
 
 

@@ -221,7 +221,7 @@ public class ObjectManager {
         //g2.drawString(Integer.toString(SX)+","+Integer.toString(SX),50,50);
         //g2.fillRect(SX,SY,o.hitBox.width,o.hitBox.height);
 
-        //System.out.println(SX+","+SY+","+o.hitBox.x+";"+o.hitBox.y);
+       
     }
 
 

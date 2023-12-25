@@ -8,5 +8,9 @@ public class primitiveEntity extends BaseEntity {
         super(panel, name, worldX, worldY, width, height, width, height, 0, 0);
         //TODO Auto-generated constructor stub
     }
-    
+
+    public primitiveEntity(GamePanel panel, String name) {
+        super(panel, name);
+        //TODO Auto-generated constructor stub
+    }
 }

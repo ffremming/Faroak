@@ -13,6 +13,7 @@ import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.tile.Tile;
 import ressurser.chunkSystem.terrainGeneration.ProceduralGeneration;
 import ressurser.main.GamePanel;
+import ressurser.main.GUIMenu.MenuPanel;
 
 
 
@@ -44,10 +45,33 @@ public class ChunkSystem {
         proceduralGen = new ProceduralGeneration();
         //this should be lower. but not sure yet.
         renderDistance = 32*panel.tileSize;
-        System.out.println((int)Math.pow(2,SIZEPOW)*panel.tileSize/panel.tileSize);
+        
 
         mother = new TreeNode(this,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,(int)Math.pow(2,SIZEPOW)*panel.tileSize,(int)Math.pow(2,SIZEPOW)*panel.tileSize,1);
 
+        setUpTest();
+    }
+
+    private void setUpTest(){
+        short w = 32;
+        BaseEntity ent = new BaseEntity(panel,"name",641, 520, w, (short)64,(short)28,(short)40,(short)2,(short)24);
+        BaseEntity ent2 = new BaseEntity(panel,"name",640, 530, w, (short)64,(short)28,(short)40,(short)2,(short)24);
+        addEntity(ent2);
+        addEntity(ent);
+
+        
+        
+        updateSemiStaticEntitiesRendered(ent);
+        removeEntitiesInBound(ent.getHitBox());
+        updateSemiStaticEntitiesRendered(ent);
+
+        //removeEntitiesInBound()
+       
+
+        
+        generateTileInAllChunks();
+
+        writeALlInfo();
     }
 
     /**
@@ -120,7 +144,7 @@ public class ChunkSystem {
         int minY = centerY-renderDistance;
 
         Rectangle renderRect = new Rectangle(minX,minY,renderDistance*2,renderDistance*2);
-        System.out.println(renderRect);
+      
         ArrayList<Chunk> chunkList = new ArrayList<>();
 
         //calls recursive method, adds all chunks.
@@ -205,34 +229,13 @@ public class ChunkSystem {
     
 
     public static void main(String[] args) {
-        //System.out.println((int)Math.pow(2,10)*64);
-
-        GamePanel panel = new GamePanel(new JFrame(),true);
-        ChunkSystem cS = new ChunkSystem(panel);
         
-
         
-
-        short w = 32;
-        BaseEntity ent = new BaseEntity(panel,"name",641, 520, w, (short)64,(short)28,(short)40,(short)2,(short)24);
-        BaseEntity ent2 = new BaseEntity(panel,"name",640, 530, w, (short)64,(short)28,(short)40,(short)2,(short)24);
-        cS.addEntity(ent2);
-        cS.addEntity(ent);
-
-        System.out.println(cS.getAllChunksInRenderDistance(ent).size()); 
+        ChunkSystem cs = new ChunkSystem(new GamePanel(new JFrame(), true));
         
-        cS.updateSemiStaticEntitiesRendered(ent);
-        cS.removeEntitiesInBound(ent.getHitBox());
-        cS.updateSemiStaticEntitiesRendered(ent);
-
-        //removeEntitiesInBound()
-        System.out.println(cS.getEntitiesInBound(ent.getHitBox()));
-       System.out.println(cS.semiStaticEntitiesRendered.size());
-
         
-        cS.generateTileInAllChunks();
-        cS.writeALlInfo();
-
+        ////OUTDATED
+        
         
     }
     /**
@@ -259,30 +262,13 @@ public class ChunkSystem {
     }
 
     //came up with different idea.
-    private void loadTileHashMap(){
-        /* 
-        tileHashMap.put("snowyTundra",ice);
-        tileHashMap.put("snowyTaiga",ice);
-        tileHashMap.put("plains",green);
-        tileHashMap.put("desert",sand);
-        tileHashMap.put("snowyTundra",ice);
-        tileHashMap.put("seasonalForest",sForest);
-        tileHashMap.put("savanna",savannaC);
-        tileHashMap.put("forest",darkGreen);
-        tileHashMap.put("rainForest",rainFr);
-        tileHashMap.put("swamp",moss);
-        tileHashMap.put("swamp",moss);
-        tileHashMap.put("swamp",new Tile(panel,"ocean",))*/
-
-
-    }
+    
 
 
     /**
      * some prototype theory written 1.des 2023
      */
     private void prototype(){
-
 
         //entity require update around itself.
         //system check player position, and tries to load all chunks within the player position

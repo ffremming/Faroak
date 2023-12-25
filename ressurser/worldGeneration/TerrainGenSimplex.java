@@ -318,7 +318,7 @@ public class TerrainGenSimplex
 
 				//double value = Math.abs(sumOcatave(seed,6,x,y,0,frequency));
 				//double value = getNoiseValue(seed,frequency,x,y);
-				//System.out.println(value);
+				
 				double value = Math.abs(sumOcatave(seed,num_iterations,x,y,0,frequency));
 				newNoiseArray[y][x] = value;
 			}
@@ -332,9 +332,7 @@ public class TerrainGenSimplex
 		for (int y = 0; y < height; y++){
 			for (int x = 0; x < width; x++){	
 
-				//double value = Math.abs(sumOcatave(seed,6,x,y,0,frequency));
-				//double value = getNoiseValue(seed,frequency,x,y);
-				//System.out.println(value);
+				
 				double value = Math.abs(sumOcatave(seed,num_iterations,x-width/2,y-height/2,0,frequency));
 				newNoiseArray[y][x] = value;
 			}
@@ -518,7 +516,7 @@ public class TerrainGenSimplex
 		public static void main(String[] args) throws IOException {
 			TerrainGenSimplex gen = new TerrainGenSimplex(2000,2000,true);
 
-			//System.out.println(gen.getLetter(1,1));
+		
 			
 		}
 		

@@ -3,6 +3,7 @@ package ressurser.drawing;
 import java.util.ArrayList;
 
 import ressurser.baseEntity.BaseEntity;
+import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.Sprite;
 import ressurser.baseEntity.primitiveEntity;
 import ressurser.main.GamePanel;
@@ -16,6 +17,11 @@ public class Camera extends primitiveEntity{
         //TODO Auto-generated constructor stub
         follow(panel.spiller);
     }
+    public Camera(GamePanel panel,String name){
+        super(panel,name);
+        follow(panel.spiller);
+        this.hitBox = new HitBox(this);
+    }
 
 
 
@@ -28,26 +34,26 @@ public class Camera extends primitiveEntity{
     }
 
     public void draw(){
-        //dont need to update all that often. - this could be updated in chunkSystem
-        panel.chunkSystem.getEntitiesInBound(this.getHitBox());
         
-        ArrayList<BaseEntity> entityList = panel.chunkSystem.semiStaticEntitiesRendered;
+        //dont need to update all that often. - this could be updated in chunkSystem
+        
+        
+        //System.out.println(panel.chunkSystem.getEntitiesInBound(this.getHitBox()));
+       
         //this only works if chunkysstem updates entites frequently
-        for (BaseEntity baseE :panel.chunkSystem.semiStaticEntitiesRendered){
+        for (BaseEntity baseE :panel.chunkSystem.getEntitiesInBound(this.getHitBox())){
             drawRelative(baseE);
         }
         panel.g.dispose();
-
     }
 
     public void drawRelative(BaseEntity entity){
-        //g2.drawImage()
+        
 
-        //if followed:   -  could change to own coordinated
-        int tempScreenX = (entity.worldX)-worldX;
-        int tempScreenY = (entity.worldY)-worldY;
+        //center
+        center(entity);
     
-        panel.g.drawImage(entity.getImage(),tempScreenX,tempScreenY,sprite.width,sprite.height,null);     //can remove width and height.
+        panel.g.drawImage(entity.getImage(),worldX,worldY,entity.getWidth(),entity.getHeight(),null);     //can remove width and height.
     }
 
 
@@ -60,7 +66,5 @@ public class Camera extends primitiveEntity{
         worldX = entityX-width/2;
         worldY = entityY+height/2;
     }
-
     //can add loads of other abilities
-
 }

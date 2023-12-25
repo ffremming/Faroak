@@ -247,8 +247,7 @@ public class Spiller extends Entity{
     @Override
     public void updateAction(){
         
-        //System.out.println("x:"+xMovement);
-
+       
         
        
         updateSpriteCounter();
@@ -260,7 +259,7 @@ public class Spiller extends Entity{
     }
 
     private boolean inputPressed(){
-        System.out.println(panel);
+        
         return panel.input.upPressed||panel.input.downPressed||panel.input.leftPressed||panel.input.rightPressed;
     }
 
@@ -268,8 +267,7 @@ public class Spiller extends Entity{
        
         if (inputPressed() ){
             //!collision()
-            System.out.println(panel.input.upPressed+","+panel.input.downPressed+","+panel.input.leftPressed+","+panel.input.rightPressed);
-            System.out.println(retning);
+            
             calculateMovementAndMove();
         } else {
             move = false;

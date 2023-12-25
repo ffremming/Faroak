@@ -43,11 +43,8 @@ public class HitBox extends Rectangle{
 
 
     // not done.... 
-    public HitBox(BaseEntity entity,int type ){
+    public HitBox(BaseEntity entity){
         super(entity.worldX,entity.worldY,entity.panel.tileSize,entity.panel.tileSize);
-
-        if (type == STANDARD1X1){
-        }
     }
 
 

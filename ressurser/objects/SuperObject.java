@@ -72,8 +72,7 @@ public class SuperObject {
         //this.hitBox = new HitBox(this,width ,height,0,0);
 
        
-        //System.out.println(hitBox.x+","+hitBox.y+"/"+worldX+","+worldY);
-        //System.out.println(hitBox.width+","+hitBox.height+"/"+width+","+height);
+       
 
 
         connectedCells= new SuperObject [30];

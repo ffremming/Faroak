@@ -26,7 +26,7 @@ public class CollisionChecker {
     }
 
     private boolean collision(Entity entity,SuperObject so){
-        //System.out.println(entity.hitBox.x +"n"+so.worldX);
+        
         return (entity.collision(so.hitBox));
     }
 

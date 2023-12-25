@@ -152,7 +152,7 @@ public class Entity extends BaseEntity{
     }
     public void updateAction(){
         
-        //System.out.println("x:"+xMovement);
+      
        
         updateSpriteCounter();
         getSprite();

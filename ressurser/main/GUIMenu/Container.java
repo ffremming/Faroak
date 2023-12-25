@@ -108,7 +108,7 @@ public class Container extends BaseComponent{
         int xEvent = e.getX();
         int yEvent = e.getY();
 
-        //System.out.println("container pressed");
+       
         for (Component comp:content){
 
             //if in the component

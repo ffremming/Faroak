@@ -29,8 +29,8 @@ public class Chunk extends TreeNode{
     protected void addChildren(){
         //nothing
         amount ++;
-        System.out.println(amount);
-        //System.out.println(startXValue+","+ startYValue+";"+ width+","+ height);
+        
+        
     }
 
     public void addTile(Tile tile,int row,int col){
@@ -81,9 +81,8 @@ public class Chunk extends TreeNode{
      */
     protected void getAllChunks(ArrayList<Chunk> list){
         list.add(this);
-        //System.out.println("add chunk"+startXValue+","+startYValue+","+width+","+height);
+        
     }
-
     /*
      * great writing here. adds entities based on the instance.
      */
@@ -110,7 +109,7 @@ public class Chunk extends TreeNode{
     public void writeInfo(){
         System.out.println("entities:"+ entities.size() +"coords: x:"+startXValue+"y:"+startYValue+"\n" );
         for (BaseEntity entity :entities){
-            System.out.println(entity.getName());
+            System.out.println("navn: "+entity.getName());
             
         }
         System.out.println("");

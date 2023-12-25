@@ -74,10 +74,10 @@ public class TreeNode {
 
 
     protected void getAllChunks(Rectangle rect,ArrayList<Chunk> list){
-        //System.out.println("get all chunks");
+       
         for(int i=0; i<children.length; i++) {
             if (children[i].rect.contains(rect)||children[i].rect.intersects(rect)){
-                //System.out.println("child get chunks");
+              
                 children[i].getAllChunks(rect,list);
                 
 

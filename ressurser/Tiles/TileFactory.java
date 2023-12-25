@@ -71,9 +71,7 @@ public class TileFactory {
     }
 
     public BufferedImage getTileSprite(String background,String upper,String lower,String right,String left){
-        //System.out.println("ikmage painter"+panel.imageP);
-
-        //System.out.println("tilesprites"+panel.imageP.tileSprites);
+       
 
         //return panel.imageP.tileSprites.get(background+upper+lower+right+left);
         BufferedImage image;
@@ -115,7 +113,7 @@ public class TileFactory {
 
 
 
-            //System.out.println("tileSprites/"+background+"/"+background+upper+lower+right+left+".png");
+         
             if (background.equals(upper) &&background.equals(lower) && background.equals(right) && background.equals(left)){
                 image = BasicTileSet.get(background);
 
