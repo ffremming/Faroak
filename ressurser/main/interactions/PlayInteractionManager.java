@@ -117,7 +117,7 @@ public class PlayInteractionManager implements Interaction{
     }
 
     public void upPressed(){
-
+            panel.camera.moveY(-10);
             if (panel.gameState == panel.PLAYSTATE ){
             }
 

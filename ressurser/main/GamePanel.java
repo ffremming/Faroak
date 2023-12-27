@@ -132,7 +132,7 @@ public class GamePanel extends JPanel implements Runnable{
         this.setFocusable(true);
         requestFocus();
        
-
+        
         
         
     }
@@ -221,7 +221,7 @@ public class GamePanel extends JPanel implements Runnable{
     public void paintComponent(Graphics g){
         super.paintComponents(g); 
         
-        camera.draw();
+        camera.draw(g);
     }
 
 

@@ -11,20 +11,20 @@ import ressurser.chunkSystem.terrainGeneration.Biome;
 
 public class ImageContainer {
 
-    HashMap<String,BufferedImage> images = new HashMap<>();
+    public HashMap<String,BufferedImage> images = new HashMap<>();
 
     public ImageContainer(){
         setupBaseImages();
     }
 
-    public BufferedImage getImage(String name){
+    public BufferedImage getImage(String name) throws Exception{
         if (images.containsKey(name)){
             return images.get(name);
         }
         else{
-            //TODO
+            throw new Exception("no such image");
         }
-        return null;
+       
     }
 
     private void loadBufferedImage(String name){
@@ -34,13 +34,13 @@ public class ImageContainer {
     private void setupBaseImages(){
         try {
 
-            BufferedImage grass = ImageIO.read(new File("ressurser/tileSpriteGenerator/gbackground.png"));
-            BufferedImage mud = ImageIO.read(new File("ressurser/tileSpriteGenerator/mbackground.png"));
-            BufferedImage moss = ImageIO.read(new File("ressurser/tileSpriteGenerator/Mobackground.png"));
-            BufferedImage sand = ImageIO.read(new File("ressurser/tileSpriteGenerator/sbackground.png"));
-            BufferedImage water = ImageIO.read(new File("ressurser/tileSpriteGenerator/wbackground.png"));
-            BufferedImage dark_grass = ImageIO.read(new File("ressurser/tileSpriteGenerator/dG.png"));
-            BufferedImage savanna = ImageIO.read(new File("ressurser/tileSpriteGenerator/Sa.png"));
+            BufferedImage grass = ImageIO.read(new File("../images/grass.png"));
+            BufferedImage mud = ImageIO.read(new File("../images/mud.png"));
+            BufferedImage moss = ImageIO.read(new File("../images/moss.png"));
+            BufferedImage sand = ImageIO.read(new File("../images/sand.png"));
+            BufferedImage water = ImageIO.read(new File("../images/ocean.png"));
+            BufferedImage dark_grass = ImageIO.read(new File("../images/dark_grass.png"));
+            BufferedImage savanna = ImageIO.read(new File("../images/savanna.png"));
 
 
             images.put("plains",grass);

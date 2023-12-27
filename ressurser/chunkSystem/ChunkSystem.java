@@ -29,7 +29,7 @@ public class ChunkSystem {
     TreeNode mother;
     ProceduralGeneration proceduralGen;
     //
-    final int SIZEPOW = 5;// 5072 chunks.
+    final int SIZEPOW = 7;// 5072 chunks.
 
     HashMap <String,Tile> tileHashMap = new HashMap<String,Tile>();
 
@@ -44,26 +44,18 @@ public class ChunkSystem {
         this.panel = panel;
         proceduralGen = new ProceduralGeneration();
         //this should be lower. but not sure yet.
-        renderDistance = 32*panel.tileSize;
+        renderDistance = 64*panel.tileSize;
+        //TODO 
+        
         
 
-        mother = new TreeNode(this,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,(int)Math.pow(2,SIZEPOW)*panel.tileSize,(int)Math.pow(2,SIZEPOW)*panel.tileSize,1);
+        mother = new TreeNode(this,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,(int)Math.pow(2,SIZEPOW)*panel.tileSize,(int)Math.pow(2,SIZEPOW)*panel.tileSize);
 
         setUpTest();
     }
 
     private void setUpTest(){
-        short w = 32;
-        BaseEntity ent = new BaseEntity(panel,"name",641, 520, w, (short)64,(short)28,(short)40,(short)2,(short)24);
-        BaseEntity ent2 = new BaseEntity(panel,"name",640, 530, w, (short)64,(short)28,(short)40,(short)2,(short)24);
-        addEntity(ent2);
-        addEntity(ent);
-
         
-        
-        updateSemiStaticEntitiesRendered(ent);
-        removeEntitiesInBound(ent.getHitBox());
-        updateSemiStaticEntitiesRendered(ent);
 
         //removeEntitiesInBound()
        
@@ -71,7 +63,7 @@ public class ChunkSystem {
         
         generateTileInAllChunks();
 
-        writeALlInfo();
+        //writeALlInfo();
     }
 
     /**
@@ -81,8 +73,9 @@ public class ChunkSystem {
      * @return list of all entities that collides with hitbox
      */
     public ArrayList<BaseEntity> getEntitiesInBound(HitBox hitBox){
-        
+        System.out.println(hitBox);
         ArrayList<BaseEntity> entitiesInBound = new ArrayList<>();
+        updateSemiStaticEntitiesRendered(hitBox);
 
         for (BaseEntity baseEntity : semiStaticEntitiesRendered){
             if (baseEntity.collision(hitBox)){
@@ -112,7 +105,6 @@ public class ChunkSystem {
      * the amount of room the method search for is decided by the renderdistance.
      */
 
-
     public void updateSemiStaticEntitiesRendered(BaseEntity entity){
       
         
@@ -126,8 +118,43 @@ public class ChunkSystem {
             semiStaticEntitiesRendered.addAll(chunk.getEntities());
         }
 
+       
+    }
+
+    /**
+     * the method updates the enities that is nearby the baseentity in the parameter.
+     * the method should not be called too frequently for perfomance.
+     * the amount of room the method search for is decided by the renderdistance.
+     * OBS Overloaded function
+     */
+
+    public void updateSemiStaticEntitiesRendered(HitBox hitbox){
+        //load all chunks that is involved in the range of the render distance.
+        semiStaticEntitiesRendered.clear();
+
+        ArrayList<Chunk> chunks = getAllChunksInRenderDistance(hitbox);
+
+        for (Chunk chunk:chunks){
+            semiStaticEntitiesRendered.addAll(chunk.getEntities());
+        }
+
        // semiStaticEntitiesRendered = mother.loadEntitites(renderDistance,entity.getWorldX(),entity.getWorldX());
     }
+
+    /**
+     * returns all entities within render distance given the given entity.
+     */
+    public ArrayList<BaseEntity> getAllEntitiesInRenderDistance(BaseEntity entity){
+
+        ArrayList<BaseEntity> AllEntitiesInRenderDistance = new ArrayList<>();
+
+        for (Chunk chunk:getAllChunksInRenderDistance(entity)){
+            AllEntitiesInRenderDistance.addAll(chunk.getEntities());
+        }
+        return AllEntitiesInRenderDistance;
+    }
+
+
 
     /**
      * returns a list of all chunks within render distance
@@ -135,10 +162,28 @@ public class ChunkSystem {
      * when a entity wants chunk -> check if loaded - > if not, load
      */
 
-    private ArrayList<Chunk> getAllChunksInRenderDistance(BaseEntity entity){
+    public ArrayList<Chunk> getAllChunksInRenderDistance(BaseEntity entity){
 
-        int centerX = entity.getWorldX();
-        int centerY = entity.getWorldY();
+        int centerX = entity.getWorldX()+entity.getWidth()/2;
+        int centerY = entity.getWorldY()-entity.getHeight()/2;
+
+        int minX = centerX-renderDistance;
+        int minY = centerY-renderDistance;
+
+        Rectangle renderRect = new Rectangle(minX,minY,renderDistance*2,renderDistance*2);
+      
+        ArrayList<Chunk> chunkList = new ArrayList<>();
+
+        //calls recursive method, adds all chunks.
+        mother.getAllChunks(renderRect,chunkList);
+
+        return chunkList;
+    }
+
+    private ArrayList<Chunk> getAllChunksInRenderDistance(HitBox hitBox){
+
+        int centerX = hitBox.getWorldX()+hitBox.width/2;
+        int centerY = hitBox.getWorldY()-hitBox.height/2;
 
         int minX = centerX-renderDistance;
         int minY = centerY-renderDistance;
@@ -228,16 +273,7 @@ public class ChunkSystem {
     }
     
 
-    public static void main(String[] args) {
-        
-        
-        ChunkSystem cs = new ChunkSystem(new GamePanel(new JFrame(), true));
-        
-        
-        ////OUTDATED
-        
-        
-    }
+    
     /**
      * i have to figure out what kind of coords this is - worldX or row
      * this is moved down to chunk. 
@@ -249,16 +285,32 @@ public class ChunkSystem {
         //TODO
     }
 
-    private void writeALlInfo(){
+    public void writeALlInfo(){
         for (Chunk chunk:getAllChunksInSystem()){
             chunk.writeInfo();
         }
+        System.out.println("amount of entities: "+getAllEntities().size());
+        System.out.println("amount of chunks:"+getAllChunksInSystem().size());
+        
+        System.out.println("bounds: "+getBounds());
+    }
+
+    public  ArrayList<BaseEntity> getAllEntities(){
+         ArrayList<BaseEntity> allEntities = new ArrayList<>();
+        for (Chunk chunk:getAllChunksInSystem()){
+            allEntities.addAll (chunk.getAllEntities());
+        }
+        return allEntities;
     }
 
     private void generateTileInAllChunks(){
         for (Chunk chunk:getAllChunksInSystem()){
             chunk.load();
         }
+    }
+
+    private ArrayList<Integer> getBounds(){
+        return mother.getBounds();
     }
 
     //came up with different idea.

@@ -7,7 +7,7 @@ import ressurser.baseEntity.BaseEntity;
 
 public class TreeNode {
 
-    int level;
+    
 
     int startXValue;
     int startYValue;
@@ -24,7 +24,7 @@ public class TreeNode {
 
     private TreeNode [] children = new TreeNode[4];
 
-    public TreeNode(ChunkSystem chunkS,int startXValue,int startYValue,int width,int height,int level){
+    public TreeNode(ChunkSystem chunkS,int startXValue,int startYValue,int width,int height){
         this.chunkS = chunkS;
 
         rect = new Rectangle(startXValue,startYValue,width,height);
@@ -34,8 +34,8 @@ public class TreeNode {
         this.width = width;
         this.height = height;
 
-        level ++;
-        this.level = level;
+       
+        
         //if (width > CHUNKSIZE){
             addChildren();
         //}
@@ -45,17 +45,17 @@ public class TreeNode {
 
     protected void addChildren(){
 
-        if (width == CHUNKSIZE*2*chunkS.panel.tileSize){      //to create chunks at bottom lvl
-            children[0] = (new Chunk(chunkS,startXValue,startYValue,width/2,height/2,level));
-            children[1] = (new Chunk(chunkS,startXValue+width/2,startYValue,width/2,height/2,level));
-            children[2] = (new Chunk(chunkS,startXValue,startYValue+height/2,width/2,height/2,level));
-            children[3] = (new Chunk(chunkS,startXValue+width/2,startYValue+height/2,width/2,height/2,level));
+        if (width == CHUNKSIZE*chunkS.panel.tileSize){      //to create chunks at bottom lvl
+            children[0] = (new Chunk(chunkS,startXValue,startYValue,width/2,height/2));
+            children[1] = (new Chunk(chunkS,startXValue+width/2,startYValue,width/2,height/2));
+            children[2] = (new Chunk(chunkS,startXValue,startYValue+height/2,width/2,height/2));
+            children[3] = (new Chunk(chunkS,startXValue+width/2,startYValue+height/2,width/2,height/2));
         } else {
 
-            children[0] = (new TreeNode(chunkS,startXValue,startYValue,width/2,height/2,level));
-            children[1] = (new TreeNode(chunkS,startXValue+width/2,startYValue,width/2,height/2,level));
-            children[2] = (new TreeNode(chunkS,startXValue,startYValue+height/2,width/2,height/2,level));
-            children[3] = (new TreeNode(chunkS,startXValue+width/2,startYValue+height/2,width/2,height/2,level));
+            children[0] = (new TreeNode(chunkS,startXValue,startYValue,width/2,height/2));
+            children[1] = (new TreeNode(chunkS,startXValue+width/2,startYValue,width/2,height/2));
+            children[2] = (new TreeNode(chunkS,startXValue,startYValue+height/2,width/2,height/2));
+            children[3] = (new TreeNode(chunkS,startXValue+width/2,startYValue+height/2,width/2,height/2));
         }
     }
 
@@ -124,6 +124,28 @@ public class TreeNode {
         return false;
     }
 
+    protected ArrayList<Integer> getBounds(){
+        ArrayList<Integer> listOfCoords = new ArrayList<>();
+        listOfCoords.add(startXValue);
+        listOfCoords.add(startYValue);
+
+        listOfCoords.add(startXValue+width);
+        listOfCoords.add(startYValue+height);
+        return listOfCoords;
+    }
+
+    public int getWorldX(){
+        return startXValue;
+    }
+    public int getWorldY(){
+        return startYValue;
+    }
+    public int getWidth(){
+        return width;
+    }
+    public int getHeight(){
+        return height;
+    }
     
 }
 

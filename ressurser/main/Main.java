@@ -22,6 +22,7 @@ public class Main{
     vindu.setLocationRelativeTo(null);
     vindu.setVisible(true);
     vindu.toFront();
+    
    
     //vindu.setFocusable(true);
 

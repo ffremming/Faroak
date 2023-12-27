@@ -44,7 +44,8 @@ public class HitBox extends Rectangle{
 
     // not done.... 
     public HitBox(BaseEntity entity){
-        super(entity.worldX,entity.worldY,entity.panel.tileSize,entity.panel.tileSize);
+        
+        super(entity.worldX,entity.worldY,entity.width,entity.height);
     }
 
 
@@ -85,11 +86,20 @@ public class HitBox extends Rectangle{
     }
 
     public int getWorldX(){
-        return baseEntity.worldX+relativeXValue;
+        if (baseEntity!= null){
+            return baseEntity.worldX+relativeXValue;
+        } else {
+            return worldX;
+        }
+        
     }
 
     public int getWorldY(){
-        return baseEntity.worldY+relativeYValue;
+        if (baseEntity!= null){
+            return baseEntity.worldY+relativeYValue;
+        } else {
+            return worldY;
+        }
     }
 
 

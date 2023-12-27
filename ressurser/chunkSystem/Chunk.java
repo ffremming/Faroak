@@ -18,8 +18,8 @@ public class Chunk extends TreeNode{
 
     //i want all chunks to always forget the tile contents, but always remember entities(not tiles)
 
-    public Chunk(ChunkSystem chunkS,int startXValue, int startYValue, int width, int height, int level) {
-        super(chunkS,startXValue, startYValue, width, height, level);
+    public Chunk(ChunkSystem chunkS,int startXValue, int startYValue, int width, int height) {
+        super(chunkS,startXValue, startYValue, width, height);
         
         tileMap = new Tile [CHUNKSIZE][CHUNKSIZE];
         //tileMap = new Tile [height][width];
@@ -106,12 +106,18 @@ public class Chunk extends TreeNode{
          return (entities.size()>0);
     }
 
+    protected ArrayList<BaseEntity> getAllEntities(){
+        return entities;
+    }   
+
     public void writeInfo(){
         System.out.println("entities:"+ entities.size() +"coords: x:"+startXValue+"y:"+startYValue+"\n" );
+        System.out.println(getBounds());
         for (BaseEntity entity :entities){
             System.out.println("navn: "+entity.getName());
             
         }
+
         System.out.println("");
     }
 
@@ -175,4 +181,6 @@ public class Chunk extends TreeNode{
             }
         }
     }
+
+    
 }

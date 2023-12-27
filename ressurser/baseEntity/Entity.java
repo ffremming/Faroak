@@ -21,7 +21,4 @@ public class Entity extends BaseEntity{
     public void interact(BaseEntity entity){
         entity.interact(this);
     }
-
-
-    
 }
