@@ -30,7 +30,9 @@ public class EnviromentManager {
        
         
         ms++;
-        if (ms%60 == 0){
+        if (ms%panel.camera.frameRate == 0){
+            //based on camera, but should be something that is followed.
+            panel.chunkSystem.workingMemory.update(panel.camera.getHitBox().getCenter());
             tick++;
             ageAllObjects();
             

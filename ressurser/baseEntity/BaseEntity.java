@@ -74,20 +74,17 @@ public class BaseEntity {
     }
 
     public BufferedImage getImage(){
-        System.out.println(name);
-        System.out.println("something");
+        
         BufferedImage image = null;
         
         try {
+          
+
             image = panel.imageContainer.getImage(name);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        System.out.println(image);
-           
-            
-        
         return image;
     }
 

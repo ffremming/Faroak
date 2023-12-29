@@ -1,6 +1,7 @@
 package ressurser.baseEntity.tile;
 
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 
 import ressurser.baseEntity.BaseEntity;
@@ -10,6 +11,13 @@ import ressurser.main.GamePanel;
 
 public class Tile extends BaseEntity{
     
+    final int NORTH = 0;
+    final int SOUTH = 2;
+    final int WEST = 3;
+    final int EAST = 1;
+
+
+
     Tile [] neigbors = new Tile [4];
     Tile north;
     Tile south;
@@ -38,9 +46,7 @@ public class Tile extends BaseEntity{
         
     }
 
-    public BufferedImage getImage(){
-        return image;
-    }
+    
 
     // not sure if i need this.
     public void addSprite(Sprite sprite){
@@ -54,14 +60,35 @@ public class Tile extends BaseEntity{
         
     }
 
+    /**@return null - if direction is given is wrong OR there is no TILE */
+    private Tile getTile(int direction){
+        if (direction == NORTH){
+            return panel.chunkSystem.getTile(new Point(worldX+width/2,worldY-width/2));
+        }
+        else if (direction == EAST){
+            return panel.chunkSystem.getTile(new Point(worldX+width*3/2,worldY+width/2));
+        }
+        else if (direction == SOUTH){
+            return panel.chunkSystem.getTile(new Point(worldX+width/2,worldY+width*3/2));
+        }
+        else if (direction == WEST){
+            return panel.chunkSystem.getTile(new Point(worldX-width/2,worldY+width/2));
+        }
+
+        return null;
+    }
+
+
+
+
     /**
      * not yet implemented, implement if this will be used.
      */
-    private void setNeighBors(Tile north,Tile south,Tile east,Tile west){
-        addNorthNeighBor(north);
-        addSouthNeighBor(south);
-        addWestNeighBor(west);
-        addEastNeighBor(east);
+    public void setNeighBors(){
+        addNorthNeighBor(getTile(NORTH));
+        addSouthNeighBor(getTile(SOUTH));
+        addWestNeighBor(getTile(WEST));
+        addEastNeighBor(getTile(EAST));
     }
 
 

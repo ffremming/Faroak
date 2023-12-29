@@ -1,5 +1,6 @@
 package ressurser.chunkSystem;
 
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,36 +22,35 @@ public class ChunkSystem {
     
     GamePanel panel;
 
-    //updates all entities that should be rendered.
-    public ArrayList<BaseEntity> semiStaticEntitiesRendered = new ArrayList<BaseEntity>();
+    public WorkingMemory workingMemory;
     
     //renderdistance is the distance from the player to the border of where entities is rendered.
     int renderDistance ;
-    TreeNode mother;
+    TreeNode parent;
     ProceduralGeneration proceduralGen;
     //
-    final int SIZEPOW = 7;// 5072 chunks.
+    final int SIZEPOW = 9;// 5072 chunks.
 
     HashMap <String,Tile> tileHashMap = new HashMap<String,Tile>();
 
-
-
     /**
-     * the chunksystem starts by creating the mother treenode, that has an set size. this treenode will create childnodes til the children are small enought to be consideed a chunk.
+     * the chunksystem starts by creating the parent treenode, that has an set size. this treenode will create childnodes til the children are small enought to be consideed a chunk.
      * 
-     * if the chunksystem is not big enought, it should create another mother.
+     * if the chunksystem is not big enought, it should create another parent.
      */
     public ChunkSystem(GamePanel panel){
         this.panel = panel;
+        
         proceduralGen = new ProceduralGeneration();
         //this should be lower. but not sure yet.
-        renderDistance = 64*panel.tileSize;
+        renderDistance = 32*panel.tileSize;
+        this.workingMemory = new WorkingMemory(this);
         //TODO 
         
         
 
-        mother = new TreeNode(this,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,(int)Math.pow(2,SIZEPOW)*panel.tileSize,(int)Math.pow(2,SIZEPOW)*panel.tileSize);
-
+        parent = new TreeNode(this,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,(int)Math.pow(2,SIZEPOW)*panel.tileSize,(int)Math.pow(2,SIZEPOW)*panel.tileSize);
+        //parent.getChildren()[0].paintMap();
         setUpTest();
     }
 
@@ -58,34 +58,12 @@ public class ChunkSystem {
         
 
         //removeEntitiesInBound()
-       
-
-        
+    
         generateTileInAllChunks();
-
-        //writeALlInfo();
+        writeALlInfo();
     }
 
-    /**
-     * returns all entities in bound. in bound mean that the hitbox collides.
-     * search from nearby entities. return all entities that hitboxes collide.
-     * 
-     * @return list of all entities that collides with hitbox
-     */
-    public ArrayList<BaseEntity> getEntitiesInBound(HitBox hitBox){
-        System.out.println(hitBox);
-        ArrayList<BaseEntity> entitiesInBound = new ArrayList<>();
-        updateSemiStaticEntitiesRendered(hitBox);
-
-        for (BaseEntity baseEntity : semiStaticEntitiesRendered){
-            if (baseEntity.collision(hitBox)){
-                if (baseEntity!= hitBox.getEntity()){
-                    entitiesInBound.add(baseEntity);
-                }
-            }
-        }
-        return entitiesInBound;   
-    }
+    
 
     /**
      * returns all entities in bound. in bound mean that the hitbox collides.
@@ -96,50 +74,24 @@ public class ChunkSystem {
     
      public ArrayList<BaseEntity> getEntitiesInBound(Rectangle rect){
         ArrayList<BaseEntity> entitiesInBound = new ArrayList<>();
-        return mother.getEntitiesInBound(rect,entitiesInBound);
+        return parent.getEntitiesInBound(rect,entitiesInBound);
     }
+
 
     /**
-     * the method updates the enities that is nearby the baseentity in the parameter.
-     * the method should not be called too frequently for perfomance.
-     * the amount of room the method search for is decided by the renderdistance.
+     * return list of entities at the specified point.
+     * @return all kinds of entities
      */
-
-    public void updateSemiStaticEntitiesRendered(BaseEntity entity){
-      
-        
-        //load all chunks that is involved in the range of the render distance.
-
-        semiStaticEntitiesRendered.clear();
-
-        ArrayList<Chunk> chunks = getAllChunksInRenderDistance(entity);
-
-        for (Chunk chunk:chunks){
-            semiStaticEntitiesRendered.addAll(chunk.getEntities());
-        }
-
-       
+    public ArrayList<BaseEntity> getEntities(int worldX,int worldY){
+        ArrayList<BaseEntity> entitiesInPoint = new ArrayList<BaseEntity>();
+        return parent.getEntitiesInPoint(new Point(worldX,worldY),entitiesInPoint);
     }
 
-    /**
-     * the method updates the enities that is nearby the baseentity in the parameter.
-     * the method should not be called too frequently for perfomance.
-     * the amount of room the method search for is decided by the renderdistance.
-     * OBS Overloaded function
-     */
 
-    public void updateSemiStaticEntitiesRendered(HitBox hitbox){
-        //load all chunks that is involved in the range of the render distance.
-        semiStaticEntitiesRendered.clear();
 
-        ArrayList<Chunk> chunks = getAllChunksInRenderDistance(hitbox);
+    
 
-        for (Chunk chunk:chunks){
-            semiStaticEntitiesRendered.addAll(chunk.getEntities());
-        }
-
-       // semiStaticEntitiesRendered = mother.loadEntitites(renderDistance,entity.getWorldX(),entity.getWorldX());
-    }
+    
 
     /**
      * returns all entities within render distance given the given entity.
@@ -166,63 +118,67 @@ public class ChunkSystem {
 
         int centerX = entity.getWorldX()+entity.getWidth()/2;
         int centerY = entity.getWorldY()-entity.getHeight()/2;
-
-        int minX = centerX-renderDistance;
-        int minY = centerY-renderDistance;
-
-        Rectangle renderRect = new Rectangle(minX,minY,renderDistance*2,renderDistance*2);
-      
-        ArrayList<Chunk> chunkList = new ArrayList<>();
-
-        //calls recursive method, adds all chunks.
-        mother.getAllChunks(renderRect,chunkList);
-
-        return chunkList;
+        return getAllChunksInRenderDistancefromPoint(new Point(centerX,centerY));
     }
 
     private ArrayList<Chunk> getAllChunksInRenderDistance(HitBox hitBox){
 
         int centerX = hitBox.getWorldX()+hitBox.width/2;
         int centerY = hitBox.getWorldY()-hitBox.height/2;
+        return getAllChunksInRenderDistancefromPoint(new Point(centerX,centerY));
+    }
 
-        int minX = centerX-renderDistance;
-        int minY = centerY-renderDistance;
+    ArrayList<Chunk> getAllChunksInRenderDistance(Point p){
+        return getAllChunksInRenderDistancefromPoint(p);
+    }
 
-        Rectangle renderRect = new Rectangle(minX,minY,renderDistance*2,renderDistance*2);
-      
+    /**@return the rectangle that is represented based on point middle and radius */
+    private Rectangle getRectangle(Point middle,int radius){
+        int minX = middle.x-radius;
+        int minY = middle.y-radius;
+
+        Rectangle renderRect = new Rectangle(minX,minY,radius*2,radius*2);
+        return renderRect;
+    }
+    /**
+     * @return complete rectangle that represent the area that is rendered
+     */
+    Rectangle getRenderRectangle(Point p){
+       return getRectangle(p,renderDistance);
+    }
+
+    /**returns all entities in render distance, takes in point */
+    private ArrayList<Chunk> getAllChunksInRenderDistancefromPoint(Point p){
+        //adjust for renderdistance
+        
         ArrayList<Chunk> chunkList = new ArrayList<>();
 
         //calls recursive method, adds all chunks.
-        mother.getAllChunks(renderRect,chunkList);
-
+        parent.getAllChunks(getRenderRectangle(p),chunkList);
         return chunkList;
     }
+
 
     /**
      * returns arraylist with all chunks in system.
      */
     private ArrayList<Chunk> getAllChunksInSystem(){
         ArrayList<Chunk> chunkList = new ArrayList<>();
-        mother.getAllChunks(chunkList);
+        parent.getAllChunks(chunkList);
         return chunkList;
     }
 
-    /**
-     * 
-     */
     
 
 
-    public ArrayList<BaseEntity> getSemiStaticEntitiesRendered(){
-      return semiStaticEntitiesRendered;
-    }
+    
 
     /**
      * works with all entities, tiles and whatnot.
      */
     public void addEntity(BaseEntity entity){
         try{
-            mother.addEntity(entity);
+            parent.addEntity(entity);
         }
         catch(OutOfChunkBounds e){
 
@@ -236,9 +192,8 @@ public class ChunkSystem {
      * 
      * a solutuion is that an intance of basentity ignores coords, and is placed by the chunksystem.
      */
-    public void setEntity(BaseEntity newEntity,int row,int col){
-        Rectangle rect = new Rectangle(row*panel.tileSize,col*panel.tileSize,panel.tileSize,panel.tileSize);
-        getEntitiesInBound(rect);
+    public void setEntity(BaseEntity newEntity){
+        //TODO
     }
 
 
@@ -254,7 +209,7 @@ public class ChunkSystem {
 
 
     public boolean removeEntity(BaseEntity entity){
-        return mother.removeEntity(entity);
+        return parent.removeEntity(entity);
     }
 
     /**
@@ -309,22 +264,140 @@ public class ChunkSystem {
         }
     }
 
-    private ArrayList<Integer> getBounds(){
-        return mother.getBounds();
+    private Rectangle getBounds(){
+        return parent.getBounds();
     }
 
-    //came up with different idea.
+   
+    
+
+
     
 
 
     /**
-     * some prototype theory written 1.des 2023
+     * i want to make a function that loades the chunks in the render area around the point p
+     * i dont think this needs to be called too often. Depends on the range of renderdistance.
      */
-    private void prototype(){
+    public void handleOutOfBounds (Point p){
+       
+        Rectangle renderRect = getRenderRectangle(p);
+        
+        //check if out of bounds
+        if (OutOfBounds(renderRect)){
+            try {
+                expand(renderRect);
+            } catch (OutOfChunkBounds e) {
+                //should never happen. 
+                e.printStackTrace();
+            }
+        } 
 
-        //entity require update around itself.
-        //system check player position, and tries to load all chunks within the player position
 
-        //if a chunk i not loaded, the system should load the chunk. this is done thought procedural generation.
+        //could be smart to load semistatic entities here //TODO
+    }
+
+    /**not for updating chunks, but loading the content on to it. does nothing if chunks already are loaded.
+     * should be called ONLY after working memory has updated chunks to load
+     */
+    void loadChunks(){
+        for (Chunk chunk:workingMemory.getChunks()){
+            chunk.load();
+        }
+    }
+
+    /**check if given parameter is containted by parent
+     * @return true - if given parameter is outside bounds of system
+     */
+    private boolean OutOfBounds(Rectangle rect){
+        return !parent.contains(rect);
+    }
+
+    /**check if given parameter is containted by parent
+     * @return true - if given parameter is outside bounds of system
+     */
+    private boolean OutOfBounds(Point p){
+        return !parent.contains(p);
+    }
+
+    private void expand(Point p) throws OutOfChunkBounds{
+
+        Rectangle southEast = new Rectangle(parent.x,parent.y,parent.width*2,parent.height*2);
+        Rectangle southWest = new Rectangle(parent.x-parent.width,parent.y,parent.width*2,parent.height*2);
+
+        Rectangle NorthEast = new Rectangle(parent.x,parent.y-parent.height,parent.width*2,parent.height*2);
+        Rectangle NorthWest = new Rectangle(parent.x-parent.width,parent.y-parent.height,parent.width*2,parent.height*2);
+
+        if (southEast.contains(p)){
+            expandTree(southEast);
+        }
+        else if (southWest.contains(p)){
+            expandTree(southEast);
+        }
+        else if (NorthEast.contains(p)){
+            expandTree(southEast);
+        }
+        else if (NorthWest.contains(p)){
+            expandTree(southEast);
+        }
+        else{
+            throw new OutOfChunkBounds("unable to create new chunks with the right constraints");
+        }
+    }
+
+    private void expand(Rectangle rect) throws OutOfChunkBounds{
+
+        Rectangle southEast = new Rectangle(parent.x,parent.y,parent.width*2,parent.height*2);
+        Rectangle southWest = new Rectangle(parent.x-parent.width,parent.y,parent.width*2,parent.height*2);
+
+        Rectangle NorthEast = new Rectangle(parent.x,parent.y-parent.height,parent.width*2,parent.height*2);
+        Rectangle NorthWest = new Rectangle(parent.x-parent.width,parent.y-parent.height,parent.width*2,parent.height*2);
+
+        if (southEast.contains(rect)){
+            expandTree(southEast);                                                                       
+        }
+
+        else if (southWest.contains(rect)){
+            expandTree(southWest);
+        }
+
+        else if (NorthEast.contains(rect)){
+            expandTree(NorthEast);
+        }
+
+        else if (NorthWest.contains(rect)){
+            expandTree(NorthWest);
+        }
+
+        else{
+            System.out.println(rect +" is not contained by any parent nodes");
+            System.out.println(southEast);
+            System.out.println(southWest);
+            System.out.println(NorthEast);
+            System.out.println(NorthWest);
+            throw new OutOfChunkBounds("unable to create new chunks with the right constraints");
+        }
+    }
+
+
+    /** creates another parent, puts old parent in old parent as a child.
+     * have check, does work*/ 
+    private void expandTree(Rectangle newBounds){
+        parent = new TreeNode(this,newBounds.x,newBounds.y,newBounds.width,newBounds.height,parent);
+        
+    }
+
+    /**returns first (should only be one) tile at specified pos 
+     * . if it cant find Tile, null is returned.
+    */
+
+    public Tile getTile(Point p) {
+        ArrayList<BaseEntity> entitiesInPoint = new ArrayList<BaseEntity>();
+        for (BaseEntity entity: parent.getEntitiesInPoint(p,entitiesInPoint)){
+            if (entity instanceof Tile){
+                return (Tile)entity;
+            }
+        }
+        return null;
     }
 }

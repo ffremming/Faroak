@@ -1,5 +1,6 @@
 package ressurser.chunkSystem;
 
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 
@@ -9,19 +10,20 @@ import ressurser.baseEntity.tile.Tile;
 
 public class Chunk extends TreeNode{
     static int amount = 0;
-    Tile [][] tileMap;  //still not a valid option
+   
     ArrayList<BaseEntity> entities = new ArrayList<>();
 
     // is the chunk loaded. When the game is started the chunk will not be loaded. When chunk is rendered/loaded, boolean value is set true. 
     // this boolean needs to be stored in harddrive. If already loaded, do not need procedural generation of entites, because these is already loaded.
     boolean generated = false;
+    boolean loaded = false;
 
     //i want all chunks to always forget the tile contents, but always remember entities(not tiles)
 
-    public Chunk(ChunkSystem chunkS,int startXValue, int startYValue, int width, int height) {
-        super(chunkS,startXValue, startYValue, width, height);
+    public Chunk(ChunkSystem chunkS,int x, int y, int width, int height) {
+        super(chunkS,x, y, width, height);
         
-        tileMap = new Tile [CHUNKSIZE][CHUNKSIZE];
+       
         //tileMap = new Tile [height][width];
     }
 
@@ -29,25 +31,12 @@ public class Chunk extends TreeNode{
     protected void addChildren(){
         //nothing
         amount ++;
-        
-        
     }
 
-    public void addTile(Tile tile,int row,int col){
-        tileMap[col] [row] = tile;
-    }
+    
 
     public ArrayList<BaseEntity> getEntities(){
         return entities;
-    }
-
-
-    public Tile [][] getTiles(){
-        return tileMap;
-    }
-
-    public Tile getTile(int worldX,int worldY){
-        return tileMap[worldY/chunkS.panel.tileSize] [worldX/chunkS.panel.tileSize];
     }
 
 
@@ -62,6 +51,22 @@ public class Chunk extends TreeNode{
         return entitiesInBound;
     }
 
+    public ArrayList<BaseEntity> getEntitiesInBound(Point p){
+        ArrayList<BaseEntity> entitiesInBound = new ArrayList<>();
+
+        for (BaseEntity baseEntity : entitiesInBound){
+            if (baseEntity.getHitBox().contains(p)){
+                entitiesInBound.add(baseEntity);
+            }
+        }
+        return entitiesInBound;
+    }
+
+    
+
+    /**
+     * returns a list of all entities in the bound
+     */
     public ArrayList<BaseEntity> getEntitiesInBound (Rectangle rect,ArrayList<BaseEntity> arrayList){
         for (BaseEntity entity:entities){
             if (rect.contains(entity.getHitBox()) || rect.intersects(entity.getHitBox())){
@@ -84,21 +89,19 @@ public class Chunk extends TreeNode{
         
     }
     /*
-     * great writing here. adds entities based on the instance.
+     * adds entities to entity pile
      */
     @Override
     public void addEntity(BaseEntity entity){
-
-        if (entity instanceof Tile && false){   //TODO not supposed to be like this, problem with the incex allocation system.
-            addTile((Tile) entity,entity.getRow()-startXValue/chunkS.panel.tileSize ,entity.getCol()-startXValue/chunkS.panel.tileSize);
-        } else {
-            entities.add(entity);
-        }
+        entities.add(entity);
+        
     }
 
+    /**
+     * removes given entity
+     */
     @Override
     public boolean removeEntity (BaseEntity entity) {
-        System.out.println("removing entity");
         return entities.remove(entity);
     }
     
@@ -110,15 +113,66 @@ public class Chunk extends TreeNode{
         return entities;
     }   
 
+    /**
+     * returns first Tile that hitbox contains point.
+     * 
+     */
+    protected BaseEntity getTile(int worldX,int worldY){
+        Point point = new Point(worldX,worldY);
+
+        for (BaseEntity entity:getEntities()){
+            if (entity instanceof Tile){
+                if (entity.getHitBox().contains( point)){
+                return entity;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * get first entity that is not tile. entity must contain point
+     */
+    protected BaseEntity getEntity(int worldX,int worldY){
+        Point point = new Point(worldX,worldY);
+
+        for (BaseEntity entity:getEntities()){
+            if (!(entity instanceof Tile)){
+                if (entity.getHitBox().contains( point)){
+                return entity;
+                }
+            }
+        }
+        return null;
+    }
+
+    public ArrayList<BaseEntity> getEntitiesInPoint(Point point, ArrayList<BaseEntity> entities){
+        for (BaseEntity entity:entities){
+            if (entity.getHitBox().contains(point)){
+                entities.add(entity);
+            }
+        }
+        return entities;
+    }
+
+    
+
+    private ArrayList<BaseEntity> getNeighbors(BaseEntity entity){
+        //TODO NOW
+        return null;
+    }
+
+
+
     public void writeInfo(){
-        System.out.println("entities:"+ entities.size() +"coords: x:"+startXValue+"y:"+startYValue+"\n" );
+        System.out.println("entities:"+ entities.size() +"coords: x:"+x+"y:"+y+"\n" );
         System.out.println(getBounds());
         for (BaseEntity entity :entities){
-            System.out.println("navn: "+entity.getName());
+            System.out.print("navn: "+entity.getName() +",");
             
         }
 
-        System.out.println("");
+        System.out.println("\n\n");
     }
 
     /**
@@ -131,10 +185,12 @@ public class Chunk extends TreeNode{
        generateTiles();
        generateEntities();
        generated = true;
+
     }
     /*generate tiles, should be used every time a chunk is loaded */
     private void generateTiles(){
-        addEntitiesToChunk(startXValue,startYValue,width);
+        addEntitiesToChunk();
+        //connectEntities();
     }
     /**generates entities, should only be ran first time in the chunks */
     private void generateEntities(){
@@ -150,18 +206,30 @@ public class Chunk extends TreeNode{
 
     /**
      * adds tiles, and load entities from file
+     * only does this if this is not loaded.
      */
-    void load(){
-        if (generated){
+    public void load(){
+
+        if (!loaded){
+
+            if (generated){
             generateTiles();
             loadEntitiesFromFile();
+            }
+            else{
+                initialLoad();
+            }
+
         }
-        else{
-            initialLoad();
-        }
+        loaded = true;
+
+        connectTiles();
+
+        
         
     }
 
+    /**should not be here.....!! //TODO */
     private Tile getSingelTile(int worldX,int worldY){
         
         //loader algorithm..
@@ -172,15 +240,29 @@ public class Chunk extends TreeNode{
         
     }
 
-    private void addEntitiesToChunk(int startX,int startY, int width){
+    private void addEntitiesToChunk(){
        
-        for (int x = 0;x<width;x+= chunkS.panel.tileSize){
-            for (int y = 0;y<width;y+=chunkS.panel.tileSize){
+        for (int x2 = 0;x2<width;x2+= chunkS.panel.tileSize){
+            for (int y2 = 0;y2<width;y2+=chunkS.panel.tileSize){
                 
-                addEntity(getSingelTile(startX+x,startY+y));
+                addEntity(getSingelTile(x+x2,y+y2));
             }
         }
     }
+
+    private void connectTiles(){
+       
+        for (BaseEntity baseEntity:entities){
+            if (baseEntity instanceof Tile){
+                ((Tile)baseEntity).setNeighBors();
+            }
+        }
+                
+                getEntity(x,y);
+            
+        
+    }
+    
 
     
 }

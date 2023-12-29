@@ -2,6 +2,7 @@ package ressurser.baseEntity;
 
 
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
 
 import ressurser.entity.spiller.Spiller;
@@ -12,9 +13,9 @@ public class HitBox extends Rectangle{
 
     //has height and width
     
-    BaseEntity baseEntity;
-    int worldX,worldY;
-    int relativeXValue,relativeYValue;
+    BaseEntity baseEntity = null;
+   
+    int relativeXValue,relativeYValue = 0;
 
     //hitbox could be based of not an x and y value, but the ditance from the entityies x and y.
 
@@ -30,6 +31,7 @@ public class HitBox extends Rectangle{
 
     /**
      * based on a connected entity.
+     * does not want this solution, try to phase out.
      */
     public HitBox(BaseEntity baseEntity,int hitBoxWidth,int hitBoxHeight,int relativeXPlusValue,int relativeYPlusValue){
         //make rectangle
@@ -44,20 +46,15 @@ public class HitBox extends Rectangle{
 
     // not done.... 
     public HitBox(BaseEntity entity){
-        
         super(entity.worldX,entity.worldY,entity.width,entity.height);
     }
-
-
 
     /**
      * based on a hitbox without a connected entity.
      */
-    public HitBox(int hitBoxWidth,int hitBoxHeight,int worldX,int worldY){
-        //make rectangle
-        super(worldX,worldY,hitBoxWidth,hitBoxHeight);
+    public HitBox(int worldX,int worldY,int width, int height){
+        super(worldX,worldY,width,height);
     }
-
 
 
     /**
@@ -72,9 +69,15 @@ public class HitBox extends Rectangle{
 
 
     public boolean collision(HitBox hitbox){
+        
+        updateCoords();
+
+        return contains( hitbox)||intersects(hitbox);
+    }
+
+    private void updateCoords(){
         x = getWorldX();
         y = getWorldY();
-        return contains( hitbox)||intersects(hitbox);
     }
 
     
@@ -85,20 +88,21 @@ public class HitBox extends Rectangle{
         y+= yMove;
     }
 
+     /**updates the x coords in case they are wrong */
     public int getWorldX(){
         if (baseEntity!= null){
             return baseEntity.worldX+relativeXValue;
         } else {
-            return worldX;
+            return x;
         }
         
     }
-
+    /**updates the y coords in case they are wrong */
     public int getWorldY(){
         if (baseEntity!= null){
             return baseEntity.worldY+relativeYValue;
         } else {
-            return worldY;
+            return y;
         }
     }
 
@@ -110,9 +114,11 @@ public class HitBox extends Rectangle{
     }
 
     public void draw(Graphics2D g2 ,Spiller player){
-        
-
         g2.drawRect(getWorldX()-(player.worldX)+player.screenX,getWorldY()-(player.worldY)+player.screenY,width,height);
      
+    }
+
+    public Point getCenter(){
+        return new Point(x-width/2,y+height/2);
     }
 }

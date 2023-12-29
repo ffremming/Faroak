@@ -34,13 +34,16 @@ public class ImageContainer {
     private void setupBaseImages(){
         try {
 
-            BufferedImage grass = ImageIO.read(new File("../images/grass.png"));
-            BufferedImage mud = ImageIO.read(new File("../images/mud.png"));
-            BufferedImage moss = ImageIO.read(new File("../images/moss.png"));
-            BufferedImage sand = ImageIO.read(new File("../images/sand.png"));
-            BufferedImage water = ImageIO.read(new File("../images/ocean.png"));
-            BufferedImage dark_grass = ImageIO.read(new File("../images/dark_grass.png"));
-            BufferedImage savanna = ImageIO.read(new File("../images/savanna.png"));
+            
+
+
+            BufferedImage grass = ImageIO.read(new File("ressurser/images/plains.png"));
+            BufferedImage mud = ImageIO.read(new File("ressurser/images/mud.png"));
+            BufferedImage moss = ImageIO.read(new File("ressurser/images/moss.png"));
+            BufferedImage sand = ImageIO.read(new File("ressurser/images/sand.png"));
+            BufferedImage water = ImageIO.read(new File("ressurser/images/ocean.png"));
+            BufferedImage dark_grass = ImageIO.read(new File("ressurser/images/dark_grass.png"));
+            BufferedImage savanna = ImageIO.read(new File("ressurser/images/savanna.png"));
 
 
             images.put("plains",grass);
@@ -57,7 +60,7 @@ public class ImageContainer {
             images.put("rain forest",savanna);
 
             
-
+            System.out.println(images.get("plains"));
 
     
 

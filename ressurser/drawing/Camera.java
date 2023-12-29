@@ -18,6 +18,7 @@ import ressurser.main.GamePanel;
 public class Camera extends primitiveEntity{
 
     private BaseEntity followed;
+    public int frameRate = 1;
 
     public Camera(GamePanel panel, String name, int worldX, int worldY, short width, short height) {
         super(panel, name, worldX, worldY, (short) panel.screenWidth,(short)(panel.screenHeight));
@@ -29,8 +30,8 @@ public class Camera extends primitiveEntity{
         super(panel,name);
         //follow(panel.spiller);
         
-        worldX = -200;
-        worldY = -60;
+        worldX =-16380;
+        worldY =-16384;
         width = (short)panel.screenWidth;
         height = (short)panel.screenHeight;
         hitBox = new HitBox(this);
@@ -49,24 +50,23 @@ public class Camera extends primitiveEntity{
     }
 
     public void draw(Graphics g){
+        
         Graphics2D g2 = (Graphics2D)g;
         g2.setFont(new Font("Arial", Font.PLAIN, 7));
         center(followed);
+        panel.chunkSystem.workingMemory.update(hitBox.getCenter());
+        
+        
        
+        ArrayList<BaseEntity> withinCam = panel.chunkSystem.workingMemory.getvisibleEntities();
         
-        //dont need to update all that often. - this could be updated in chunkSystem
-        
-        
-        //System.out.println(panel.chunkSystem.getEntitiesInBound(this.getHitBox()));
-        ArrayList<BaseEntity> list = panel.chunkSystem.getAllEntitiesInRenderDistance(this);
-        ArrayList<BaseEntity> allEntities  =panel.chunkSystem.getAllEntities();
-        ArrayList<BaseEntity> withinCam = panel.chunkSystem.getEntitiesInBound(this.hitBox);
-        
+       //panel.chunkSystem.workingMemory.writeInfo();
         //this only works if chunkysstem updates entites frequently
         for (BaseEntity baseE :withinCam){
             drawRelative(g2,baseE);
             drawHitBox(g2,baseE);
             drawCoords(g2,baseE);
+            
             
             
         }
@@ -75,9 +75,8 @@ public class Camera extends primitiveEntity{
     }
 
     public void drawRelative(Graphics2D g2,BaseEntity entity){
-
-        //int x = entity.getWorldX()-width/2;
-        //int y = entity.getWorldY()+height/2;
+        //TODO write functions in baseEntity and hitbox that makes it so you dont need to "draw relative" - could do it inside those functions.
+       
 
         int x = entity.getWorldX()-worldX;
         int y = entity.getWorldY()-worldY;
@@ -96,7 +95,7 @@ public class Camera extends primitiveEntity{
             int x = chunk.getWorldX()-worldX;
             int y = chunk.getWorldY()-worldY;
             g2.setColor(Color.white);
-            g2.drawRect(x,y,chunk.getWidth(),chunk.getHeight());     //can remove width and height.
+            g2.drawRect(x,y,(int)chunk.getWidth(),(int)chunk.getHeight());     //can remove width and height.
         }
     }
 
