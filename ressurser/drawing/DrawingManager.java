@@ -5,7 +5,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
-import ressurser.baseEntity.Sprite;
+import ressurser.baseEntity.sprite.Sprite;
 import ressurser.main.GamePanel;
 import ressurser.main.UI;
 

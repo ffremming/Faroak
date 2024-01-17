@@ -52,7 +52,7 @@ public class TreeNode extends HitBox{
 
 
     protected void addChildren(){
-        
+
         if (width == CHUNKSIZE*chunkS.panel.tileSize){      //to create chunks at bottom lvl
             children[0] = (new Chunk(chunkS,x,y,width/2,height/2));
             children[1] = (new Chunk(chunkS,x+width/2,y,width/2,height/2));
@@ -128,6 +128,7 @@ public class TreeNode extends HitBox{
     public ArrayList<BaseEntity> getEntitiesInPoint (Point point,ArrayList<BaseEntity> arrayList){
         for(int i=0; i<children.length; i++) {
             if (children[i].contains(point)){
+                
                 children[i].getEntitiesInPoint(point,arrayList);
             }
         }

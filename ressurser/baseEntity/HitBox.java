@@ -75,7 +75,7 @@ public class HitBox extends Rectangle{
         return contains( hitbox)||intersects(hitbox);
     }
 
-    private void updateCoords(){
+    void updateCoords(){
         x = getWorldX();
         y = getWorldY();
     }
@@ -119,6 +119,6 @@ public class HitBox extends Rectangle{
     }
 
     public Point getCenter(){
-        return new Point(x-width/2,y+height/2);
+        return new Point((x+width/2),(y+height/2));
     }
 }

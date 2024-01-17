@@ -5,13 +5,14 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.awt.BasicStroke;
 
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.HitBox;
-import ressurser.baseEntity.Sprite;
 import ressurser.baseEntity.primitiveEntity;
+import ressurser.baseEntity.sprite.Sprite;
 import ressurser.chunkSystem.Chunk;
 import ressurser.main.GamePanel;
 
@@ -24,18 +25,18 @@ public class Camera extends primitiveEntity{
         super(panel, name, worldX, worldY, (short) panel.screenWidth,(short)(panel.screenHeight));
         //TODO Auto-generated constructor stub
         //follow(panel.spiller);
+        centerAtPosition(new Point(0,0));
        
     }
     public Camera(GamePanel panel,String name){
         super(panel,name);
         //follow(panel.spiller);
         
-        worldX =-16380;
-        worldY =-16384;
+        worldX = -50;
+        worldY = -50;
         width = (short)panel.screenWidth;
         height = (short)panel.screenHeight;
         hitBox = new HitBox(this);
-        
     }
 
 
@@ -50,11 +51,12 @@ public class Camera extends primitiveEntity{
     }
 
     public void draw(Graphics g){
-        
+        panel.chunkSystem.workingMemory.update(hitBox.getCenter());
+        System.out.println(panel.chunkSystem.getTile(new Point(10,10)).north);
         Graphics2D g2 = (Graphics2D)g;
         g2.setFont(new Font("Arial", Font.PLAIN, 7));
-        center(followed);
-        panel.chunkSystem.workingMemory.update(hitBox.getCenter());
+        
+        
         
         
        
@@ -88,10 +90,10 @@ public class Camera extends primitiveEntity{
         
     }
     private void drawChunks(Graphics2D g2){
-        float lineWidth = 1.5f;
+        float lineWidth = 2;
         BasicStroke stroke = new BasicStroke(lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
         g2.setStroke(stroke);
-        for (Chunk chunk:panel.chunkSystem.getAllChunksInRenderDistance(this)){
+        for (Chunk chunk:panel.chunkSystem.workingMemory.getChunks()){
             int x = chunk.getWorldX()-worldX;
             int y = chunk.getWorldY()-worldY;
             g2.setColor(Color.white);

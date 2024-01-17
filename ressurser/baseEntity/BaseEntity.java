@@ -1,8 +1,12 @@
 package ressurser.baseEntity;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 
+import ressurser.baseEntity.sprite.Sprite;
+import ressurser.drawing.Camera;
 import ressurser.main.GamePanel;
 
 public class BaseEntity {
@@ -16,6 +20,7 @@ public class BaseEntity {
 
     byte TILE = 0;protected byte SUPEROBJECT = 1;byte ENTITY = 2;
 
+    Sprite sprite;
 
     public int worldX;
 
@@ -160,5 +165,30 @@ public class BaseEntity {
     }
     public short getHeight() {
         return width;
+    }
+    /**positions wiht the center of object at point */
+    public void centerAtPosition(Point p){
+        worldX = p.x-width/2;
+        worldY = p.y-height/2;
+        hitBox.updateCoords();
+    }
+    /**position with the absolute values at given point */
+    public void position(Point p){
+        worldX = p.x;
+        worldY = p.y;
+        hitBox.updateCoords();
+    }   
+
+    public void draw(Camera camera,Graphics2D g2){
+        
+        int x = getWorldX()-camera.worldX;
+        int y = getWorldY()-camera.worldY;
+
+        g2.setColor(Color.WHITE);
+       
+        g2.drawImage(sprite.getImage(),x,y,64,64,null);
+        g2.drawString(getName(),x,y+15);
+
+        //UNCOMPLETED. NEEDS A BETTER METHOD FOR DRAWING USING THE SPRITE SHIT
     }
 }

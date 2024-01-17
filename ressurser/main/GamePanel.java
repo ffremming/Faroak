@@ -41,8 +41,8 @@ public class GamePanel extends JPanel implements Runnable{
     public boolean gameOption = false;
     public boolean arrowYes = false;
     
-    public final int screenHeight = tileSize/2 *18;
-    public final int screenWidth = tileSize/2 *26;
+    public final int screenHeight = tileSize *10;
+    public final int screenWidth = tileSize *18;
     
 
     int aktivStreng = 1;
@@ -140,7 +140,7 @@ public class GamePanel extends JPanel implements Runnable{
     private void generateMap(){
         imageContainer = new ImageContainer();
         chunkSystem = new ChunkSystem(this);
-        spriteLoader = new SpriteLoader(this);
+        
         mapH = new MapHandler(this);
         spiller = new Spiller(this,textString, 2000,500,(short) 40,(short) 128,(short) 48,(short) 48, (short)8,(short)( 128-48));
         terrainGen = new TerrainGenSimplex(mapH.mapWidth,mapH.mapHeight,true);
@@ -150,7 +150,7 @@ public class GamePanel extends JPanel implements Runnable{
     }
    
     private void setUpObjects(){
-        camera = new Camera(this,"camera");
+        camera = new Camera(this,"camera",0,0,(short)screenWidth,(short)screenHeight);
         //dungeonM = new DungeonManager(this);
         //interactionPlay = new PlayInteractionManager(this);
 

@@ -5,8 +5,8 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 
 import ressurser.baseEntity.BaseEntity;
-import ressurser.baseEntity.Sprite;
 import ressurser.baseEntity.gameObjects.GameObject;
+import ressurser.baseEntity.sprite.Sprite;
 import ressurser.main.GamePanel;
 
 public class Tile extends BaseEntity{
@@ -19,14 +19,14 @@ public class Tile extends BaseEntity{
 
 
     Tile [] neigbors = new Tile [4];
-    Tile north;
+    public Tile north;
     Tile south;
     Tile east;
     Tile west;
 
     int zone;
 
-    Sprite sprite;
+    public Sprite sprite;
 
     //midlertidig
     public BufferedImage image;
@@ -89,6 +89,10 @@ public class Tile extends BaseEntity{
         addSouthNeighBor(getTile(SOUTH));
         addWestNeighBor(getTile(WEST));
         addEastNeighBor(getTile(EAST));
+    }
+    public Tile[] getNeighbors(){
+        Tile[] neighbors ={north,east,south,west};
+        return neighbors;
     }
 
 

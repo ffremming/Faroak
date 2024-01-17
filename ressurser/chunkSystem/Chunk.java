@@ -117,8 +117,7 @@ public class Chunk extends TreeNode{
      * returns first Tile that hitbox contains point.
      * 
      */
-    protected BaseEntity getTile(int worldX,int worldY){
-        Point point = new Point(worldX,worldY);
+    protected BaseEntity getTile(Point point){
 
         for (BaseEntity entity:getEntities()){
             if (entity instanceof Tile){
@@ -129,12 +128,10 @@ public class Chunk extends TreeNode{
         }
         return null;
     }
-
     /**
      * get first entity that is not tile. entity must contain point
      */
-    protected BaseEntity getEntity(int worldX,int worldY){
-        Point point = new Point(worldX,worldY);
+    protected BaseEntity getEntity(Point point){
 
         for (BaseEntity entity:getEntities()){
             if (!(entity instanceof Tile)){
@@ -145,14 +142,17 @@ public class Chunk extends TreeNode{
         }
         return null;
     }
-
-    public ArrayList<BaseEntity> getEntitiesInPoint(Point point, ArrayList<BaseEntity> entities){
-        for (BaseEntity entity:entities){
+    /**adds entities that contains point in list */
+    public ArrayList<BaseEntity> getEntitiesInPoint(Point point, ArrayList<BaseEntity> entitiesList){
+        
+        for (BaseEntity entity:getEntities()){
+            
             if (entity.getHitBox().contains(point)){
-                entities.add(entity);
+               
+                entitiesList.add(entity);
             }
         }
-        return entities;
+        return entitiesList;
     }
 
     
@@ -211,7 +211,7 @@ public class Chunk extends TreeNode{
     public void load(){
 
         if (!loaded){
-
+            
             if (generated){
             generateTiles();
             loadEntitiesFromFile();
@@ -258,7 +258,7 @@ public class Chunk extends TreeNode{
             }
         }
                 
-                getEntity(x,y);
+                
             
         
     }

@@ -128,6 +128,20 @@ public class WorkingMemory {
         return visible;
     }
 
+    public Tile getTile(Point p){
+        //try to get tile from active memory
+        //can figure out how to do this faster, can separate tiles and other entities..
+        for (BaseEntity ent:getBaseEntities()){
+            if (ent instanceof Tile){
+                if (ent.getHitBox().contains(p)){
+                    //return (Tile)ent;
+                }
+            }
+        }
+        //try to get tile from chunkSystem
+        return chunkSystem.getTile(p);
+    }
+
 
 
 }

@@ -3,7 +3,7 @@ package ressurser.baseEntity.tile;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import ressurser.baseEntity.Sprite;
+import ressurser.baseEntity.sprite.Sprite;
 import ressurser.main.GamePanel;
 
 public class TileFactory {

@@ -43,7 +43,7 @@ public class ChunkSystem {
         
         proceduralGen = new ProceduralGeneration();
         //this should be lower. but not sure yet.
-        renderDistance = 32*panel.tileSize;
+        renderDistance = 12*panel.tileSize;
         this.workingMemory = new WorkingMemory(this);
         //TODO 
         
@@ -51,7 +51,7 @@ public class ChunkSystem {
 
         parent = new TreeNode(this,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,(int)Math.pow(2,SIZEPOW)*panel.tileSize,(int)Math.pow(2,SIZEPOW)*panel.tileSize);
         //parent.getChildren()[0].paintMap();
-        setUpTest();
+        //setUpTest();
     }
 
     private void setUpTest(){

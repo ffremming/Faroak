@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
+import ressurser.baseEntity.sprite.TileSprite;
 import ressurser.chunkSystem.terrainGeneration.Biome;
 
 public class ImageContainer {
@@ -17,14 +18,13 @@ public class ImageContainer {
         setupBaseImages();
     }
 
-    public BufferedImage getImage(String name) throws Exception{
+    public BufferedImage getImage(String name){
         if (images.containsKey(name)){
             return images.get(name);
         }
         else{
-            throw new Exception("no such image");
+            return retrieveTileSpriteImage(name);
         }
-       
     }
 
     private void loadBufferedImage(String name){
@@ -33,9 +33,6 @@ public class ImageContainer {
 
     private void setupBaseImages(){
         try {
-
-            
-
 
             BufferedImage grass = ImageIO.read(new File("ressurser/images/plains.png"));
             BufferedImage mud = ImageIO.read(new File("ressurser/images/mud.png"));
@@ -70,7 +67,80 @@ public class ImageContainer {
             e.printStackTrace();
 
         }
+    }
+
+    /**takes inn the name of file : 
+     * for tile - background // background + B + (0-3) // background + C + (0-3)
+     */
+    private BufferedImage retrieveTileSpriteImage(String name){
+        BufferedImage image = null;
+        try {
+
+            image = ImageIO.read(new File("ressurser/images/"+name+".png"));
+            
+
+        }catch (IOException e) {
+            // TODO Auto-generated catch block
+            System.out.println("problem with load of images - "+name);
+            
+            //create the right image from file
+            try {
+                image = getRotated(getImage(removeNumberAtEnd(name)+"1"),getNumberAtEnd(name)*90-90);
+            } catch (Exception e1) {
+                // TODO Auto-generated catch block
+                System.out.println("tried to rotate image, something went wrong:");
+                e1.printStackTrace();
+            }
+        }
+
+        images.put(name,image);
+        return image;
+    }
+
+    private static String removeNumberAtEnd(String input){
+        // Use regular expression to match and remove the number at the end
+        return input.replaceAll("\\d+$", "");
+    }
+    public static int getNumberAtEnd(String input) {
+        // Check if the input string is not empty
+        if (input != null && !input.isEmpty()) {
+            // Use regular expression to find the number at the end
+            String numberString = input.replaceAll(".*[^\\d](\\d+)$", "$1");
+
+            // Convert the extracted number string to an integer
+            try {
+                return Integer.parseInt(numberString);
+            } catch (NumberFormatException e) {
+                // Handle the case where the number cannot be parsed
+                System.err.println("Error parsing the number: " + e.getMessage());
+            }
+        }
+
+        // Return a default value (e.g., 0) if no valid number is found
+        return -1;
+    }
+
+    public void setTileImages(TileSprite tileSprite) {
         
-       
+        //main background
+        tileSprite.setMain(retrieveTileSpriteImage(tileSprite.getName()));
+
+        //corners
+        tileSprite.corner0 = retrieveTileSpriteImage(tileSprite.getName() +"C" +"0");
+        tileSprite.corner0 = retrieveTileSpriteImage(tileSprite.getName() +"C" +"1");
+        tileSprite.corner0 = retrieveTileSpriteImage(tileSprite.getName() +"C" +"2");
+        tileSprite.corner0 = retrieveTileSpriteImage(tileSprite.getName() +"C" +"3");
+
+        //borders
+        tileSprite.border0 = retrieveTileSpriteImage(tileSprite.getName() +"B" +"0");
+        tileSprite.border0 = retrieveTileSpriteImage(tileSprite.getName() +"B" +"1");
+        tileSprite.border0 = retrieveTileSpriteImage(tileSprite.getName() +"B" +"2");
+        tileSprite.border0 = retrieveTileSpriteImage(tileSprite.getName() +"B" +"3");
+
+        
+    }
+
+    private BufferedImage getRotated(BufferedImage image,int angle){
+        return ImageResources.rotateImage(image,angle);
     }
 }

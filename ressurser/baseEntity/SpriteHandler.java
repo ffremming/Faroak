@@ -2,6 +2,8 @@ package ressurser.baseEntity;
 
 import java.util.ArrayList;
 
+import ressurser.baseEntity.sprite.Sprite;
+
 public abstract class SpriteHandler {
     
     protected BaseEntity baseEntity;

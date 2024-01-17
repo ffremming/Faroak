@@ -9,7 +9,7 @@ import java.util.HashMap;
 import javax.imageio.ImageIO;
 
 import ressurser.baseEntity.BaseEntity;
-import ressurser.baseEntity.Sprite;
+import ressurser.baseEntity.sprite.Sprite;
 import ressurser.main.GamePanel;
 
 public class SpriteLoader {
