@@ -1,6 +1,6 @@
 package ressurser.main;
 
-import ressurser.Tiles.TileManager;
+import ressurser.baseEntity.tile.TileManager;
 import ressurser.chunkSystem.ChunkSystem;
 
 import ressurser.drawing.Camera;
@@ -146,24 +146,25 @@ public class GamePanel extends JPanel implements Runnable{
         terrainGen = new TerrainGenSimplex(mapH.mapWidth,mapH.mapHeight,true);
         //imageP = new ImagePainter();
         //objM = new ObjectManager(this,newGame);
-        //tileM = new TileManager(this,newGame);
+        tileM = new TileManager(this);
+        chunkSystem.workingMemory.initial();
     }
    
     private void setUpObjects(){
         camera = new Camera(this,"camera",0,0,(short)screenWidth,(short)screenHeight);
         //dungeonM = new DungeonManager(this);
-        //interactionPlay = new PlayInteractionManager(this);
+        interactionPlay = new PlayInteractionManager(this);
 
-        input = new KeyHandler(this);
-        //Smouse = new MouseHandler(this);
-        //menu = new Meny(this);
+        //input = new KeyHandler(this);
+        //mouse = new MouseHandler(this);
+        menu = new Meny(this);
         //collisionC = new CollisionChecker(this);
         //entityH = new EntityHandler(this);
         //light = new Lightning(this);
         enviromentM = new EnviromentManager(this);
         //itemB = new ItemBar(this);
         drawingM = new DrawingManager(this);
-        //menuStateUI = new MenuState(this);
+        menuStateUI = new MenuState(this);
     }
 
 
@@ -185,9 +186,9 @@ public class GamePanel extends JPanel implements Runnable{
 
     public void update(){
         
-
+        enviromentM.updateTicks();
         if (gameState == PLAYSTATE ){
-            playUpdate();
+            //playUpdate();
 
         } else if (gameState == MENUSTATE){
             //ingenting hittil
@@ -234,6 +235,7 @@ public class GamePanel extends JPanel implements Runnable{
             animatedSpriteCounter = 0;
             aniTeller ++;
             aniTeller = aniTeller % 2;
+            
         }
     }
 

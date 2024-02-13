@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
 import ressurser.baseEntity.sprite.Sprite;
 import ressurser.drawing.Camera;
@@ -83,7 +84,6 @@ public class BaseEntity {
         BufferedImage image = null;
         
         try {
-          
 
             image = panel.imageContainer.getImage(name);
         } catch (Exception e) {
@@ -190,5 +190,14 @@ public class BaseEntity {
         g2.drawString(getName(),x,y+15);
 
         //UNCOMPLETED. NEEDS A BETTER METHOD FOR DRAWING USING THE SPRITE SHIT
+    }
+    public ArrayList<BufferedImage> getImages() {
+        ArrayList<BufferedImage> arr = new ArrayList<>();
+        arr.add(getImage());
+       return arr;
+    }
+
+    public void animate(int value){
+        
     }
 }

@@ -3,6 +3,7 @@ package ressurser.baseEntity.tile;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.gameObjects.GameObject;
@@ -30,21 +31,170 @@ public class Tile extends BaseEntity{
 
     //midlertidig
     public BufferedImage image;
+    ArrayList<BufferedImage> images = new ArrayList<>();
+
+    int altitude;
 
 
 
-    public Tile(GamePanel panel,String name, int worldX, int worldY) {
+    public Tile(GamePanel panel,String name, int worldX, int worldY,int altitude) {
         super(panel, name, worldX, worldY, (short)panel.tileSize,(short)panel.tileSize, (short)panel.tileSize, (short)panel.tileSize, (short)0, (short)0);
         
-        
-        //TODO Auto-generated String name,constructor stub
-
-        //generate sprites
-        //spriteHandler = new SpriteHandlerTiles(this);
-
-
+        this.altitude = altitude;
+        if (name.equals("ocean")){
+            animated = true;
+            System.out.println("aniamtion.set");
+        }
         
     }
+
+    public boolean compareTo(Tile tile2){
+        return this.getName() == tile2.getName();
+    }
+
+    @Override
+    public void animate(int value){
+        setAnimatedImages(value);
+        
+    }
+
+    /**value can be set between 0 and 2 */
+    private BufferedImage getAnimatedImage(int value){
+        
+        BufferedImage image = null;
+        image = panel.imageContainer.getImage(getName()+value);
+        if (image == null){
+            System.out.println("animation of "+getName()+" went wrong - value:"+value);
+            // TODO Auto-generated catch block
+            image = panel.imageContainer.getImage(getName());
+        }
+            
+        
+        return image;
+    }
+    /**sets the main(backgroudn tile image to another version. ) */
+    private void setAnimatedImage(int value){
+        try{
+            images.set(0,getAnimatedImage(value));
+        } catch(IndexOutOfBoundsException e){
+            images.add(getAnimatedImage(value));
+        }
+        
+    }
+
+    /**sets all images based on animation cycle  */
+    private void setAnimatedImages(int value){
+
+            //checks if possible first
+
+
+
+            images.clear();
+            setAnimatedImage(value);
+            boolean[] borders = {false,false,false,false};
+            for (int i = 0;i<4;i++){
+                Tile neightbor = getNeighbors()[i];
+                if (neightbor != null){
+                    if (neightbor.isHigherthan(this)){
+    
+                        //unsure if this will work.
+                        if (value == 0){
+                            images.add(panel.imageContainer.getImage(neightbor.getName()+"B"+i));
+                        }else{
+                            images.add(panel.imageContainer.getImage(neightbor.getName()+value+"B"+i));
+                        }
+                       
+                        
+                        borders[i] = true;
+                        //images.add(panel.imageContainer.getImage(neightbor.getName()+"C"+i));
+                    }
+                    
+                }
+    
+            }
+            if (value == 0){if ((borders[0] && borders[1] ) &&(getNeighbors()[0].getName() == getNeighbors()[1].getName() )){
+                images.add(panel.imageContainer.getImage(getNeighbors()[0].getName()+"C"+1));
+            }if ((borders[1] && borders[2] ) &&(getNeighbors()[1].getName() == getNeighbors()[2].getName() )){
+                images.add(panel.imageContainer.getImage(getNeighbors()[1].getName()+"C"+2));
+            }if ((borders[2] && borders[3] ) &&(getNeighbors()[2].getName() == getNeighbors()[3].getName() )){
+                images.add(panel.imageContainer.getImage(getNeighbors()[2].getName()+"C"+3));
+            }if ((borders[3] && borders[0] ) &&(getNeighbors()[3].getName() == getNeighbors()[0].getName() )){
+                images.add(panel.imageContainer.getImage(getNeighbors()[3].getName()+"C"+4));
+            }
+
+            }else{
+                if ((borders[0] && borders[1] ) &&(getNeighbors()[0].getName() == getNeighbors()[1].getName() )){
+                    images.add(panel.imageContainer.getImage(getNeighbors()[0].getName()+value+"C"+1));
+                }
+        
+                if ((borders[1] && borders[2] ) &&(getNeighbors()[1].getName() == getNeighbors()[2].getName() )){
+                    images.add(panel.imageContainer.getImage(getNeighbors()[1].getName()+value+"C"+2));
+                }
+        
+                if ((borders[2] && borders[3] ) &&(getNeighbors()[2].getName() == getNeighbors()[3].getName() )){
+                    images.add(panel.imageContainer.getImage(getNeighbors()[2].getName()+value+"C"+3));
+                }
+        
+                if ((borders[3] && borders[0] ) &&(getNeighbors()[3].getName() == getNeighbors()[0].getName() )){
+                    images.add(panel.imageContainer.getImage(getNeighbors()[3].getName()+value+"C"+4));
+                }
+            }
+           
+    }
+
+    private void setImages(){
+        images.add(getImage());
+        boolean[] borders = {false,false,false,false};
+        for (int i = 0;i<4;i++){
+            Tile neightbor = getNeighbors()[i];
+            if (neightbor != null){
+                if (neightbor.isHigherthan(this)){
+
+                    //unsure if this will work.
+                    images.add(panel.imageContainer.getImage(neightbor.getName()+"B"+i));
+                    
+                    borders[i] = true;
+                    //images.add(panel.imageContainer.getImage(neightbor.getName()+"C"+i));
+                }
+                
+            }
+
+        }
+            
+        if ((borders[0] && borders[1] ) &&(getNeighbors()[0].getName() == getNeighbors()[1].getName() )){
+            images.add(panel.imageContainer.getImage(getNeighbors()[0].getName()+"C"+1));
+        }
+
+        if ((borders[1] && borders[2] ) &&(getNeighbors()[1].getName() == getNeighbors()[2].getName() )){
+            images.add(panel.imageContainer.getImage(getNeighbors()[1].getName()+"C"+2));
+        }
+
+        if ((borders[2] && borders[3] ) &&(getNeighbors()[2].getName() == getNeighbors()[3].getName() )){
+            images.add(panel.imageContainer.getImage(getNeighbors()[2].getName()+"C"+3));
+        }
+
+        if ((borders[3] && borders[0] ) &&(getNeighbors()[3].getName() == getNeighbors()[0].getName() )){
+            images.add(panel.imageContainer.getImage(getNeighbors()[3].getName()+"C"+4));
+        }
+
+        
+    
+
+    }
+
+    /**returns true if tile is higher than given tile */
+    private boolean isHigherthan(Tile tile) {
+        return panel.tileM.isHigher(tile,this);
+    }
+
+    public ArrayList<BufferedImage> getImages(){
+        if (images.size()== 0){
+            setImages();
+        }
+        return images;
+    
+    }
+
 
     
 

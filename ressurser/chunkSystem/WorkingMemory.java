@@ -21,6 +21,19 @@ public class WorkingMemory {
 
     public WorkingMemory(ChunkSystem chunkSystem){
         this.chunkSystem = chunkSystem;
+        
+    }
+
+    /**starts the system up. connect tiles toghetet after all tiles are made. */
+    public void initial(){
+        setWorkingChunks(chunkSystem.getAllChunksInRenderDistance(new Point(0,0)));
+
+        for (Chunk chunk:getChunks()){
+            chunk.load();
+        }
+        for (Chunk chunk:getChunks()){
+            chunk.connectTiles();
+        }
     }
 
     /**
@@ -78,17 +91,40 @@ public class WorkingMemory {
         setWorkingChunks(chunkSystem.getAllChunksInRenderDistance(p));
 
         //load chunks that might not be loaded: - is dependent on the working memory chunks
-        chunkSystem.loadChunks();
+        //chunkSystem.loadChunks();
+
+        //TODO kkeps getting exceptiosn
+        for (Chunk chunk:getChunks()){
+            chunk.load();
+        }
+        for (Chunk chunk:getChunks()){
+            chunk.connectTiles();
+        }
+        
 
         //sets working entities - all entities within render distance.
         ArrayList<BaseEntity> AllEntitiesInRenderDistance = new ArrayList<>();
-        for (Chunk chunk:workingChunks){
+        ArrayList<Chunk> chunksCopy = new ArrayList<>(workingChunks);
+        for (Chunk chunk:chunksCopy){
             chunk.getEntitiesInBound(chunkSystem.getRenderRectangle(p),AllEntitiesInRenderDistance);
         }
         setWorkingEntities(AllEntitiesInRenderDistance);
         
-        //writeInfo();
         
+        //writeInfo();
+    }
+
+    /**
+     * should only be called when it is time to animate the pieces.
+     */
+    public void animate(int value){
+        for (BaseEntity visible:getvisibleEntities()){
+            if (visible.animated){
+                visible.animate(value);
+                
+                //TODO
+            }
+        }
     }
 
     //** test if objects are the same */
@@ -141,6 +177,8 @@ public class WorkingMemory {
         //try to get tile from chunkSystem
         return chunkSystem.getTile(p);
     }
+
+
 
 
 

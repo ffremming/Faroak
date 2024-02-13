@@ -13,6 +13,7 @@ public class EnviromentManager {
     int minutes = 4;
     int days = 0;
     int lightLevel;
+    int animationValue = 0;
 
     //different types of envoriement.
     public int normalEnviroment = 0;
@@ -28,14 +29,16 @@ public class EnviromentManager {
 
     public void updateTicks(){
        
-        
+      
         ms++;
         if (ms%panel.camera.frameRate == 0){
+            System.out.println("second");
             //based on camera, but should be something that is followed.
             panel.chunkSystem.workingMemory.update(panel.camera.getHitBox().getCenter());
             tick++;
-            ageAllObjects();
-            
+
+            //ageAllObjects();
+            updateAnimation();
             //panel.objM.updatePlants();
             if (tick%60 == 0){
                 minutes ++;
@@ -49,6 +52,8 @@ public class EnviromentManager {
             } 
         }
     }
+
+    
 
     public int lightLevel(){
         //if noamrl envirmoent, implement normal light rules.
@@ -112,6 +117,12 @@ public class EnviromentManager {
         activeEnviroment = normalEnviroment;
     }
 
-    
+    private void updateAnimation() {
+        animationValue ++;
+        if (animationValue == 3){
+            animationValue = 0;
+        }
+        panel.chunkSystem.workingMemory.animate(animationValue);
+    }
 
 }

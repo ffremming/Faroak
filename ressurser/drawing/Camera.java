@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.awt.BasicStroke;
 
@@ -13,13 +14,14 @@ import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.primitiveEntity;
 import ressurser.baseEntity.sprite.Sprite;
+import ressurser.baseEntity.tile.Tile;
 import ressurser.chunkSystem.Chunk;
 import ressurser.main.GamePanel;
 
 public class Camera extends primitiveEntity{
 
     private BaseEntity followed;
-    public int frameRate = 1;
+    public int frameRate = 60;
 
     public Camera(GamePanel panel, String name, int worldX, int worldY, short width, short height) {
         super(panel, name, worldX, worldY, (short) panel.screenWidth,(short)(panel.screenHeight));
@@ -52,12 +54,15 @@ public class Camera extends primitiveEntity{
 
     public void draw(Graphics g){
         panel.chunkSystem.workingMemory.update(hitBox.getCenter());
-        System.out.println(panel.chunkSystem.getTile(new Point(10,10)).north);
+        
         Graphics2D g2 = (Graphics2D)g;
         g2.setFont(new Font("Arial", Font.PLAIN, 7));
         
-        
-        
+        Tile[] tiles = panel.chunkSystem.workingMemory.getTile(new Point(12,12)).getNeighbors();
+        System.out.println("array:"+panel.chunkSystem.workingMemory.getTile(new Point(12,12)).getNeighbors()+" "+tiles[0].getName()+tiles[1].getName()+tiles[2].getName()+tiles[3].getName());
+        Tile tiles2 = panel.chunkSystem.workingMemory.getTile(new Point(-12,-12));
+        System.out.println(tiles2.getNeighbors());
+        //System.out.println("array:"+panel.chunkSystem.workingMemory.getTile(new Point(-12,-12)).getNeighbors()+" "+tiles2[0].getName()+tiles2[1].getName()+tiles2[2].getName()+tiles2[3].getName());
         
        
         ArrayList<BaseEntity> withinCam = panel.chunkSystem.workingMemory.getvisibleEntities();
@@ -86,6 +91,10 @@ public class Camera extends primitiveEntity{
         g2.setColor(Color.WHITE);
         g2.drawString(entity.getName(),x,y+15);
         g2.drawImage(entity.getImage(),x,y,64,64,null);     //can remove width and height.
+        ArrayList<BufferedImage> imagesCopy = new ArrayList<>(entity.getImages());
+        for (BufferedImage img:imagesCopy){
+            g2.drawImage(img,x,y,64,64,null);  
+        }
         
         
     }
@@ -93,7 +102,8 @@ public class Camera extends primitiveEntity{
         float lineWidth = 2;
         BasicStroke stroke = new BasicStroke(lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
         g2.setStroke(stroke);
-        for (Chunk chunk:panel.chunkSystem.workingMemory.getChunks()){
+        ArrayList<Chunk> chunkCopy = new ArrayList<>(panel.chunkSystem.workingMemory.getChunks());
+        for (Chunk chunk:chunkCopy){
             int x = chunk.getWorldX()-worldX;
             int y = chunk.getWorldY()-worldY;
             g2.setColor(Color.white);

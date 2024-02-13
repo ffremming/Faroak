@@ -1,6 +1,7 @@
 package ressurser.baseEntity.tile;
 
 import java.util.HashMap;
+import java.util.NoSuchElementException;
 
 import ressurser.baseEntity.sprite.TileSprite;
 import ressurser.main.GamePanel;
@@ -15,8 +16,42 @@ public class TileManager {
     /**helper for tiles. can keep inportant information about tiles etc... */
     public TileManager(GamePanel panel){
         this.panel = panel;
+        setup();
 
         
+    }
+    /**
+     * thows exception if the element does not have a corresponding name. 
+     */
+    private int getHeight(Tile tile){
+        
+
+
+        if (tileHeight.containsKey(tile.getName())){
+            return tileHeight.get(tile.getName());
+        } else{
+            throw new NoSuchElementException(tile.getName());
+            
+        }
+    }
+
+    /**returns true if tile2 is higher than tile */
+    public boolean isHigher(Tile tile, Tile tile2){
+
+        if (tile.compareTo(tile2) && !tile.getName().equals("ocean")){
+            int hundreds1 = (tile.altitude) / 50;
+            int hundreds2 = (tile2.altitude) / 50;
+            System.out.println("tile 1: "+hundreds1+ ","+getHeight(tile2)+" tile 2: "+hundreds2+ ","+getHeight(tile));
+
+            // Check if the hundreds digits are different
+        return hundreds1 < hundreds2;
+        } else {
+            return (getHeight(tile2) >getHeight(tile));
+        }
+
+        
+
+        //
     }
 
     private void setup(){
@@ -24,27 +59,17 @@ public class TileManager {
         tileHeight.put("mud",20);
         tileHeight.put("moss",80);
         tileHeight.put("desert",10);
+        tileHeight.put("beach",5);
         tileHeight.put("ocean",0);
-        tileHeight.put("dark_green",101);
+        tileHeight.put("forest",101);
         tileHeight.put("savanna",50);
+        tileHeight.put("seasonal forest",50);
     }
 
-    public TileSprite getTileSprite(String name){
+    
+    
 
-        if (tileSprites.containsKey(name)){
-            return tileSprites.get(name);
-        }
-        else{
-            return createTileSprite(name);
-        }
-
-    }
-
-    private TileSprite createTileSprite(String name) {
-        TileSprite newTileSprite = new TileSprite(name,panel.imageContainer);
-        tileSprites.put(name,newTileSprite);
-        return newTileSprite;
-    }
+    
 
    
        

@@ -27,6 +27,10 @@ public class ImageContainer {
         }
     }
 
+    public boolean containsImage(String name){
+        return (images.containsKey(name));
+    }
+
     private void loadBufferedImage(String name){
 
     }
@@ -54,7 +58,7 @@ public class ImageContainer {
             images.put("snowy Tundra",dark_grass);
             images.put("snowy taiga",dark_grass);
             images.put("beach",sand);
-            images.put("rain forest",savanna);
+            images.put("rain_forest",savanna);
 
             
             System.out.println(images.get("plains"));
@@ -64,7 +68,7 @@ public class ImageContainer {
         } catch (IOException e) {
             // TODO Auto-generated catch block
             System.out.println("problem with base load of images");
-            e.printStackTrace();
+            //e.printStackTrace();
 
         }
     }
@@ -74,6 +78,7 @@ public class ImageContainer {
      */
     private BufferedImage retrieveTileSpriteImage(String name){
         BufferedImage image = null;
+        System.out.println(name);
         try {
 
             image = ImageIO.read(new File("ressurser/images/"+name+".png"));
@@ -82,19 +87,51 @@ public class ImageContainer {
         }catch (IOException e) {
             // TODO Auto-generated catch block
             System.out.println("problem with load of images - "+name);
-            
+            System.out.println((removeNumberAtEnd(name)+"1")+","+(getNumberAtEnd(name)*90-90) );
             //create the right image from file
             try {
-                image = getRotated(getImage(removeNumberAtEnd(name)+"1"),getNumberAtEnd(name)*90-90);
+               
+                
+                int degrees = getNumberAtEnd(name)*90-90;
+                String rawName = removeNumberAtEnd(name);
+                System.out.println("raw  "+rawName);
+                System.out.println(degrees);
+                System.out.println("name "+degrees + ", end");
+                
+
+                if (rawName.charAt(rawName.length() - 1) == 'C') {
+                    if (doesPNGFileExist(removeNumberAtEnd(name)+"0")){
+                        image = getRotated(getImage(removeNumberAtEnd(name)+"0"),degrees);
+                    }
+                    
+                } else if (rawName.charAt(rawName.length() - 1) == 'B') {
+                    if (doesPNGFileExist(removeNumberAtEnd(name)+"1")){
+                    image = getRotated(getImage(removeNumberAtEnd(name)+"1"),degrees);
+                    }
+                }
+
+                
+                
             } catch (Exception e1) {
                 // TODO Auto-generated catch block
                 System.out.println("tried to rotate image, something went wrong:");
-                e1.printStackTrace();
+                
             }
         }
 
         images.put(name,image);
         return image;
+    }
+
+    public static boolean doesPNGFileExist( String fileName) {
+       
+        try {
+            BufferedImage image = ImageIO.read(new File("ressurser/images/"+fileName+".png"));
+            return true;
+        } catch (IOException e) {
+           return false;
+        }
+        
     }
 
     private static String removeNumberAtEnd(String input){
@@ -139,6 +176,8 @@ public class ImageContainer {
 
         
     }
+
+    
 
     private BufferedImage getRotated(BufferedImage image,int angle){
         return ImageResources.rotateImage(image,angle);

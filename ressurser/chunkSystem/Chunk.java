@@ -219,12 +219,12 @@ public class Chunk extends TreeNode{
             else{
                 initialLoad();
             }
-
+            
         }
         loaded = true;
 
-        connectTiles();
-
+        
+        
         
         
     }
@@ -235,8 +235,8 @@ public class Chunk extends TreeNode{
         //loader algorithm..
         //method returns biome type- which is a streubg
         String biomeType =  chunkS.proceduralGen.calculateBiomeString(worldX, worldY);
-        
-        return new Tile(chunkS.panel,biomeType,worldX,worldY);
+        int height = (int)(chunkS.proceduralGen.getHeightValue(worldX,worldY)*1000);
+        return new Tile(chunkS.panel,biomeType,worldX,worldY,height);
         
     }
 
@@ -250,7 +250,7 @@ public class Chunk extends TreeNode{
         }
     }
 
-    private void connectTiles(){
+    void connectTiles(){
        
         for (BaseEntity baseEntity:entities){
             if (baseEntity instanceof Tile){

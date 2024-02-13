@@ -29,7 +29,7 @@ public class ChunkSystem {
     TreeNode parent;
     ProceduralGeneration proceduralGen;
     //
-    final int SIZEPOW = 9;// 5072 chunks.
+    final int SIZEPOW = 11;// 5072 chunks.
 
     HashMap <String,Tile> tileHashMap = new HashMap<String,Tile>();
 
@@ -44,14 +44,14 @@ public class ChunkSystem {
         proceduralGen = new ProceduralGeneration();
         //this should be lower. but not sure yet.
         renderDistance = 12*panel.tileSize;
-        this.workingMemory = new WorkingMemory(this);
-        //TODO 
         
+    
         
 
         parent = new TreeNode(this,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,(int)Math.pow(2,SIZEPOW)*panel.tileSize,(int)Math.pow(2,SIZEPOW)*panel.tileSize);
-        //parent.getChildren()[0].paintMap();
-        //setUpTest();
+        
+
+        this.workingMemory = new WorkingMemory(this);
     }
 
     private void setUpTest(){
