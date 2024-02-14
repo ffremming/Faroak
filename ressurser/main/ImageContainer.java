@@ -3,6 +3,7 @@ package ressurser.main;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.imageio.ImageIO;
@@ -18,7 +19,7 @@ public class ImageContainer {
         setupBaseImages();
     }
 
-    public BufferedImage getImage(String name){
+    public BufferedImage getTileImage(String name){
         if (images.containsKey(name)){
             return images.get(name);
         }
@@ -38,13 +39,13 @@ public class ImageContainer {
     private void setupBaseImages(){
         try {
 
-            BufferedImage grass = ImageIO.read(new File("ressurser/images/plains.png"));
-            BufferedImage mud = ImageIO.read(new File("ressurser/images/mud.png"));
-            BufferedImage moss = ImageIO.read(new File("ressurser/images/moss.png"));
-            BufferedImage sand = ImageIO.read(new File("ressurser/images/sand.png"));
-            BufferedImage water = ImageIO.read(new File("ressurser/images/ocean.png"));
-            BufferedImage dark_grass = ImageIO.read(new File("ressurser/images/dark_grass.png"));
-            BufferedImage savanna = ImageIO.read(new File("ressurser/images/savanna.png"));
+            BufferedImage grass = ImageIO.read(new File("ressurser/images/tile/plains.png"));
+            BufferedImage mud = ImageIO.read(new File("ressurser/images/tile/mud.png"));
+            BufferedImage moss = ImageIO.read(new File("ressurser/images/tile/moss.png"));
+            BufferedImage sand = ImageIO.read(new File("ressurser/images/tile/sand.png"));
+            BufferedImage water = ImageIO.read(new File("ressurser/images/tile/ocean.png"));
+            BufferedImage dark_grass = ImageIO.read(new File("ressurser/images/tile/dark_grass.png"));
+            BufferedImage savanna = ImageIO.read(new File("ressurser/images/tile/savanna.png"));
 
 
             images.put("plains",grass);
@@ -61,7 +62,7 @@ public class ImageContainer {
             images.put("rain_forest",savanna);
 
             
-            System.out.println(images.get("plains"));
+           
 
     
 
@@ -81,7 +82,7 @@ public class ImageContainer {
         System.out.println(name);
         try {
 
-            image = ImageIO.read(new File("ressurser/images/"+name+".png"));
+            image = ImageIO.read(new File("ressurser/images/tile/"+name+".png"));
             
 
         }catch (IOException e) {
@@ -100,13 +101,13 @@ public class ImageContainer {
                 
 
                 if (rawName.charAt(rawName.length() - 1) == 'C') {
-                    if (doesPNGFileExist(removeNumberAtEnd(name)+"0")){
-                        image = getRotated(getImage(removeNumberAtEnd(name)+"0"),degrees);
+                    if (doesPNGFileExist("tile/"+removeNumberAtEnd(name)+"0")){
+                        image = getRotated(getTileImage(removeNumberAtEnd(name)+"0"),degrees);
                     }
                     
                 } else if (rawName.charAt(rawName.length() - 1) == 'B') {
-                    if (doesPNGFileExist(removeNumberAtEnd(name)+"1")){
-                    image = getRotated(getImage(removeNumberAtEnd(name)+"1"),degrees);
+                    if (doesPNGFileExist("tile/"+removeNumberAtEnd(name)+"1")){
+                    image = getRotated(getTileImage(removeNumberAtEnd(name)+"1"),degrees);
                     }
                 }
 
@@ -181,5 +182,32 @@ public class ImageContainer {
 
     private BufferedImage getRotated(BufferedImage image,int angle){
         return ImageResources.rotateImage(image,angle);
+    }
+
+    public ArrayList<BufferedImage> setPlayableImages(String name) {
+        ArrayList<BufferedImage> images = new ArrayList<>();
+        try {
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"up1.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"up2.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"up3.png")));
+
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"down1.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"down2.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"down3.png")));
+        
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"left1.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"left2.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"left3.png")));
+
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"right1.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"right2.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"right3.png")));
+        
+    } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
+    return images;
+       
     }
 }

@@ -16,7 +16,7 @@ public class DrawingManager {
     public boolean drawingTimer = false;
 
     //for drawing right FPS in panel:
-    public int FPS = 1;
+    public int FPS = 60;
     public long splitTime = 1000000000/FPS;
     public long nestetid = System.nanoTime()+splitTime;
 

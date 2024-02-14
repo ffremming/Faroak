@@ -62,11 +62,11 @@ public class Tile extends BaseEntity{
     private BufferedImage getAnimatedImage(int value){
         
         BufferedImage image = null;
-        image = panel.imageContainer.getImage(getName()+value);
+        image = panel.imageContainer.getTileImage(getName()+value);
         if (image == null){
             System.out.println("animation of "+getName()+" went wrong - value:"+value);
             // TODO Auto-generated catch block
-            image = panel.imageContainer.getImage(getName());
+            image = panel.imageContainer.getTileImage(getName());
         }
             
         
@@ -99,9 +99,9 @@ public class Tile extends BaseEntity{
     
                         //unsure if this will work.
                         if (value == 0){
-                            images.add(panel.imageContainer.getImage(neightbor.getName()+"B"+i));
+                            images.add(panel.imageContainer.getTileImage(neightbor.getName()+"B"+i));
                         }else{
-                            images.add(panel.imageContainer.getImage(neightbor.getName()+value+"B"+i));
+                            images.add(panel.imageContainer.getTileImage(neightbor.getName()+value+"B"+i));
                         }
                        
                         
@@ -113,30 +113,30 @@ public class Tile extends BaseEntity{
     
             }
             if (value == 0){if ((borders[0] && borders[1] ) &&(getNeighbors()[0].getName() == getNeighbors()[1].getName() )){
-                images.add(panel.imageContainer.getImage(getNeighbors()[0].getName()+"C"+1));
+                images.add(panel.imageContainer.getTileImage(getNeighbors()[0].getName()+"C"+1));
             }if ((borders[1] && borders[2] ) &&(getNeighbors()[1].getName() == getNeighbors()[2].getName() )){
-                images.add(panel.imageContainer.getImage(getNeighbors()[1].getName()+"C"+2));
+                images.add(panel.imageContainer.getTileImage(getNeighbors()[1].getName()+"C"+2));
             }if ((borders[2] && borders[3] ) &&(getNeighbors()[2].getName() == getNeighbors()[3].getName() )){
-                images.add(panel.imageContainer.getImage(getNeighbors()[2].getName()+"C"+3));
+                images.add(panel.imageContainer.getTileImage(getNeighbors()[2].getName()+"C"+3));
             }if ((borders[3] && borders[0] ) &&(getNeighbors()[3].getName() == getNeighbors()[0].getName() )){
-                images.add(panel.imageContainer.getImage(getNeighbors()[3].getName()+"C"+4));
+                images.add(panel.imageContainer.getTileImage(getNeighbors()[3].getName()+"C"+4));
             }
 
             }else{
                 if ((borders[0] && borders[1] ) &&(getNeighbors()[0].getName() == getNeighbors()[1].getName() )){
-                    images.add(panel.imageContainer.getImage(getNeighbors()[0].getName()+value+"C"+1));
+                    images.add(panel.imageContainer.getTileImage(getNeighbors()[0].getName()+value+"C"+1));
                 }
         
                 if ((borders[1] && borders[2] ) &&(getNeighbors()[1].getName() == getNeighbors()[2].getName() )){
-                    images.add(panel.imageContainer.getImage(getNeighbors()[1].getName()+value+"C"+2));
+                    images.add(panel.imageContainer.getTileImage(getNeighbors()[1].getName()+value+"C"+2));
                 }
         
                 if ((borders[2] && borders[3] ) &&(getNeighbors()[2].getName() == getNeighbors()[3].getName() )){
-                    images.add(panel.imageContainer.getImage(getNeighbors()[2].getName()+value+"C"+3));
+                    images.add(panel.imageContainer.getTileImage(getNeighbors()[2].getName()+value+"C"+3));
                 }
         
                 if ((borders[3] && borders[0] ) &&(getNeighbors()[3].getName() == getNeighbors()[0].getName() )){
-                    images.add(panel.imageContainer.getImage(getNeighbors()[3].getName()+value+"C"+4));
+                    images.add(panel.imageContainer.getTileImage(getNeighbors()[3].getName()+value+"C"+4));
                 }
             }
            
@@ -151,7 +151,7 @@ public class Tile extends BaseEntity{
                 if (neightbor.isHigherthan(this)){
 
                     //unsure if this will work.
-                    images.add(panel.imageContainer.getImage(neightbor.getName()+"B"+i));
+                    images.add(panel.imageContainer.getTileImage(neightbor.getName()+"B"+i));
                     
                     borders[i] = true;
                     //images.add(panel.imageContainer.getImage(neightbor.getName()+"C"+i));
@@ -162,19 +162,19 @@ public class Tile extends BaseEntity{
         }
             
         if ((borders[0] && borders[1] ) &&(getNeighbors()[0].getName() == getNeighbors()[1].getName() )){
-            images.add(panel.imageContainer.getImage(getNeighbors()[0].getName()+"C"+1));
+            images.add(panel.imageContainer.getTileImage(getNeighbors()[0].getName()+"C"+1));
         }
 
         if ((borders[1] && borders[2] ) &&(getNeighbors()[1].getName() == getNeighbors()[2].getName() )){
-            images.add(panel.imageContainer.getImage(getNeighbors()[1].getName()+"C"+2));
+            images.add(panel.imageContainer.getTileImage(getNeighbors()[1].getName()+"C"+2));
         }
 
         if ((borders[2] && borders[3] ) &&(getNeighbors()[2].getName() == getNeighbors()[3].getName() )){
-            images.add(panel.imageContainer.getImage(getNeighbors()[2].getName()+"C"+3));
+            images.add(panel.imageContainer.getTileImage(getNeighbors()[2].getName()+"C"+3));
         }
 
         if ((borders[3] && borders[0] ) &&(getNeighbors()[3].getName() == getNeighbors()[0].getName() )){
-            images.add(panel.imageContainer.getImage(getNeighbors()[3].getName()+"C"+4));
+            images.add(panel.imageContainer.getTileImage(getNeighbors()[3].getName()+"C"+4));
         }
 
         

@@ -23,6 +23,15 @@ public class Camera extends primitiveEntity{
     private BaseEntity followed;
     public int frameRate = 60;
 
+    public boolean drawingTimer = false;
+
+    //for drawing right FPS in panel:
+    public int FPS = 60;
+    public long splitTime = 1000000000/FPS;
+    public long nextDrawTime = System.nanoTime()+splitTime;
+
+    public boolean testData = false;
+
     public Camera(GamePanel panel, String name, int worldX, int worldY, short width, short height) {
         super(panel, name, worldX, worldY, (short) panel.screenWidth,(short)(panel.screenHeight));
         //TODO Auto-generated constructor stub
@@ -51,7 +60,7 @@ public class Camera extends primitiveEntity{
         //TODO
         this.followed = entity;
     }
-
+    
     public void draw(Graphics g){
         panel.chunkSystem.workingMemory.update(hitBox.getCenter());
         
@@ -59,25 +68,26 @@ public class Camera extends primitiveEntity{
         g2.setFont(new Font("Arial", Font.PLAIN, 7));
         
         Tile[] tiles = panel.chunkSystem.workingMemory.getTile(new Point(12,12)).getNeighbors();
-        System.out.println("array:"+panel.chunkSystem.workingMemory.getTile(new Point(12,12)).getNeighbors()+" "+tiles[0].getName()+tiles[1].getName()+tiles[2].getName()+tiles[3].getName());
-        Tile tiles2 = panel.chunkSystem.workingMemory.getTile(new Point(-12,-12));
-        System.out.println(tiles2.getNeighbors());
-        //System.out.println("array:"+panel.chunkSystem.workingMemory.getTile(new Point(-12,-12)).getNeighbors()+" "+tiles2[0].getName()+tiles2[1].getName()+tiles2[2].getName()+tiles2[3].getName());
         
        
         ArrayList<BaseEntity> withinCam = panel.chunkSystem.workingMemory.getvisibleEntities();
         
        //panel.chunkSystem.workingMemory.writeInfo();
         //this only works if chunkysstem updates entites frequently
+       
         for (BaseEntity baseE :withinCam){
             drawRelative(g2,baseE);
-            drawHitBox(g2,baseE);
-            drawCoords(g2,baseE);
-            
-            
+            if (testData){
+                drawHitBox(g2,baseE);
+                drawCoords(g2,baseE);
+            }   
             
         }
-        drawChunks(g2);
+        if (testData){
+            drawChunks(g2);
+        }
+            
+        
         panel.g.dispose();
     }
 

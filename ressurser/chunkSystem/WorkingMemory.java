@@ -91,14 +91,8 @@ public class WorkingMemory {
         setWorkingChunks(chunkSystem.getAllChunksInRenderDistance(p));
 
         //load chunks that might not be loaded: - is dependent on the working memory chunks
-        //chunkSystem.loadChunks();
-
-        //TODO kkeps getting exceptiosn
         for (Chunk chunk:getChunks()){
             chunk.load();
-        }
-        for (Chunk chunk:getChunks()){
-            chunk.connectTiles();
         }
         
 

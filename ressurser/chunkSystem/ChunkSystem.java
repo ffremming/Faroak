@@ -287,6 +287,7 @@ public class ChunkSystem {
         if (OutOfBounds(renderRect)){
             try {
                 expand(renderRect);
+                System.out.println("expand system");
             } catch (OutOfChunkBounds e) {
                 //should never happen. 
                 e.printStackTrace();

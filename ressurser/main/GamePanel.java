@@ -153,18 +153,18 @@ public class GamePanel extends JPanel implements Runnable{
     private void setUpObjects(){
         camera = new Camera(this,"camera",0,0,(short)screenWidth,(short)screenHeight);
         //dungeonM = new DungeonManager(this);
-        interactionPlay = new PlayInteractionManager(this);
+        //interactionPlay = new PlayInteractionManager(this);
 
         //input = new KeyHandler(this);
         //mouse = new MouseHandler(this);
-        menu = new Meny(this);
+        //menu = new Meny(this);
         //collisionC = new CollisionChecker(this);
         //entityH = new EntityHandler(this);
         //light = new Lightning(this);
         enviromentM = new EnviromentManager(this);
         //itemB = new ItemBar(this);
-        drawingM = new DrawingManager(this);
-        menuStateUI = new MenuState(this);
+        //drawingM = new DrawingManager(this);
+        //menuStateUI = new MenuState(this);
     }
 
 
@@ -244,15 +244,15 @@ public class GamePanel extends JPanel implements Runnable{
 
     public void sleepGameFrame(){
         try {
-            double gjenstaaendeTid = drawingM.nestetid-System.nanoTime();
-            gjenstaaendeTid = gjenstaaendeTid/1000000;
+            double remainingTime = camera.nextDrawTime-System.nanoTime();
+            remainingTime = remainingTime/1000000;
             
-            if (gjenstaaendeTid<0){
-                gjenstaaendeTid = 0;
+            if (remainingTime<0){
+                remainingTime = 0;
             }
-            Thread.sleep((long)gjenstaaendeTid);
+            Thread.sleep((long)remainingTime);
 
-            drawingM.nestetid += drawingM.splitTime;
+            camera.nextDrawTime += camera.splitTime;
         } catch (InterruptedException e) {e.printStackTrace();
         }
     }
