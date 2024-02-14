@@ -41,10 +41,9 @@ public class TileManager {
         if (tile.compareTo(tile2) && !tile.getName().equals("ocean")){
             int hundreds1 = (tile.altitude) / 50;
             int hundreds2 = (tile2.altitude) / 50;
-            System.out.println("tile 1: "+hundreds1+ ","+getHeight(tile2)+" tile 2: "+hundreds2+ ","+getHeight(tile));
-
+            
             // Check if the hundreds digits are different
-        return hundreds1 < hundreds2;
+            return hundreds1 < hundreds2;
         } else {
             return (getHeight(tile2) >getHeight(tile));
         }

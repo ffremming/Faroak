@@ -13,6 +13,7 @@ import java.awt.BasicStroke;
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.primitiveEntity;
+import ressurser.baseEntity.playable.Playable;
 import ressurser.baseEntity.sprite.Sprite;
 import ressurser.baseEntity.tile.Tile;
 import ressurser.chunkSystem.Chunk;
@@ -30,7 +31,7 @@ public class Camera extends primitiveEntity{
     public long splitTime = 1000000000/FPS;
     public long nextDrawTime = System.nanoTime()+splitTime;
 
-    public boolean testData = false;
+    public boolean testData = true;
 
     public Camera(GamePanel panel, String name, int worldX, int worldY, short width, short height) {
         super(panel, name, worldX, worldY, (short) panel.screenWidth,(short)(panel.screenHeight));
@@ -67,7 +68,7 @@ public class Camera extends primitiveEntity{
         Graphics2D g2 = (Graphics2D)g;
         g2.setFont(new Font("Arial", Font.PLAIN, 7));
         
-        Tile[] tiles = panel.chunkSystem.workingMemory.getTile(new Point(12,12)).getNeighbors();
+        
         
        
         ArrayList<BaseEntity> withinCam = panel.chunkSystem.workingMemory.getvisibleEntities();
@@ -75,14 +76,32 @@ public class Camera extends primitiveEntity{
        //panel.chunkSystem.workingMemory.writeInfo();
         //this only works if chunkysstem updates entites frequently
        
+        //draw tiles first - not yet implemented
         for (BaseEntity baseE :withinCam){
-            drawRelative(g2,baseE);
-            if (testData){
-                drawHitBox(g2,baseE);
-                drawCoords(g2,baseE);
-            }   
+            if (baseE instanceof Tile){
+            
+                drawRelative(g2,baseE);
+                if (testData){
+                    drawHitBox(g2,baseE);
+                    drawCoords(g2,baseE);
+                } 
+            }  
             
         }
+
+        //draw entities later..
+        for (BaseEntity baseE :withinCam){
+            if (baseE instanceof Playable){
+                drawRelative(g2,baseE);
+                if (testData){
+                   
+                    drawHitBox(g2,baseE);
+                    drawCoords(g2,baseE);
+                }   
+            } 
+        }
+
+        //drawing chunks
         if (testData){
             drawChunks(g2);
         }
@@ -100,10 +119,10 @@ public class Camera extends primitiveEntity{
 
         g2.setColor(Color.WHITE);
         g2.drawString(entity.getName(),x,y+15);
-        g2.drawImage(entity.getImage(),x,y,64,64,null);     //can remove width and height.
+        //g2.drawImage(entity.getImage(),x,y,64,64,null);     //can remove width and height.
         ArrayList<BufferedImage> imagesCopy = new ArrayList<>(entity.getImages());
         for (BufferedImage img:imagesCopy){
-            g2.drawImage(img,x,y,64,64,null);  
+            g2.drawImage(img,x,y,entity.getWidth(),entity.getHeight(),null);  
         }
         
         

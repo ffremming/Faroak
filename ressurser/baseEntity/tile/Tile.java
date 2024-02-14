@@ -43,7 +43,6 @@ public class Tile extends BaseEntity{
         this.altitude = altitude;
         if (name.equals("ocean")){
             animated = true;
-            System.out.println("aniamtion.set");
         }
         
     }

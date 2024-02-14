@@ -16,6 +16,7 @@ public class WorkingMemory {
     ArrayList<Chunk> workingChunks = new ArrayList<>();
     ArrayList<BaseEntity> workingEntities = new ArrayList<>();
     ChunkSystem chunkSystem;
+    
 
 
 

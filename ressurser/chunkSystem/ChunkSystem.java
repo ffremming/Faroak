@@ -11,6 +11,7 @@ import javax.swing.JFrame;
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.HitBox;
+import ressurser.baseEntity.playable.Playable;
 import ressurser.baseEntity.tile.Tile;
 import ressurser.chunkSystem.terrainGeneration.ProceduralGeneration;
 import ressurser.main.GamePanel;
@@ -49,9 +50,11 @@ public class ChunkSystem {
         
 
         parent = new TreeNode(this,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,(int)Math.pow(2,SIZEPOW)*panel.tileSize,(int)Math.pow(2,SIZEPOW)*panel.tileSize);
-        
+        addEntity(new Playable(panel, "red",-32,-32,(short)48,(short)96,(short)48,(short)96,(short)0,(short)0));
 
         this.workingMemory = new WorkingMemory(this);
+
+
     }
 
     private void setUpTest(){

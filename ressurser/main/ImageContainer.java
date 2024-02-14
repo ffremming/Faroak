@@ -187,24 +187,25 @@ public class ImageContainer {
     public ArrayList<BufferedImage> setPlayableImages(String name) {
         ArrayList<BufferedImage> images = new ArrayList<>();
         try {
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"up1.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"up2.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"up3.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/up1.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/up2.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/up3.png")));
 
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"down1.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"down2.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"down3.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/down1.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/down2.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/down3.png")));
         
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"left1.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"left2.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"left3.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/left1.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/left2.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/left3.png")));
 
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"right1.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"right2.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"right3.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/right1.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/right2.png")));
+        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/right3.png")));
         
     } catch (IOException e) {
         // TODO Auto-generated catch block
+        System.out.println(name + " could not load the sprites of playable");
         e.printStackTrace();
     }
     return images;

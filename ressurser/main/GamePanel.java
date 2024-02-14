@@ -1,5 +1,6 @@
 package ressurser.main;
 
+import ressurser.baseEntity.playable.Playable;
 import ressurser.baseEntity.tile.TileManager;
 import ressurser.chunkSystem.ChunkSystem;
 
@@ -23,15 +24,9 @@ import ressurser.worldGeneration.TerrainGenSimplex;
 import ressurser.worldGeneration.dungeonGenerator.DungeonManager;
 
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.Graphics;
-
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
@@ -81,7 +76,7 @@ public class GamePanel extends JPanel implements Runnable{
     public MenuState menuStateUI;
     public SpriteLoader spriteLoader;
 
-
+    public Playable player;
 
 
     Graphics2D g2;
@@ -142,7 +137,7 @@ public class GamePanel extends JPanel implements Runnable{
         chunkSystem = new ChunkSystem(this);
         
         mapH = new MapHandler(this);
-        spiller = new Spiller(this,textString, 2000,500,(short) 40,(short) 128,(short) 48,(short) 48, (short)8,(short)( 128-48));
+        //spiller = new Spiller(this,textString, 2000,500,(short) 40,(short) 128,(short) 48,(short) 48, (short)8,(short)( 128-48));
         terrainGen = new TerrainGenSimplex(mapH.mapWidth,mapH.mapHeight,true);
         //imageP = new ImagePainter();
         //objM = new ObjectManager(this,newGame);
@@ -152,6 +147,8 @@ public class GamePanel extends JPanel implements Runnable{
    
     private void setUpObjects(){
         camera = new Camera(this,"camera",0,0,(short)screenWidth,(short)screenHeight);
+        player = (new Playable(this, "red",-32,-32,(short)48,(short)96,(short)48,(short)96,(short)0,(short)0));
+
         //dungeonM = new DungeonManager(this);
         //interactionPlay = new PlayInteractionManager(this);
 

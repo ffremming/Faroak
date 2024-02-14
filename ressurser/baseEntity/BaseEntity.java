@@ -60,7 +60,7 @@ public class BaseEntity {
 
 
 
-        hitBox = new HitBox(this, hitBoxWidth, hitBoxWidth, i, j);
+        hitBox = new HitBox(this, hitBoxWidth, hitBoxHeight, i, j);
 
         //spriteHandler = new SpriteHandler(this);
         //sprite = new Sprite(this,"filenavn",worldX,worldY,width,height);
@@ -85,7 +85,7 @@ public class BaseEntity {
         
         try {
 
-            image = panel.imageContainer.getImage(name);
+            image = panel.imageContainer.getTileImage(name);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -164,7 +164,7 @@ public class BaseEntity {
         return width;
     }
     public short getHeight() {
-        return width;
+        return height;
     }
     /**positions wiht the center of object at point */
     public void centerAtPosition(Point p){

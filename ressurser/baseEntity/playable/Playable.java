@@ -18,7 +18,8 @@ public class Playable extends Entity {
     public Playable(GamePanel panel, String name, int worldX, int worldY, short width, short height, short hitBoxWidth,
             short hitBoxHeight, short relativeXPLus, short relativeYPlus) {
         super(panel, name, worldX, worldY, width, height, hitBoxWidth, hitBoxHeight, relativeXPLus, relativeYPlus);
-        //TODO Auto-generated constructor stub
+       
+        setImages();
     }
 
     public void move() {
@@ -30,34 +31,24 @@ public class Playable extends Entity {
         velocity.add(newVector);
     }
 
-    public void hentBilde(){
-        try{
-
-           
-        opp1 = ImageIO.read(getClass().getResourceAsStream("playerSprites/playerStandingBack1.png"));
-        opp2 = ImageIO.read(getClass().getResourceAsStream("playerSprites/playerBackNew2.png"));
-        opp3 = ImageIO.read(getClass().getResourceAsStream("playerSprites/playerBackNew3.png"));
-
-
-        ned1 = ImageIO.read(getClass().getResourceAsStream("playerSprites/playerDown.png"));
-        ned2 = ImageIO.read(getClass().getResourceAsStream("playerSprites/playerDown2.png"));
-        ned3 = ImageIO.read(getClass().getResourceAsStream("playerSprites/playerDown3.png"));
-
-        venstre1 = ImageIO.read(getClass().getResourceAsStream("playerSprites/playerLeftStanding1.png"));
-        venstre2 = ImageIO.read(getClass().getResourceAsStream("playerSprites/revidertPlayerLeft2.png"));
-        venstre3 = ImageIO.read(getClass().getResourceAsStream("playerSprites/revidertPlayerLeft3.png"));
-
-        hoyre1 = ImageIO.read(getClass().getResourceAsStream("playerSprites/standingRight1.png"));
-        hoyre2 = ImageIO.read(getClass().getResourceAsStream("playerSprites/playerRight2.png"));
-        hoyre3 = ImageIO.read(getClass().getResourceAsStream("playerSprites/playerRight3.png"));
-
-        }catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    
 
     private void setImages(){
         images = panel.imageContainer.setPlayableImages(getName());
+    }
+
+    /**returns the one image that is supposed to be returned */
+    @Override
+    public ArrayList<BufferedImage> getImages() {
+        ArrayList<BufferedImage> arr = new ArrayList<>();
+        if (images.size()>0){
+            arr.add(images.get(getCorrespondingSpriteIndex()));
+        }
+        return arr;
+    }
+
+    private int getCorrespondingSpriteIndex() {//TODO
+        return 0;
     }
 
     
