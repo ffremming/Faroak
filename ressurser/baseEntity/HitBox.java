@@ -68,16 +68,22 @@ public class HitBox extends Rectangle{
 
 
 
+    /**return true if this hitbox either contains.
+     * also returns false if given hitBox is the same as this hitbox
+    */
     public boolean collision(HitBox hitbox){
         
         updateCoords();
-
-        return contains( hitbox)||intersects(hitbox);
+        if (hitbox == this){return false;}
+        return intersects(hitbox)||contains( hitbox);
     }
 
-    void updateCoords(){
-        x = getWorldX();
-        y = getWorldY();
+    public void updateCoords(){
+        if (baseEntity != null){
+            x = baseEntity.getWorldX()+relativeXValue;
+            y = baseEntity.getWorldY()+relativeYValue;
+        
+        }
     }
 
     
@@ -90,20 +96,14 @@ public class HitBox extends Rectangle{
 
      /**updates the x coords in case they are wrong */
     public int getWorldX(){
-        if (baseEntity!= null){
-            return baseEntity.worldX+relativeXValue;
-        } else {
-            return x;
-        }
+        updateCoords();
+        return x;
         
     }
     /**updates the y coords in case they are wrong */
     public int getWorldY(){
-        if (baseEntity!= null){
-            return baseEntity.worldY+relativeYValue;
-        } else {
-            return y;
-        }
+        updateCoords();
+        return y;
     }
 
 

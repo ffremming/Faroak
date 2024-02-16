@@ -56,7 +56,7 @@ public class TileManager {
     private void setup(){
         tileHeight.put("plains",100);
         tileHeight.put("mud",20);
-        tileHeight.put("moss",80);
+        tileHeight.put("swamp",80);
         tileHeight.put("desert",10);
         tileHeight.put("beach",5);
         tileHeight.put("ocean",0);

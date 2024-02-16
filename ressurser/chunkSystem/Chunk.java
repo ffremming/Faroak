@@ -6,6 +6,7 @@ import java.util.ArrayList;
 
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.HitBox;
+import ressurser.baseEntity.playable.Playable;
 import ressurser.baseEntity.tile.Tile;
 
 public class Chunk extends TreeNode{
@@ -17,6 +18,8 @@ public class Chunk extends TreeNode{
     // this boolean needs to be stored in harddrive. If already loaded, do not need procedural generation of entites, because these is already loaded.
     boolean generated = false;
     boolean loaded = false;
+    static int amtLoaded = 0;
+    static int amtGenerated = 0;
 
     //i want all chunks to always forget the tile contents, but always remember entities(not tiles)
 
@@ -185,6 +188,7 @@ public class Chunk extends TreeNode{
        generateTiles();
        generateEntities();
        generated = true;
+       amtGenerated ++;
 
     }
     /*generate tiles, should be used every time a chunk is loaded */
@@ -222,6 +226,7 @@ public class Chunk extends TreeNode{
             
         }
         loaded = true;
+        amtLoaded++;
 
         
         
@@ -257,10 +262,29 @@ public class Chunk extends TreeNode{
                 ((Tile)baseEntity).setNeighBors();
             }
         }
-                
-                
-            
-        
+    }
+
+    /**checks if any entities has moved out of the specified chunk, removes them if they have, and adds them to correct chunk. */
+    void flush(){
+
+        ArrayList<BaseEntity> toBeRemoved = new ArrayList<>();
+        for (BaseEntity baseE:entities){
+            //should be changed to moveable
+            if (baseE instanceof Playable){
+                if (!(this.collision(baseE.getHitBox()))){
+
+                    //to stop concurrentmodification
+                    toBeRemoved.add(baseE);
+                    
+                    
+                }
+            }
+        }
+        for (BaseEntity baseE:toBeRemoved){
+            //eneity has moved from this chunk, and need to be placed in another chunk.
+            entities.remove(baseE);
+            chunkS.addEntity(baseE);
+        }
     }
     
 

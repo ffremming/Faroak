@@ -79,7 +79,6 @@ public class ImageContainer {
      */
     private BufferedImage retrieveTileSpriteImage(String name){
         BufferedImage image = null;
-        System.out.println(name);
         try {
 
             image = ImageIO.read(new File("ressurser/images/tile/"+name+".png"));
@@ -87,17 +86,15 @@ public class ImageContainer {
 
         }catch (IOException e) {
             // TODO Auto-generated catch block
-            System.out.println("problem with load of images - "+name);
-            System.out.println((removeNumberAtEnd(name)+"1")+","+(getNumberAtEnd(name)*90-90) );
+            
+            
             //create the right image from file
             try {
                
                 
                 int degrees = getNumberAtEnd(name)*90-90;
                 String rawName = removeNumberAtEnd(name);
-                System.out.println("raw  "+rawName);
-                System.out.println(degrees);
-                System.out.println("name "+degrees + ", end");
+                
                 
 
                 if (rawName.charAt(rawName.length() - 1) == 'C') {

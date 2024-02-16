@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.awt.BasicStroke;
@@ -22,7 +23,7 @@ import ressurser.main.GamePanel;
 public class Camera extends primitiveEntity{
 
     private BaseEntity followed;
-    public int frameRate = 60;
+    
 
     public boolean drawingTimer = false;
 
@@ -30,6 +31,7 @@ public class Camera extends primitiveEntity{
     public int FPS = 60;
     public long splitTime = 1000000000/FPS;
     public long nextDrawTime = System.nanoTime()+splitTime;
+    ArrayList<String> backEndData = new ArrayList<>();
 
     public boolean testData = true;
 
@@ -37,7 +39,7 @@ public class Camera extends primitiveEntity{
         super(panel, name, worldX, worldY, (short) panel.screenWidth,(short)(panel.screenHeight));
         //TODO Auto-generated constructor stub
         //follow(panel.spiller);
-        centerAtPosition(new Point(0,0));
+        follow(panel.player);
        
     }
     public Camera(GamePanel panel,String name){
@@ -60,10 +62,15 @@ public class Camera extends primitiveEntity{
     public void follow(BaseEntity entity){
         //TODO
         this.followed = entity;
+
     }
     
     public void draw(Graphics g){
-        panel.chunkSystem.workingMemory.update(hitBox.getCenter());
+        long startDraw = System.nanoTime();
+        
+        
+        centerAtPosition(followed.getPoint());
+        
         
         Graphics2D g2 = (Graphics2D)g;
         g2.setFont(new Font("Arial", Font.PLAIN, 7));
@@ -105,9 +112,14 @@ public class Camera extends primitiveEntity{
         if (testData){
             drawChunks(g2);
         }
-            
+        long endDraw = System.nanoTime();
+        
+        addbackendPrintData("drawtime: "+String.valueOf(endDraw-startDraw));
+        drawBackEndData(g2);
         
         panel.g.dispose();
+        
+        
     }
 
     public void drawRelative(Graphics2D g2,BaseEntity entity){
@@ -153,6 +165,10 @@ public class Camera extends primitiveEntity{
        
         
          g2.drawRect(x,y,width,height);
+         if (entity instanceof Playable){
+            Rectangle rect = ((Playable) entity).getHitboxInfront();
+            g2.drawRect(rect.x-worldX,rect.y-worldY,rect.width,rect.height);
+         }
     }
 
     private void drawCoords(Graphics2D g2,BaseEntity entity){
@@ -165,6 +181,20 @@ public class Camera extends primitiveEntity{
         g2.setColor(Color.red);
         
          g2.drawString("x: "+entity.getWorldX()+",y: "+entity.getWorldY(),x,y);
+    }
+
+    private void drawBackEndData(Graphics g2){
+        g2.setFont(new Font("Arial", Font.PLAIN, 16));
+        int y = 20;
+        ArrayList<String> printables = new ArrayList<>(backEndData);
+        for (String printData:printables){
+           
+            g2.drawString(printData,20,y);
+            y += 25;
+        }
+        
+        backEndData.clear();
+        backEndData.clear();
     }
 
 
@@ -192,4 +222,6 @@ public class Camera extends primitiveEntity{
         worldY+= value;
 
     }
+
+    public void addbackendPrintData(String newString){backEndData.add(newString);}
 }

@@ -31,8 +31,8 @@ public class EnviromentManager {
        
       
         ms++;
-        if (ms%panel.camera.frameRate == 0){
-            System.out.println("second");
+        if (ms%panel.camera.FPS == 0){
+            
             //based on camera, but should be something that is followed.
             panel.chunkSystem.workingMemory.update(panel.camera.getHitBox().getCenter());
             tick++;

@@ -19,6 +19,8 @@ public class BaseEntity {
     String nameID;
     protected byte type;
 
+    protected boolean solid;
+
     byte TILE = 0;protected byte SUPEROBJECT = 1;byte ENTITY = 2;
 
     Sprite sprite;
@@ -32,15 +34,6 @@ public class BaseEntity {
 
     protected HitBox hitBox;
     int hitBoxWidth,hitBoxHeight,relativeXValue,relativeYValue;
-    
-
-    //hard collision is collision that is non passable
-    boolean hardCollision = false;
-    
-    
-    
-    boolean interactable;
-
     
 
     //might need to change to sprite.
@@ -154,9 +147,7 @@ public class BaseEntity {
         return hitBox.collision(be.hitBox);
     }
 
-    public boolean hardCollision(BaseEntity be){
-        return (collision(be) && be.hardCollision);
-    }
+    
     public Boolean getAnimated() {
         return animated;
     }
@@ -199,5 +190,15 @@ public class BaseEntity {
 
     public void animate(int value){
         
+    }
+    public void update() {
+        System.out.println(name+" , update");
+    }
+    public Point getPoint() {
+        return new Point(worldX,worldY);
+    }
+
+    public boolean isSolid(){
+        return solid;
     }
 }

@@ -4,6 +4,7 @@ import java.awt.Point;
 import java.util.ArrayList;
 
 import ressurser.baseEntity.BaseEntity;
+import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.tile.Tile;
 
 /** 
@@ -16,8 +17,7 @@ public class WorkingMemory {
     ArrayList<Chunk> workingChunks = new ArrayList<>();
     ArrayList<BaseEntity> workingEntities = new ArrayList<>();
     ChunkSystem chunkSystem;
-    
-
+    BaseEntity hoveredEntity = null;
 
 
     public WorkingMemory(ChunkSystem chunkSystem){
@@ -85,6 +85,8 @@ public class WorkingMemory {
     public void update(Point p){
 
         
+
+        System.out.println("updating WM"+ p);
         //check if needed loading of new chunks
         chunkSystem.handleOutOfBounds(p);
 
@@ -93,9 +95,14 @@ public class WorkingMemory {
 
         //load chunks that might not be loaded: - is dependent on the working memory chunks
         for (Chunk chunk:getChunks()){
+            chunk.flush();
             chunk.load();
+            
         }
         
+        for (Chunk chunk:getChunks()){
+            chunk.connectTiles();
+        }
 
         //sets working entities - all entities within render distance.
         ArrayList<BaseEntity> AllEntitiesInRenderDistance = new ArrayList<>();
@@ -103,17 +110,44 @@ public class WorkingMemory {
         for (Chunk chunk:chunksCopy){
             chunk.getEntitiesInBound(chunkSystem.getRenderRectangle(p),AllEntitiesInRenderDistance);
         }
+
         setWorkingEntities(AllEntitiesInRenderDistance);
         
-        
+        System.out.println("end updating WM");
         //writeInfo();
+    }
+
+    /**
+     * updates/simulates all actions of the entities
+     */
+    public void simulate(){
+
+        int nonTile = 0;
+
+        ArrayList<BaseEntity> simulatedEntites = new ArrayList<>(workingEntities);
+        
+        for (BaseEntity baseE:simulatedEntites){
+            if (!(baseE instanceof Tile)){
+                baseE.update();
+                nonTile ++;
+            }
+        }
+
+        chunkSystem.panel.camera.addbackendPrintData("simulated entities: "+String.valueOf(simulatedEntites.size()));
+        chunkSystem.panel.camera.addbackendPrintData("non-tile entities: "+nonTile);
+        chunkSystem.panel.camera.addbackendPrintData("chunks in working memory: "+String.valueOf(workingChunks.size()));
+        chunkSystem.panel.camera.addbackendPrintData("render distance: "+chunkSystem.renderDistance);
+
+        chunkSystem.panel.camera.addbackendPrintData("amount chunks loaded: "+String.valueOf(Chunk.amtLoaded));
+        chunkSystem.panel.camera.addbackendPrintData("amount chunks generated: "+Chunk.amtGenerated);
+
     }
 
     /**
      * should only be called when it is time to animate the pieces.
      */
     public void animate(int value){
-        for (BaseEntity visible:getvisibleEntities()){
+        for (BaseEntity visible:workingEntities){
             if (visible.animated){
                 visible.animate(value);
                 
@@ -174,7 +208,34 @@ public class WorkingMemory {
     }
 
 
+    //COLLISION:::::::::
 
+    public boolean solidCollision(HitBox hitbox){
+        for (BaseEntity baseE:getEntitiesCollidedWith(hitbox)){
 
+            if (baseE.isSolid()){
+
+                //can implement cheks here for boats and others...
+                return true;
+            }
+            //must check if given entity is solid, and wheter the entity that is calling collision has the requirments to move throught.
+        }
+        return false;
+    }
+
+    public ArrayList<BaseEntity> getEntitiesCollidedWith(HitBox hitBox){
+        ArrayList<BaseEntity> collided = new ArrayList<>();
+        for (BaseEntity baseE:workingEntities){
+
+            //if there is collision between the hitboxes and they are not the same hitbox, the enotity is added to list.
+            if (hitBox.collision(baseE.getHitBox()) && baseE.getHitBox() != hitBox){
+                collided.add(baseE);
+            }
+        
+        }
+    return collided;
+    }
+
+    ///END COLLISION::::::::
 
 }

@@ -9,6 +9,7 @@ import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.gameObjects.GameObject;
 import ressurser.baseEntity.sprite.Sprite;
 import ressurser.main.GamePanel;
+import ressurser.main.ImageContainer;
 
 public class Tile extends BaseEntity{
     
@@ -43,6 +44,7 @@ public class Tile extends BaseEntity{
         this.altitude = altitude;
         if (name.equals("ocean")){
             animated = true;
+            solid = true;
         }
         
     }
@@ -63,7 +65,10 @@ public class Tile extends BaseEntity{
         BufferedImage image = null;
         image = panel.imageContainer.getTileImage(getName()+value);
         if (image == null){
-            System.out.println("animation of "+getName()+" went wrong - value:"+value);
+            if (panel.camera.testData){
+                System.out.println("animation of "+getName()+" went wrong - value:"+value);
+            }
+            
             // TODO Auto-generated catch block
             image = panel.imageContainer.getTileImage(getName());
         }
@@ -84,10 +89,6 @@ public class Tile extends BaseEntity{
     /**sets all images based on animation cycle  */
     private void setAnimatedImages(int value){
 
-            //checks if possible first
-
-
-
             images.clear();
             setAnimatedImage(value);
             boolean[] borders = {false,false,false,false};
@@ -96,8 +97,8 @@ public class Tile extends BaseEntity{
                 if (neightbor != null){
                     if (neightbor.isHigherthan(this)){
     
-                        //unsure if this will work.
-                        if (value == 0){
+                        
+                        if (value == 0 ||(!ImageContainer.doesPNGFileExist("tile/"+neightbor.getName()+1+"B"+1))){
                             images.add(panel.imageContainer.getTileImage(neightbor.getName()+"B"+i));
                         }else{
                             images.add(panel.imageContainer.getTileImage(neightbor.getName()+value+"B"+i));
@@ -111,7 +112,8 @@ public class Tile extends BaseEntity{
                 }
     
             }
-            if (value == 0){if ((borders[0] && borders[1] ) &&(getNeighbors()[0].getName() == getNeighbors()[1].getName() )){
+            if (value == 0 )
+            {if ((borders[0] && borders[1]  ) &&(getNeighbors()[0].getName() == getNeighbors()[1].getName() )){
                 images.add(panel.imageContainer.getTileImage(getNeighbors()[0].getName()+"C"+1));
             }if ((borders[1] && borders[2] ) &&(getNeighbors()[1].getName() == getNeighbors()[2].getName() )){
                 images.add(panel.imageContainer.getTileImage(getNeighbors()[1].getName()+"C"+2));
@@ -122,20 +124,47 @@ public class Tile extends BaseEntity{
             }
 
             }else{
+
                 if ((borders[0] && borders[1] ) &&(getNeighbors()[0].getName() == getNeighbors()[1].getName() )){
-                    images.add(panel.imageContainer.getTileImage(getNeighbors()[0].getName()+value+"C"+1));
+
+                    //there is corner - find out if the file exist.
+                    if (ImageContainer.doesPNGFileExist("tile/"+getNeighbors()[0].getName()+1+"C"+0)){
+                        images.add(panel.imageContainer.getTileImage(getNeighbors()[0].getName()+value+"C"+1));
+                    } else{
+                        images.add(panel.imageContainer.getTileImage(getNeighbors()[0].getName()+"C"+1));
+                    }
+
+                    
                 }
         
                 if ((borders[1] && borders[2] ) &&(getNeighbors()[1].getName() == getNeighbors()[2].getName() )){
-                    images.add(panel.imageContainer.getTileImage(getNeighbors()[1].getName()+value+"C"+2));
+
+                    //there is corner - find out if the file exist.
+                    if (ImageContainer.doesPNGFileExist("tile/"+getNeighbors()[1].getName()+1+"C"+0)){
+                        images.add(panel.imageContainer.getTileImage(getNeighbors()[1].getName()+value+"C"+2));
+                    } else{
+                        images.add(panel.imageContainer.getTileImage(getNeighbors()[1].getName()+"C"+2));
+                    }
+
+                    
                 }
         
                 if ((borders[2] && borders[3] ) &&(getNeighbors()[2].getName() == getNeighbors()[3].getName() )){
-                    images.add(panel.imageContainer.getTileImage(getNeighbors()[2].getName()+value+"C"+3));
+                    //there is corner - find out if the file exist.
+                    if (ImageContainer.doesPNGFileExist("tile/"+getNeighbors()[2].getName()+1+"C"+0)){
+                        images.add(panel.imageContainer.getTileImage(getNeighbors()[2].getName()+value+"C"+3));
+                    } else{
+                        images.add(panel.imageContainer.getTileImage(getNeighbors()[2].getName()+"C"+3));
+                    }
                 }
         
                 if ((borders[3] && borders[0] ) &&(getNeighbors()[3].getName() == getNeighbors()[0].getName() )){
-                    images.add(panel.imageContainer.getTileImage(getNeighbors()[3].getName()+value+"C"+4));
+                    //there is corner - find out if the file exist.
+                    if (ImageContainer.doesPNGFileExist("tile/"+getNeighbors()[3].getName()+1+"C"+0)){
+                        images.add(panel.imageContainer.getTileImage(getNeighbors()[3].getName()+value+"C"+4));
+                    } else{
+                        images.add(panel.imageContainer.getTileImage(getNeighbors()[3].getName()+"C"+4));
+                    }
                 }
             }
            

@@ -1,5 +1,6 @@
 package ressurser.main;
 
+import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.playable.Playable;
 import ressurser.baseEntity.tile.TileManager;
 import ressurser.chunkSystem.ChunkSystem;
@@ -26,9 +27,14 @@ import ressurser.worldGeneration.dungeonGenerator.DungeonManager;
 import java.awt.Dimension;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Point;
+import java.lang.reflect.InvocationTargetException;
 import java.awt.Graphics;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+
+
 
 public class GamePanel extends JPanel implements Runnable{
     public int tileSize = 64;
@@ -77,6 +83,8 @@ public class GamePanel extends JPanel implements Runnable{
     public SpriteLoader spriteLoader;
 
     public Playable player;
+    public Keys keys;
+    public InputHandlingSystem inputHandlingSystem;
 
 
     Graphics2D g2;
@@ -122,7 +130,7 @@ public class GamePanel extends JPanel implements Runnable{
         generateMap();
         
         setUpObjects();
-        addKeyListener(input);
+        addKeyListener(keys);
        
         this.setFocusable(true);
         requestFocus();
@@ -146,9 +154,10 @@ public class GamePanel extends JPanel implements Runnable{
     }
    
     private void setUpObjects(){
+        Point p = getStartingPoint();
+        player = (new Playable(this, "red",p.x,p.y,(short)48,(short)96,(short)36,(short)32,(short)6,(short)64));
         camera = new Camera(this,"camera",0,0,(short)screenWidth,(short)screenHeight);
-        player = (new Playable(this, "red",-32,-32,(short)48,(short)96,(short)48,(short)96,(short)0,(short)0));
-
+        chunkSystem.addEntity(player);
         //dungeonM = new DungeonManager(this);
         //interactionPlay = new PlayInteractionManager(this);
 
@@ -162,6 +171,8 @@ public class GamePanel extends JPanel implements Runnable{
         //itemB = new ItemBar(this);
         //drawingM = new DrawingManager(this);
         //menuStateUI = new MenuState(this);
+        keys = new Keys(this);
+        inputHandlingSystem = new InputHandlingSystem(this);
     }
 
 
@@ -175,8 +186,24 @@ public class GamePanel extends JPanel implements Runnable{
         
         while (gameThread != null){
             
-            update();
+            long drawStart = System.nanoTime();
             repaint();
+            long drawend = System.nanoTime();
+            Runnable updateThread = new Runnable() {
+                public void run() {
+                    update();
+                };
+            };
+            try {
+                SwingUtilities.invokeAndWait(updateThread);
+            } catch (InvocationTargetException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
             sleepGameFrame();
         }
     }
@@ -184,6 +211,8 @@ public class GamePanel extends JPanel implements Runnable{
     public void update(){
         
         enviromentM.updateTicks();
+        inputHandlingSystem.update();
+        chunkSystem.workingMemory.simulate();
         if (gameState == PLAYSTATE ){
             //playUpdate();
 
@@ -206,9 +235,7 @@ public class GamePanel extends JPanel implements Runnable{
         enviromentM.updateTicks();
         //entityH.update();
         
-        //update players action
-        spiller.updateAction();
-       // updateAction()
+        
         
 
         //update animation - shoudl be done in envoirment.
@@ -217,9 +244,10 @@ public class GamePanel extends JPanel implements Runnable{
 
 
     public void paintComponent(Graphics g){
-        super.paintComponents(g); 
         
+        super.paintComponent(g); 
         camera.draw(g);
+        
     }
 
 
@@ -264,5 +292,18 @@ public class GamePanel extends JPanel implements Runnable{
 
     public int getFrameWidth(){
         return (int)frame.getBounds().getWidth();
+    }
+
+    private Point getStartingPoint(){
+        for (int x = -tileSize*10;x<=tileSize*20;x+=tileSize){
+            for (int y = -tileSize*10;y<=tileSize*20;y+=tileSize){
+                if (!chunkSystem.workingMemory.solidCollision(new HitBox(x,y,tileSize*2,tileSize*2))){
+                    System.out.println("sucess!");
+                    System.out.println(x+","+y);
+                    return new Point(x,y);
+                }
+            }
+        }
+        return null;
     }
 }

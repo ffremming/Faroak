@@ -34,6 +34,8 @@ public class ChunkSystem {
 
     HashMap <String,Tile> tileHashMap = new HashMap<String,Tile>();
 
+    
+
     /**
      * the chunksystem starts by creating the parent treenode, that has an set size. this treenode will create childnodes til the children are small enought to be consideed a chunk.
      * 
@@ -44,13 +46,13 @@ public class ChunkSystem {
         
         proceduralGen = new ProceduralGeneration();
         //this should be lower. but not sure yet.
-        renderDistance = 12*panel.tileSize;
+        renderDistance = 4*panel.tileSize;
         
     
         
 
         parent = new TreeNode(this,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,(int)Math.pow(2,SIZEPOW)*panel.tileSize,(int)Math.pow(2,SIZEPOW)*panel.tileSize);
-        addEntity(new Playable(panel, "red",-32,-32,(short)48,(short)96,(short)48,(short)96,(short)0,(short)0));
+        //addEntity(new Playable(panel, "red",-32,-32,(short)48,(short)96,(short)48,(short)96,(short)0,(short)0));
 
         this.workingMemory = new WorkingMemory(this);
 
