@@ -13,9 +13,13 @@ import ressurser.main.GamePanel;
 
 public class Playable extends Entity {
 
-    Vector velocity = new Vector();
-    Vector direction = new Vector(1,1);
-    ArrayList<BufferedImage> images = new ArrayList<>();
+    private Vector velocity = new Vector();
+    private Vector direction = new Vector(1,1); 
+    private ArrayList<Vector> path = new ArrayList<>();
+
+    private ArrayList<BufferedImage> images = new ArrayList<>();
+    private int animationIndex = 0;
+    private int directionIndex = 0;
 
     public Playable(GamePanel panel, String name, int worldX, int worldY, short width, short height, short hitBoxWidth,
             short hitBoxHeight, short relativeXPLus, short relativeYPlus) {
@@ -39,27 +43,97 @@ public class Playable extends Entity {
 
     @Override
     public void update(){
-        
+       
         move();
+        updateAnimation();
+        
     }
 
-    public Vector getVelocity(){
-        return velocity;
+    private void updateAnimation() {
+
+
+        int oldX = (int)direction.getX();
+        int oldY = (int)direction.getY();
+
+       
+
+        //chechks for direction cahnges, might not be necacarry
+        if (oldX == direction.getX() && oldY == direction.getY() && !(oldX== 0 && oldY== 0)){
+            animationIndex ++;
+            if (animationIndex >= 60){
+                animationIndex = 1;
+            }
+
+            
+        } else {
+            animationIndex = 0;
+        }
+        if (direction.getX()>0){
+                //moves right
+                directionIndex = 1;
+            
+        } else if (direction.getX()<0){
+                //moves left
+                directionIndex = 3;
+        } else if(direction.getY()<0){
+            //moves down
+            directionIndex = 0;
+
+        } else if(direction.getY()>0){
+            //moves up
+            directionIndex = 2;
+            
+        } else {
+            //no movement
+            //no need to change
+        }
+
+        panel.camera.addbackendPrintData("direction: "+String.valueOf(direction));
+       
+        
+       
     }
+
+
+    
 
     /**not used.. */
     public void move() {
-        direction.set(Vector.normalize(velocity.getX()),Vector.normalize(velocity.getY()));
-        int movementX = (int)velocity.transferX(2);
-        int movementY = (int)velocity.transferY(2);
-       
+        
 
-        if (!(isCollided(getHitboxInfront()))){
 
-            worldX += movementX;
-            worldY += movementY;
-            getHitBox().updateCoords();
+        if (path.size()== 0){
+            direction.set(Vector.normalize(velocity.getX()),Vector.normalize(velocity.getY()));
+            int movementX = (int)velocity.transferX(2);
+            int movementY = (int)velocity.transferY(2);
+        
+
+            if (!(isCollided(getHitboxInfront()))){
+
+                worldX += movementX;
+                worldY += movementY;
+                getHitBox().updateCoords();
+            }
         }
+        else{
+            direction.set(Vector.normalize(path.get(0).getX()),Vector.normalize(path.get(0).getY()));
+            int movementX = (int)path.get(0).transferX(2);
+            int movementY = (int)path.get(0).transferY(2);
+            System.out.println(path.get(0));
+        
+            if (path.get(0).hasNoVelocity()){
+                path.remove(0);
+            }
+
+            if (!(isCollided(getHitboxInfront()))){
+
+                worldX += movementX;
+                worldY += movementY;
+                getHitBox().updateCoords();
+            }
+        }
+
+        
         
     }
 
@@ -97,7 +171,37 @@ public class Playable extends Entity {
     }
 
     private int getCorrespondingSpriteIndex() {//TODO
-        return 0;
+        int index = (directionIndex)*3;
+        if (index <0){index = 0;}
+        
+
+        int index2 = 0;
+
+        if (animationIndex == 0){
+            
+        } else if (animationIndex<30){
+            index2 = 1;
+        } else {
+            index2 = 2;
+        }
+        
+
+        return index +index2;// + animationIndex/20;
+
+
+        
+    }
+
+    public Vector getVelocity(){
+        return velocity;
+    }
+
+
+    public void setPath(ArrayList<Vector> newPath) {
+        path = newPath;
+    }
+    public void addPath(ArrayList<Vector> newPath){
+        path.addAll(newPath);
     }
 
     

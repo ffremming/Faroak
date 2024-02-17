@@ -46,7 +46,7 @@ public class ChunkSystem {
         
         proceduralGen = new ProceduralGeneration();
         //this should be lower. but not sure yet.
-        renderDistance = 4*panel.tileSize;
+        renderDistance = 30*panel.tileSize;
         
     
         
@@ -406,4 +406,7 @@ public class ChunkSystem {
         }
         return null;
     }
+
+
+    
 }

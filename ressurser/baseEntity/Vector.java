@@ -98,4 +98,8 @@ public class Vector {
         if (value<-1){return -1;}
         return value;
     }
+
+    public boolean hasNoVelocity() {
+        return (x ==0 && y == 0);
+    }
 }

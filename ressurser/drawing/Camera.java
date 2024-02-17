@@ -80,6 +80,7 @@ public class Camera extends primitiveEntity{
        
         ArrayList<BaseEntity> withinCam = panel.chunkSystem.workingMemory.getvisibleEntities();
         
+        addbackendPrintData("amount entities visible: "+String.valueOf(withinCam.size()));
        //panel.chunkSystem.workingMemory.writeInfo();
         //this only works if chunkysstem updates entites frequently
        
@@ -114,9 +115,13 @@ public class Camera extends primitiveEntity{
         }
         long endDraw = System.nanoTime();
         
+        
+        drawHighlightetHitbox(g2,panel.chunkSystem.workingMemory.hoveredEntity);
+
         addbackendPrintData("drawtime: "+String.valueOf(endDraw-startDraw));
         drawBackEndData(g2);
         
+
         panel.g.dispose();
         
         
@@ -171,6 +176,25 @@ public class Camera extends primitiveEntity{
          }
     }
 
+    private void drawHighlightetHitbox(Graphics2D g2,BaseEntity entity){
+        int x = entity.getHitBox().getWorldX()-worldX;
+        int y = entity.getHitBox().getWorldY()-worldY;
+
+        int width = (int)entity.getHitBox().getWidth();
+        int height = (int)entity.getHitBox().getHeight();
+        g2.setColor(Color.white);
+        float lineWidth = 2f;
+        BasicStroke stroke = new BasicStroke(lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+        g2.setStroke(stroke);
+       
+        
+         g2.drawRect(x,y,width,height);
+         if (entity instanceof Playable){
+            Rectangle rect = ((Playable) entity).getHitboxInfront();
+            g2.drawRect(rect.x-worldX,rect.y-worldY,rect.width,rect.height);
+         }
+    }
+
     private void drawCoords(Graphics2D g2,BaseEntity entity){
         int x = entity.getWorldX()-worldX;
         int y = entity.getWorldY()-worldY+30;
@@ -184,6 +208,7 @@ public class Camera extends primitiveEntity{
     }
 
     private void drawBackEndData(Graphics g2){
+        g2.setColor(Color.white);
         g2.setFont(new Font("Arial", Font.PLAIN, 16));
         int y = 20;
         ArrayList<String> printables = new ArrayList<>(backEndData);
@@ -222,6 +247,58 @@ public class Camera extends primitiveEntity{
         worldY+= value;
 
     }
+
+    /**works very poorly.. */
+    public BufferedImage createTransparentRectangle(int width, int height,ArrayList<BaseEntity> visible) {
+        // Create a BufferedImage with ARGB type for transparency support
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        
+        // Get the graphics context from the image
+        Graphics2D g2d = image.createGraphics();
+        
+        // Fill the entire image with black color
+        g2d.setColor(new Color(0,0,0,100));
+        g2d.fillRect(0, 0, width, height);
+        
+        // Clear the transparent area by setting alpha to 0
+        g2d.setColor(new Color(0, 0, 0, 0)); // Transparent black color
+
+
+        BufferedImage mask = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D maskGraphics = mask.createGraphics();
+        maskGraphics.setColor(new Color(0, 0, 0, 0)); // Transparent color
+
+      
+        
+
+
+        for (BaseEntity baseE: visible){
+            if (baseE.lightSource){
+                for (int x = baseE.getWorldX()-worldX-300;x<baseE.getWorldX()-worldX+300;x++){
+                    for (int y = baseE.getWorldY()-worldY-300;y<baseE.getWorldY()-worldY+300;y++){
+                        if (x>=0 && x< width && y>= 0 && y<height){
+                            if (image.getRGB(x,y)!=0x00000000 ){
+                                image.setRGB(x, y, 0x00000000);
+                            }
+                            
+                            
+                        }
+                        
+                    }
+                }
+            }
+        }
+        
+       
+
+        
+        // Dispose of the graphics context
+        g2d.dispose();
+        
+        
+        return image;
+    }
+
 
     public void addbackendPrintData(String newString){backEndData.add(newString);}
 }

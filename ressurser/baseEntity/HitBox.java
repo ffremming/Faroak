@@ -78,6 +78,13 @@ public class HitBox extends Rectangle{
         return intersects(hitbox)||contains( hitbox);
     }
 
+    public boolean collision(Point p){
+        
+        updateCoords();
+        
+        return contains( p);
+    }
+
     public void updateCoords(){
         if (baseEntity != null){
             x = baseEntity.getWorldX()+relativeXValue;

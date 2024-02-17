@@ -45,6 +45,7 @@ public class Tile extends BaseEntity{
         if (name.equals("ocean")){
             animated = true;
             solid = true;
+            lightSource = true;
         }
         
     }
@@ -98,7 +99,7 @@ public class Tile extends BaseEntity{
                     if (neightbor.isHigherthan(this)){
     
                         
-                        if (value == 0 ||(!ImageContainer.doesPNGFileExist("tile/"+neightbor.getName()+1+"B"+1))){
+                        if (value == 0 ||(!ImageContainer.doesPNGFileExist("tile/"+neightbor.getName()+value+"B"+1))){
                             images.add(panel.imageContainer.getTileImage(neightbor.getName()+"B"+i));
                         }else{
                             images.add(panel.imageContainer.getTileImage(neightbor.getName()+value+"B"+i));

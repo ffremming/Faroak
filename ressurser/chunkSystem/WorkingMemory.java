@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.HitBox;
+import ressurser.baseEntity.Vector;
 import ressurser.baseEntity.tile.Tile;
 
 /** 
@@ -17,7 +18,7 @@ public class WorkingMemory {
     ArrayList<Chunk> workingChunks = new ArrayList<>();
     ArrayList<BaseEntity> workingEntities = new ArrayList<>();
     ChunkSystem chunkSystem;
-    BaseEntity hoveredEntity = null;
+    public BaseEntity hoveredEntity = null;
 
 
     public WorkingMemory(ChunkSystem chunkSystem){
@@ -141,6 +142,9 @@ public class WorkingMemory {
         chunkSystem.panel.camera.addbackendPrintData("amount chunks loaded: "+String.valueOf(Chunk.amtLoaded));
         chunkSystem.panel.camera.addbackendPrintData("amount chunks generated: "+Chunk.amtGenerated);
 
+        
+        
+
     }
 
     /**
@@ -206,13 +210,14 @@ public class WorkingMemory {
         //try to get tile from chunkSystem
         return chunkSystem.getTile(p);
     }
+   
 
 
     //COLLISION:::::::::
 
     public boolean solidCollision(HitBox hitbox){
+        
         for (BaseEntity baseE:getEntitiesCollidedWith(hitbox)){
-
             if (baseE.isSolid()){
 
                 //can implement cheks here for boats and others...
@@ -236,6 +241,44 @@ public class WorkingMemory {
     return collided;
     }
 
+    public ArrayList<BaseEntity> getEntitiesCollidedWith(Point p){
+        ArrayList<BaseEntity> collided = new ArrayList<>();
+        for (BaseEntity baseE:workingEntities){
+
+            //if there is collision between the hitboxes and they are not the same hitbox, the enotity is added to list.
+
+            if (baseE.getHitBox().collision(p)){
+                collided.add(baseE);
+            }
+        
+        }
+    return collided;
+    }
+
     ///END COLLISION::::::::
+
+    public void setHoveredEntity(int x,int y){
+        int worldX =  chunkSystem.panel.camera.getWorldX()+x;
+        int worldY =  chunkSystem.panel.camera.getWorldY()+y;
+        ArrayList<BaseEntity> entities = getEntitiesCollidedWith(new Point(worldX,worldY));
+        chunkSystem.panel.camera.addbackendPrintData(worldX +","+worldY);
+        for (BaseEntity baseE:entities){
+            //TODO
+            if (entities.size() == 1){
+                hoveredEntity = baseE;
+                return;
+            } else{
+                if (!(baseE instanceof Tile)){
+                    hoveredEntity = baseE;
+                }
+            }
+        }
+    }
+
+    public ArrayList<Vector> getPath(BaseEntity baseE,Point p){
+        ArrayList<Vector> path = new ArrayList<>();
+        path.add(new Vector(p.x-baseE.getHitBox().getWorldX(),p.y-baseE.getHitBox().getWorldY()));
+        return path;
+    }
 
 }

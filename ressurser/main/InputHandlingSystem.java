@@ -7,6 +7,7 @@ public class InputHandlingSystem {
     boolean up,left,down,right = false;
     GamePanel panel;
 
+
     public InputHandlingSystem(GamePanel panel){
         this.panel = panel;
     }
@@ -27,6 +28,12 @@ public class InputHandlingSystem {
         if (right){
             panel.player.addVelocity(new Vector(1,0));
         }
+
+        //setting the hovered entities from mouse input
+        panel.chunkSystem.workingMemory.setHoveredEntity(panel.mouse.x,panel.mouse.y);
+        
+        
+
     }
 
     public void setDown(boolean val){

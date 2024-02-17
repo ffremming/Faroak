@@ -39,6 +39,8 @@ public class BaseEntity {
     //might need to change to sprite.
     public boolean animated;
 
+    public boolean lightSource = false;
+
     public BaseEntity(GamePanel panel,String name,int worldX,int worldY,short width,short height,short hitBoxWidth,short hitBoxHeight,int i,int j){
         this.panel = panel;
 

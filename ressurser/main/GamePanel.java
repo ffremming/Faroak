@@ -69,7 +69,7 @@ public class GamePanel extends JPanel implements Runnable{
     public OptionInteraction interactionOption;
 
     public KeyHandler input;
-    public MouseHandler mouse;
+    
     public Spiller spiller;
     public Meny menu;
     public CollisionChecker collisionC;
@@ -84,6 +84,7 @@ public class GamePanel extends JPanel implements Runnable{
 
     public Playable player;
     public Keys keys;
+    public Mouse mouse;
     public InputHandlingSystem inputHandlingSystem;
 
 
@@ -130,7 +131,10 @@ public class GamePanel extends JPanel implements Runnable{
         generateMap();
         
         setUpObjects();
+
         addKeyListener(keys);
+        addMouseListener(mouse);
+        addMouseMotionListener(mouse);
        
         this.setFocusable(true);
         requestFocus();
@@ -151,6 +155,7 @@ public class GamePanel extends JPanel implements Runnable{
         //objM = new ObjectManager(this,newGame);
         tileM = new TileManager(this);
         chunkSystem.workingMemory.initial();
+        chunkSystem.workingMemory.update(new Point(0,0));
     }
    
     private void setUpObjects(){
@@ -173,6 +178,7 @@ public class GamePanel extends JPanel implements Runnable{
         //menuStateUI = new MenuState(this);
         keys = new Keys(this);
         inputHandlingSystem = new InputHandlingSystem(this);
+        mouse = new Mouse(this);
     }
 
 
@@ -295,11 +301,9 @@ public class GamePanel extends JPanel implements Runnable{
     }
 
     private Point getStartingPoint(){
-        for (int x = -tileSize*10;x<=tileSize*20;x+=tileSize){
-            for (int y = -tileSize*10;y<=tileSize*20;y+=tileSize){
-                if (!chunkSystem.workingMemory.solidCollision(new HitBox(x,y,tileSize*2,tileSize*2))){
-                    System.out.println("sucess!");
-                    System.out.println(x+","+y);
+        for (int x = -tileSize*10;x<=tileSize*10;x+=tileSize){
+            for (int y = -tileSize*10;y<=tileSize*10;y+=tileSize){
+                if (!(chunkSystem.workingMemory.solidCollision(new HitBox(x,y,tileSize*2,tileSize*2)))){
                     return new Point(x,y);
                 }
             }
