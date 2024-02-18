@@ -17,6 +17,7 @@ public class WorkingMemory {
 
     ArrayList<Chunk> workingChunks = new ArrayList<>();
     ArrayList<BaseEntity> workingEntities = new ArrayList<>();
+    ArrayList<BaseEntity> sortedEntities = new ArrayList<>();
     ChunkSystem chunkSystem;
     public BaseEntity hoveredEntity = null;
 

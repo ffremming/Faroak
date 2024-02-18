@@ -91,14 +91,19 @@ public class Chunk extends TreeNode{
         list.add(this);
         
     }
+
     /*
      * adds entities to entity pile
      */
     @Override
     public void addEntity(BaseEntity entity){
-        entities.add(entity);
+        if (entity!= null){
+            entities.add(entity);
+        }
+       
         
     }
+
 
     /**
      * removes given entity
@@ -245,12 +250,21 @@ public class Chunk extends TreeNode{
         
     }
 
+    private BaseEntity getSingelEntity(int worldX,int worldY){
+
+        return chunkS.entityFactory.getEntity(worldX,worldY);
+
+
+    }
+
     private void addEntitiesToChunk(){
        
         for (int x2 = 0;x2<width;x2+= chunkS.panel.tileSize){
             for (int y2 = 0;y2<width;y2+=chunkS.panel.tileSize){
                 
                 addEntity(getSingelTile(x+x2,y+y2));
+
+                addEntity(getSingelEntity(x+x2,y+y2));
             }
         }
     }

@@ -13,6 +13,7 @@ import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.playable.Playable;
 import ressurser.baseEntity.tile.Tile;
+import ressurser.chunkSystem.terrainGeneration.EntityFactory;
 import ressurser.chunkSystem.terrainGeneration.ProceduralGeneration;
 import ressurser.main.GamePanel;
 import ressurser.main.GUIMenu.MenuPanel;
@@ -29,6 +30,7 @@ public class ChunkSystem {
     int renderDistance ;
     TreeNode parent;
     ProceduralGeneration proceduralGen;
+    EntityFactory entityFactory;
     //
     final int SIZEPOW = 11;// 5072 chunks.
 
@@ -45,6 +47,7 @@ public class ChunkSystem {
         this.panel = panel;
         
         proceduralGen = new ProceduralGeneration();
+        entityFactory = new EntityFactory(proceduralGen, panel);
         //this should be lower. but not sure yet.
         renderDistance = 30*panel.tileSize;
         

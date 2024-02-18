@@ -194,7 +194,7 @@ public class BaseEntity {
         
     }
     public void update() {
-        System.out.println(name+" , update");
+        
     }
     public Point getPoint() {
         return new Point(worldX,worldY);

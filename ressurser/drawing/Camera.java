@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.awt.BasicStroke;
 
 import ressurser.baseEntity.BaseEntity;
+import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.primitiveEntity;
 import ressurser.baseEntity.playable.Playable;
@@ -26,7 +27,7 @@ public class Camera extends primitiveEntity{
     
 
     public boolean drawingTimer = false;
-
+    
     //for drawing right FPS in panel:
     public int FPS = 60;
     public long splitTime = 1000000000/FPS;
@@ -99,7 +100,7 @@ public class Camera extends primitiveEntity{
 
         //draw entities later..
         for (BaseEntity baseE :withinCam){
-            if (baseE instanceof Playable){
+            if (baseE instanceof Entity){
                 drawRelative(g2,baseE);
                 if (testData){
                    

@@ -17,8 +17,7 @@ public class Playable extends Entity {
     private Vector direction = new Vector(1,1); 
     private ArrayList<Vector> path = new ArrayList<>();
 
-    private ArrayList<BufferedImage> images = new ArrayList<>();
-    private int animationIndex = 0;
+    
     private int directionIndex = 0;
 
     public Playable(GamePanel panel, String name, int worldX, int worldY, short width, short height, short hitBoxWidth,

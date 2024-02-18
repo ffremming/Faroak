@@ -14,6 +14,7 @@ import ressurser.chunkSystem.terrainGeneration.Biome;
 public class ImageContainer {
 
     public HashMap<String,BufferedImage> images = new HashMap<>();
+    public HashMap<String,ArrayList<BufferedImage>> objectImages = new HashMap<>();
 
     public ImageContainer(){
         setupBaseImages();
@@ -195,7 +196,7 @@ public class ImageContainer {
         images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/down1.png")));
         images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/down2.png")));
         images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/down3.png")));
-        
+
         images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/left1.png")));
         images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/left2.png")));
         images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/left3.png")));
@@ -207,5 +208,46 @@ public class ImageContainer {
     }
     return images;
        
+    }
+
+
+
+    public ArrayList<BufferedImage> getObjectImages(String name){
+        if (objectImages.containsKey(name)){
+            return objectImages.get(name);
+        }
+        else{
+            return getObjectImagesFromFile(name);
+        }
+    }
+
+
+    public ArrayList<BufferedImage> getObjectImagesFromFile(String name) {
+        ArrayList<BufferedImage> images = new ArrayList<>();
+
+        File folder = new File("ressurser/images/objects/"+name); // Change this to your folder path
+        
+        if (folder.isDirectory()) {
+            File[] files = folder.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile()) {
+                        try {
+                            BufferedImage image = ImageIO.read(file);
+                            if (image != null) {
+                                images.add(image);
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+
+
+
+        }
+        objectImages.put(name,images);
+        return images;
     }
 }

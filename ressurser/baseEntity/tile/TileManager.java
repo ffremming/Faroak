@@ -58,7 +58,8 @@ public class TileManager {
         tileHeight.put("mud",20);
         tileHeight.put("swamp",80);
         tileHeight.put("desert",10);
-        tileHeight.put("beach",5);
+        tileHeight.put("beach",7);
+        tileHeight.put("wetBeach",5);
         tileHeight.put("ocean",0);
         tileHeight.put("forest",101);
         tileHeight.put("savanna",50);
