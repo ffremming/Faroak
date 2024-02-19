@@ -8,8 +8,9 @@ import ressurser.main.GamePanel;
 public class GameObject extends Entity{
 
     public GameObject(GamePanel panel, String name, int worldX, int worldY, short width, short height, short hitBoxWidth,
-            short hitBoxHeight, short i, short j) {
+            short hitBoxHeight, short i, short j,boolean solid) {
         super(panel, name, worldX, worldY, width, height, hitBoxWidth, hitBoxHeight, i, j);
+        this.solid = solid;
         getImage();
     }
 

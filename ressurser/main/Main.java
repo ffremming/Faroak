@@ -16,10 +16,10 @@ public class Main{
     vindu.setTitle("nytt vindu");
     
     MenuPanel menu = new MenuPanel(vindu);
-    vindu.setSize(20*32,32*15);
+    vindu.setSize(640,400);
 
     vindu.getContentPane().add(menu);
-    vindu.setLocationRelativeTo(null);
+    //vindu.setLocationRelativeTo(null);
     vindu.setVisible(true);
     vindu.toFront();
     

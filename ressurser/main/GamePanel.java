@@ -42,8 +42,8 @@ public class GamePanel extends JPanel implements Runnable{
     public boolean gameOption = false;
     public boolean arrowYes = false;
     
-    public final int screenHeight = tileSize *10;
-    public final int screenWidth = tileSize *18;
+    public final int screenHeight = tileSize *12;
+    public final int screenWidth = tileSize *20;
     
 
     int aktivStreng = 1;

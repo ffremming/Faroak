@@ -203,4 +203,10 @@ public class BaseEntity {
     public boolean isSolid(){
         return solid;
     }
+
+    @Override
+    public String toString(){
+        return name+"\nsolid: " + solid+"\nanimated: "+animated + "\nlightSource: " + lightSource; 
+
+    }
 }

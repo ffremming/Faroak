@@ -49,7 +49,7 @@ public class ChunkSystem {
         proceduralGen = new ProceduralGeneration();
         entityFactory = new EntityFactory(proceduralGen, panel);
         //this should be lower. but not sure yet.
-        renderDistance = 30*panel.tileSize;
+        renderDistance = 14*panel.tileSize;
         
     
         

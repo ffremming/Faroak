@@ -27,7 +27,7 @@ public class Camera extends primitiveEntity{
     
 
     public boolean drawingTimer = false;
-    
+
     //for drawing right FPS in panel:
     public int FPS = 60;
     public long splitTime = 1000000000/FPS;
@@ -86,16 +86,12 @@ public class Camera extends primitiveEntity{
         //this only works if chunkysstem updates entites frequently
        
         //draw tiles first - not yet implemented
-        for (BaseEntity baseE :withinCam){
-            if (baseE instanceof Tile){
-            
-                drawRelative(g2,baseE);
-                if (testData){
-                    drawHitBox(g2,baseE);
-                    drawCoords(g2,baseE);
-                } 
-            }  
-            
+        for (BaseEntity baseE :panel.chunkSystem.workingMemory.getVisibleTiles()){
+            drawRelative(g2,baseE);
+            if (testData){
+                drawHitBox(g2,baseE);
+                drawCoords(g2,baseE);
+            } 
         }
 
         //draw entities later..
@@ -119,8 +115,10 @@ public class Camera extends primitiveEntity{
         
         drawHighlightetHitbox(g2,panel.chunkSystem.workingMemory.hoveredEntity);
 
-        addbackendPrintData("drawtime: "+String.valueOf(endDraw-startDraw));
+        addbackendPrintData("drawtime ms: "+String.valueOf((endDraw-startDraw)/1000000));
+        addbackendPrintData("remaining cap: "+String.valueOf((1000000000-(((endDraw-startDraw)*60)))));
         drawBackEndData(g2);
+        drawObjectData(g2);
         
 
         panel.g.dispose();
@@ -220,7 +218,24 @@ public class Camera extends primitiveEntity{
         }
         
         backEndData.clear();
-        backEndData.clear();
+    }
+
+    private void drawObjectData(Graphics g2){
+        g2.setColor(Color.white);
+        g2.setFont(new Font("Arial", Font.PLAIN, 16));
+        int y = 20;
+        ArrayList<String> printables = new ArrayList<>();
+
+        
+        for (String streng:(panel.chunkSystem.workingMemory.hoveredEntity.toString().split("\n"))){
+            printables.add(streng);
+        }
+
+        for (String printData:printables){
+           
+            g2.drawString(printData,panel.screenWidth-150,y);
+            y += 25;
+        }
     }
 
 

@@ -2,6 +2,7 @@ package ressurser.chunkSystem;
 
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.HitBox;
@@ -16,7 +17,7 @@ import ressurser.baseEntity.tile.Tile;
 public class WorkingMemory {
 
     ArrayList<Chunk> workingChunks = new ArrayList<>();
-    ArrayList<BaseEntity> workingEntities = new ArrayList<>();
+    public ArrayList<BaseEntity> workingEntities = new ArrayList<>();
     ArrayList<BaseEntity> sortedEntities = new ArrayList<>();
     ChunkSystem chunkSystem;
     public BaseEntity hoveredEntity = null;
@@ -70,6 +71,16 @@ public class WorkingMemory {
         return notTiles;
     }
 
+    public ArrayList<BaseEntity> getTiles(){
+        ArrayList<BaseEntity> notTiles = new ArrayList<>();
+        for (BaseEntity entity:workingEntities){
+            if ((entity instanceof Tile)){
+                notTiles.add(entity);
+            }
+        }
+        return notTiles;
+    }
+
     public ArrayList<BaseEntity> getBaseEntities(){
         return workingEntities;
     }
@@ -86,7 +97,7 @@ public class WorkingMemory {
      */
     public void update(Point p){
 
-        
+        sortedEntities = getEntities();
 
         System.out.println("updating WM"+ p);
         //check if needed loading of new chunks
@@ -117,13 +128,15 @@ public class WorkingMemory {
         
         System.out.println("end updating WM");
         //writeInfo();
+
+        sort(sortedEntities);
     }
 
     /**
      * updates/simulates all actions of the entities
      */
     public void simulate(){
-
+        
         int nonTile = 0;
 
         ArrayList<BaseEntity> simulatedEntites = new ArrayList<>(workingEntities);
@@ -190,7 +203,19 @@ public class WorkingMemory {
      */
     public  ArrayList<BaseEntity> getvisibleEntities(){
         ArrayList<BaseEntity> visible = new ArrayList<>();
-        for (BaseEntity ent:getBaseEntities()){
+
+        for (BaseEntity ent:sortedEntities){
+            if (chunkSystem.panel.camera.collision(ent)){
+                visible.add(ent);
+            }
+        }
+        return visible;
+    }
+
+    public  ArrayList<BaseEntity> getVisibleTiles(){
+        ArrayList<BaseEntity> visible = new ArrayList<>();
+
+        for (BaseEntity ent:getTiles()){
             if (chunkSystem.panel.camera.collision(ent)){
                 visible.add(ent);
             }
@@ -280,6 +305,58 @@ public class WorkingMemory {
         ArrayList<Vector> path = new ArrayList<>();
         path.add(new Vector(p.x-baseE.getHitBox().getWorldX(),p.y-baseE.getHitBox().getWorldY()));
         return path;
+    }
+
+
+     private static void swap(ArrayList<BaseEntity> list, int i, int j) {
+        Collections.swap(list, i, j);
+    }
+
+    // Partition function to partition the arraylist and return the pivot index
+    private static int partition(ArrayList<BaseEntity> list, int low, int high) {
+        BaseEntity pivot = list.get(high);
+        int i = low - 1;
+        for (int j = low; j < high; j++) {
+            if (list.get(j).getHitBox().getWorldY() < pivot.getHitBox().getWorldY()) {
+                i++;
+                swap(list, i, j);
+            }
+        }
+        swap(list, i + 1, high);
+        return i + 1;
+    }
+
+    // Quicksort function to recursively sort the arraylist
+    private static void quicksort(ArrayList<BaseEntity> list, int low, int high) {
+        if (low < high) {
+            // Optimized for small arrays: switch to insertion sort if partition size is small
+            if (high - low + 1 <= 10) {
+                insertionSort(list, low, high);
+            } else {
+                int pivotIndex = partition(list, low, high);
+                quicksort(list, low, pivotIndex - 1);
+                quicksort(list, pivotIndex + 1, high);
+            }
+        }
+    }
+
+    // Insertion sort function for sorting small subarrays
+    private static void insertionSort(ArrayList<BaseEntity> list, int low, int high) {
+        for (int i = low + 1; i <= high; i++) {
+            BaseEntity key = list.get(i);
+            int j = i - 1;
+            while (j >= low && (list.get(j).getHitBox().getWorldY() > key.getHitBox().getWorldY()) ) {
+
+                list.set(j + 1, list.get(j));
+                j--;
+            }
+            list.set(j + 1, key);
+        }
+    }
+
+    // Public method to call the quicksort function with the entire arraylist
+    public static void sort(ArrayList<BaseEntity> list) {
+        quicksort(list, 0, list.size() - 1);
     }
 
 }
