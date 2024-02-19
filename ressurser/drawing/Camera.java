@@ -34,7 +34,7 @@ public class Camera extends primitiveEntity{
     public long nextDrawTime = System.nanoTime()+splitTime;
     ArrayList<String> backEndData = new ArrayList<>();
 
-    public boolean testData = true;
+    public boolean testData = false;
 
     public Camera(GamePanel panel, String name, int worldX, int worldY, short width, short height) {
         super(panel, name, worldX, worldY, (short) panel.screenWidth,(short)(panel.screenHeight));
@@ -132,6 +132,7 @@ public class Camera extends primitiveEntity{
 
         int x = entity.getWorldX()-worldX;
         int y = entity.getWorldY()-worldY;
+        if (getHitBox().contains(x,y) || getHitBox().contains(x+entity.getWidth(),y+entity.getWidth()) )
 
         g2.setColor(Color.WHITE);
         g2.drawString(entity.getName(),x,y+15);

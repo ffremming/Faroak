@@ -205,7 +205,7 @@ public class WorkingMemory {
         ArrayList<BaseEntity> visible = new ArrayList<>();
 
         for (BaseEntity ent:sortedEntities){
-            if (chunkSystem.panel.camera.collision(ent)){
+            if (chunkSystem.panel.camera.getHitBox().getAlteredHitBox(0,0,0,64*3).collision(ent.getHitBox())){
                 visible.add(ent);
             }
         }
@@ -331,7 +331,7 @@ public class WorkingMemory {
         if (low < high) {
             // Optimized for small arrays: switch to insertion sort if partition size is small
             if (high - low + 1 <= 10) {
-                insertionSort(list, low, high);
+                insertionSort1(list, low, high);
             } else {
                 int pivotIndex = partition(list, low, high);
                 quicksort(list, low, pivotIndex - 1);
@@ -341,7 +341,7 @@ public class WorkingMemory {
     }
 
     // Insertion sort function for sorting small subarrays
-    private static void insertionSort(ArrayList<BaseEntity> list, int low, int high) {
+    private static void insertionSort1(ArrayList<BaseEntity> list, int low, int high) {
         for (int i = low + 1; i <= high; i++) {
             BaseEntity key = list.get(i);
             int j = i - 1;
@@ -357,6 +357,29 @@ public class WorkingMemory {
     // Public method to call the quicksort function with the entire arraylist
     public static void sort(ArrayList<BaseEntity> list) {
         quicksort(list, 0, list.size() - 1);
+    }
+
+
+    
+
+    // Insertion sort function for sorting small subarrays based on BaseEntity's getWorldY() and getWorldX() methods
+    private static void insertionSort(ArrayList<BaseEntity> list, int low, int high) {
+        for (int i = low + 1; i <= high; i++) {
+            BaseEntity key = list.get(i);
+            int j = i - 1;
+            // Compare based on worldY
+            while (j >= low && (list.get(j).getWorldY() > key.getWorldY() ||
+                    (list.get(j).getWorldY()+list.get(j).getHeight() == key.getWorldY()+key.getWorldY()+key.getHeight() && list.get(j).getWorldX()+list.get(j).getHeight() > key.getWorldX()+key.getHeight()))) {
+                list.set(j + 1, list.get(j));
+                j--;
+            }
+            list.set(j + 1, key);
+        }
+    }
+
+    // Public method to call the insertion sort function with the entire arraylist
+    public static void insertionSort(ArrayList<BaseEntity> list) {
+        insertionSort(list, 0, list.size() - 1);
     }
 
 }

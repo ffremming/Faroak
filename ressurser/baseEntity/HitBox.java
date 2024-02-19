@@ -128,6 +128,19 @@ public class HitBox extends Rectangle{
     public Point getCenter(){
         return new Point((x+width/2),(y+height/2));
     }
+
+    public HitBox getAlteredHitBox(double resizeValue,int right,int up){
+        HitBox hitBox = new HitBox(getWorldX()+right,getWorldY()-up,(int)(width*resizeValue),(int)(height*resizeValue));
+        return hitBox;
+
+    }
+
+    public HitBox getAlteredHitBox(int right,int up,int left,int down){
+        HitBox hitBox = new HitBox(getWorldX()-left,getWorldY()-up,(int)(width+left+right),(int)(height+up+down));
+        return hitBox;
+    }
+
     
+
     
 }
