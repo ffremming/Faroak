@@ -1,6 +1,0 @@
-baseType,type,class,name,
-
-
-entity,npc,ferdi,{1:1,3:6,3:8}
-
-entity,player,0,

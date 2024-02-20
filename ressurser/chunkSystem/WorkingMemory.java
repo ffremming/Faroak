@@ -104,15 +104,17 @@ public class WorkingMemory {
         chunkSystem.handleOutOfBounds(p);
 
         //update chunks:
+        ArrayList<Chunk> oldChunks = new ArrayList<>(workingChunks);
         setWorkingChunks(chunkSystem.getAllChunksInRenderDistance(p));
+
+        compareAndSelectUnloadedChunks(oldChunks,workingChunks);
+
 
         //load chunks that might not be loaded: - is dependent on the working memory chunks
         for (Chunk chunk:getChunks()){
             chunk.flush();
             chunk.load();
-            
         }
-        
         for (Chunk chunk:getChunks()){
             chunk.connectTiles();
         }
@@ -131,6 +133,19 @@ public class WorkingMemory {
 
         sort(sortedEntities);
     }
+
+    /**compares two lists if any chunks no longer are loaded, if so, forget data, and write to dataBase */
+    private void compareAndSelectUnloadedChunks(ArrayList<Chunk> oldChunks, ArrayList<Chunk> newChunks) {
+        for(Chunk oldChunk:oldChunks){
+            
+            if (!newChunks.contains(oldChunk)){ //if new chunkList doestn contain old chunks - 
+               
+                oldChunk.unLoad();
+            }
+        }
+    
+    }
+
 
     /**
      * updates/simulates all actions of the entities

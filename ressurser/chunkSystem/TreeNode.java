@@ -189,7 +189,9 @@ public class TreeNode extends HitBox{
     protected TreeNode [] getChildren(){
         return children;
     }
-    
+    public int getSquareMeter(){
+        return width*height;
+    }
     
 }
 

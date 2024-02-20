@@ -55,10 +55,10 @@ public class Playable extends Entity {
         int oldY = (int)direction.getY();
 
        
-
+        
         //chechks for direction cahnges, might not be necacarry
         if (oldX == direction.getX() && oldY == direction.getY() && !(oldX== 0 && oldY== 0)){
-            animationIndex ++;
+            animationIndex +=2;
             if (animationIndex >= 60){
                 animationIndex = 1;
             }

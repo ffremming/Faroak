@@ -300,6 +300,12 @@ public class Chunk extends TreeNode{
             chunkS.addEntity(baseE);
         }
     }
+
+
+    public void unLoad(){
+        loaded = false;
+        entities = null;
+    }
     
 
     

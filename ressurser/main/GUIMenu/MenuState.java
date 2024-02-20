@@ -26,7 +26,7 @@ public class MenuState extends ScreenState{
 
         itemBar.setX(200);
         itemBar.setY(500);
-
+        
         add(itemBar);
         add(itemC);
         setVisible(false);

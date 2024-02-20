@@ -2,6 +2,7 @@ package ressurser.chunkSystem;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -21,6 +22,11 @@ import ressurser.main.GUIMenu.MenuPanel;
 
 
 public class ChunkSystem {
+
+    //file reading prototype:
+    
+
+
     
     GamePanel panel;
 
@@ -31,12 +37,52 @@ public class ChunkSystem {
     TreeNode parent;
     ProceduralGeneration proceduralGen;
     EntityFactory entityFactory;
+    
     //
-    final int SIZEPOW = 11;// 5072 chunks.
+    final int SIZEPOW = 1;// 5072 chunks.
+    //the size 1 results in 16 chunks
+    //the size 2 results in 64 chunks
+    //etc 256 ...
 
     HashMap <String,Tile> tileHashMap = new HashMap<String,Tile>();
 
     
+    public static void main(){
+        GamePanel panel = new GamePanel(new JFrame(),true);
+        ChunkSystem chunky = new ChunkSystem(panel);
+        chunky.setUpTest();
+        chunky.handleOutOfBounds(new Point(-1050,-1070));
+        //chunky.testExpandingSystem(0,0);
+        //chunky.testExpandingSystem(1,0);
+        chunky.testExpandingSystem(0,1);
+        //chunky.testExpandingSystem(1,1);
+    }
+
+    private void testExpandingSystem(int xOff,int yOff){
+        
+        
+
+        for (int i = 0;i<10;i++){
+            int width = parent.width;
+            int height = parent.height;
+
+            int x = parent.x;
+            int y = parent.y;
+            handleOutOfBounds(new Point(x+xOff*width,yOff*height));
+
+
+            assert parent.getSquareMeter() == width*height *4: "squareMeter";
+            assert parent.x !=x: "x==x";
+            assert parent.y !=y: "y==y";
+            System.out.println(parent.x);
+            System.out.println(parent.y);
+            System.out.println(parent.width);
+            System.out.println(parent.height);
+
+        }
+
+        
+    }
 
     /**
      * the chunksystem starts by creating the parent treenode, that has an set size. this treenode will create childnodes til the children are small enought to be consideed a chunk.
@@ -54,7 +100,9 @@ public class ChunkSystem {
     
         
 
-        parent = new TreeNode(this,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,-(int)Math.pow(2,SIZEPOW)*panel.tileSize/2,(int)Math.pow(2,SIZEPOW)*panel.tileSize,(int)Math.pow(2,SIZEPOW)*panel.tileSize);
+        //the size of treeNode is defined by the SIZEPOW - which is the value x that results in 2^x, which is the width of the entire chunkSystem(in the beginning.)
+        
+        parent = new TreeNode(this,-(int)Math.pow(2,SIZEPOW)*panel.tileSize*8,-(int)Math.pow(2,SIZEPOW)*panel.tileSize*8,(int)Math.pow(2,SIZEPOW)*panel.tileSize*16,(int)Math.pow(2,SIZEPOW)*panel.tileSize*16);
         //addEntity(new Playable(panel, "red",-32,-32,(short)48,(short)96,(short)48,(short)96,(short)0,(short)0));
 
         this.workingMemory = new WorkingMemory(this);
@@ -384,6 +432,7 @@ public class ChunkSystem {
             System.out.println(southWest);
             System.out.println(NorthEast);
             System.out.println(NorthWest);
+            //this should never happen, since we are increasing the storage by 4, and 
             throw new OutOfChunkBounds("unable to create new chunks with the right constraints");
         }
     }
@@ -410,6 +459,20 @@ public class ChunkSystem {
         return null;
     }
 
+    private int getPercentagegenerated(){
+        int generated = 0;
+        
+        for (Chunk chunk:getAllChunksInSystem()){
+            if (chunk.loaded){
+
+                generated ++;
+            } 
+        }
+        int percentage = 100*generated/getAllChunksInSystem().size();
+        return percentage;
+    }
+
+    
 
     
 }

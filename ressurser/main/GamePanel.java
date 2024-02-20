@@ -150,7 +150,7 @@ public class GamePanel extends JPanel implements Runnable{
         
         mapH = new MapHandler(this);
         //spiller = new Spiller(this,textString, 2000,500,(short) 40,(short) 128,(short) 48,(short) 48, (short)8,(short)( 128-48));
-        terrainGen = new TerrainGenSimplex(mapH.mapWidth,mapH.mapHeight,true);
+        
         //imageP = new ImagePainter();
         //objM = new ObjectManager(this,newGame);
         tileM = new TileManager(this);
