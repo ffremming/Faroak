@@ -1,6 +1,7 @@
 package ressurser.main.GUIMenu;
 
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
@@ -12,26 +13,37 @@ import ressurser.main.GamePanel;
 
 public class Container extends BaseComponent{
 
-    final protected int STACK = 1;
-    final protected int INVENTORY = 2;
-    int layout;
-
     //INVENTORY
     int rows;
     int cols;
     int slotWidth;
     int slotHeight;
 
+    ArrayList<Component> content = new ArrayList<>();
+    public int border;
 
     public Container(GamePanel panel) {
         super(panel);
-        
+    }
+    public Container(GamePanel panel,int x,int y,int width,int height) {
+        super(panel);
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
     }
 
-    ArrayList<Component> content = new ArrayList<>();
-
-
     public void add(Component comp){
+        if (content.size()== 0){
+            comp.y = y+padding;
+            comp.x = x+padding;
+
+        } else {
+            Component previous = content.get(content.size()-1);
+            comp.y = y+previous.y+previous.height + padding;
+            comp.x = x + padding;
+        }
+
         content.add(comp);
         comp.setContainer(this);
     }
@@ -41,66 +53,13 @@ public class Container extends BaseComponent{
     }
 
     public void draw(Graphics2D g2){
-        //avhenger av hvordan jeg vil gjør dette
-
-        //has to change to look better:
-        
-        if (layout == STACK){
-
-            int compY = y + 20;
+        if (visible){
             drawRect(g2);
-
             for (Component comp:content){
-                
-                comp.setX(x+width/2-comp.width/2);
-                comp.setY(compY);
                 comp.draw(g2);
-                compY += (int)comp.height+comp.height/2;
             }
         }
-
-         else if (layout == INVENTORY){
-
-
-            int startX = x +10;
-            int startY = y +10;
-
-            int compY = y +10;
-            int compX = x + 10;
-            
-            drawRect(g2);
-            int counter = 0;
-
-            for (Component comp:content){
-
-                comp.setX(compX);
-                comp.setY(compY);
-                comp.draw(g2);
-
-                if (counter <cols-1){
-                   
-                    compX += comp.width;
-                } else {
-                    compX = startX;
-                    compY += comp.height;
-                    counter = -1;
-                }
-
-                counter ++;
-            }
-        }
-        
-        
-    }
-    /**
-     * 1: Stack
-     * 2: Inventory
-     */
-    void setLayout(int type){
-        layout = type;
-    }
-
-    public void setCorrectedBounds() {
+       
     }
 
     public void mousePressed(MouseEvent e){
@@ -110,32 +69,25 @@ public class Container extends BaseComponent{
 
        
         for (Component comp:content){
-
-            //if in the component
-            
-            if (xEvent >= comp.x && xEvent<=comp.x+comp.width){
-                if (yEvent >= comp.y && yEvent<=comp.y+comp.height){
-
-                    comp.mousePressed(e);
-                }
+            if (comp.contains(new Point(xEvent,yEvent))){
+                comp.mousePressed(e);
+            }else{
+                
             }
         }
     }
 
     public void mouseMoved(MouseEvent e){
 
-        hover = true;
         int xEvent = e.getX();
         int yEvent = e.getY();
 
-        
         for (Component comp:content){
-            
-            //if in the component
-            if (xEvent >= comp.x && xEvent<=comp.x+comp.width && yEvent >= comp.y && yEvent<=comp.y+comp.height){
-                    comp.mouseMoved(e);
+            if (comp.contains(new Point(xEvent,yEvent))){
+                setHover(true);
+                comp.mouseMoved(e);
             } else {
-                comp.hover = false;
+                comp.setHover(false);
             }
         }
     }
@@ -148,12 +100,9 @@ public class Container extends BaseComponent{
         //Some containers wwant to move here, others, might need to move the components.
         
         for (Component comp:content){
-            
-            //if in the component
-            if (xEvent >= comp.x && xEvent<=comp.x+comp.width && yEvent >= comp.y && yEvent<=comp.y+comp.height){
+            if (comp.contains(new Point(xEvent,yEvent))){
                     comp.mouseWheelMoved(e);
             } else {
-                
             }
         }
     }

@@ -13,6 +13,7 @@ import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.playable.Playable;
+import ressurser.baseEntity.tile.CliffTile;
 import ressurser.baseEntity.tile.Tile;
 import ressurser.chunkSystem.terrainGeneration.EntityFactory;
 import ressurser.chunkSystem.terrainGeneration.ProceduralGeneration;
@@ -39,7 +40,9 @@ public class ChunkSystem {
     EntityFactory entityFactory;
     
     //
-    final int SIZEPOW = 1;// 5072 chunks.
+    //the size of treeNode is defined by the SIZEPOW - which is the value x that results in 2^x, which is the width of the entire chunkSystem(in the beginning.)
+        
+    final int SIZEPOW = 8;// 5072 chunks.
     //the size 1 results in 16 chunks
     //the size 2 results in 64 chunks
     //etc 256 ...
@@ -100,8 +103,7 @@ public class ChunkSystem {
     
         
 
-        //the size of treeNode is defined by the SIZEPOW - which is the value x that results in 2^x, which is the width of the entire chunkSystem(in the beginning.)
-        
+       
         parent = new TreeNode(this,-(int)Math.pow(2,SIZEPOW)*panel.tileSize*8,-(int)Math.pow(2,SIZEPOW)*panel.tileSize*8,(int)Math.pow(2,SIZEPOW)*panel.tileSize*16,(int)Math.pow(2,SIZEPOW)*panel.tileSize*16);
         //addEntity(new Playable(panel, "red",-32,-32,(short)48,(short)96,(short)48,(short)96,(short)0,(short)0));
 
@@ -452,9 +454,11 @@ public class ChunkSystem {
     public Tile getTile(Point p) {
         ArrayList<BaseEntity> entitiesInPoint = new ArrayList<BaseEntity>();
         for (BaseEntity entity: parent.getEntitiesInPoint(p,entitiesInPoint)){
-            if (entity instanceof Tile){
+            if(entity instanceof CliffTile){
+                return (CliffTile) entity;
+            }else if (entity instanceof Tile){
                 return (Tile)entity;
-            }
+            } 
         }
         return null;
     }

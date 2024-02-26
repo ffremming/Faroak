@@ -22,10 +22,9 @@ public class WorkingMemory {
     ChunkSystem chunkSystem;
     public BaseEntity hoveredEntity = null;
 
-
+    
     public WorkingMemory(ChunkSystem chunkSystem){
         this.chunkSystem = chunkSystem;
-        
     }
 
     /**starts the system up. connect tiles toghetet after all tiles are made. */
@@ -97,20 +96,24 @@ public class WorkingMemory {
      */
     public void update(Point p){
 
-        sortedEntities = getEntities();
-
-        System.out.println("updating WM"+ p);
-        //check if needed loading of new chunks
+        //1. check if needed loading of new chunks
         chunkSystem.handleOutOfBounds(p);
 
-        //update chunks:
+        //2. updates chunks (unloading, loading, flushing, connecting)
+        updateChunks(p);
+
+        //3. updates list of all entities, sorts sorted list
+        updateEntities(p);
+    }
+
+    /**unloades chunks, flushes out moveables, reloades chunk and connect tiles */
+    private void updateChunks(Point p){
+
+         // chekcs if needed unloading of old chunks as well as updating new chunks
         ArrayList<Chunk> oldChunks = new ArrayList<>(workingChunks);
         setWorkingChunks(chunkSystem.getAllChunksInRenderDistance(p));
-
         compareAndSelectUnloadedChunks(oldChunks,workingChunks);
 
-
-        //load chunks that might not be loaded: - is dependent on the working memory chunks
         for (Chunk chunk:getChunks()){
             chunk.flush();
             chunk.load();
@@ -118,20 +121,19 @@ public class WorkingMemory {
         for (Chunk chunk:getChunks()){
             chunk.connectTiles();
         }
+    }
 
-        //sets working entities - all entities within render distance.
-        ArrayList<BaseEntity> AllEntitiesInRenderDistance = new ArrayList<>();
+    /**3. updates list of all entities - all entities within render distance*/
+    private void updateEntities(Point p){
+        ArrayList<BaseEntity> allEntitiesInRenderDistance = new ArrayList<>();
         ArrayList<Chunk> chunksCopy = new ArrayList<>(workingChunks);
         for (Chunk chunk:chunksCopy){
-            chunk.getEntitiesInBound(chunkSystem.getRenderRectangle(p),AllEntitiesInRenderDistance);
+            chunk.getEntitiesInBound(chunkSystem.getRenderRectangle(p),allEntitiesInRenderDistance);
         }
 
-        setWorkingEntities(AllEntitiesInRenderDistance);
-        
-        System.out.println("end updating WM");
-        //writeInfo();
-
-        sort(sortedEntities);
+        setWorkingEntities(allEntitiesInRenderDistance);
+        sortedEntities =allEntitiesInRenderDistance;
+        sort(allEntitiesInRenderDistance);
     }
 
     /**compares two lists if any chunks no longer are loaded, if so, forget data, and write to dataBase */
@@ -139,8 +141,8 @@ public class WorkingMemory {
         for(Chunk oldChunk:oldChunks){
             
             if (!newChunks.contains(oldChunk)){ //if new chunkList doestn contain old chunks - 
-               
-                oldChunk.unLoad();
+            
+            oldChunk.unLoad();
             }
         }
     
@@ -167,13 +169,8 @@ public class WorkingMemory {
         chunkSystem.panel.camera.addbackendPrintData("non-tile entities: "+nonTile);
         chunkSystem.panel.camera.addbackendPrintData("chunks in working memory: "+String.valueOf(workingChunks.size()));
         chunkSystem.panel.camera.addbackendPrintData("render distance: "+chunkSystem.renderDistance);
-
         chunkSystem.panel.camera.addbackendPrintData("amount chunks loaded: "+String.valueOf(Chunk.amtLoaded));
         chunkSystem.panel.camera.addbackendPrintData("amount chunks generated: "+Chunk.amtGenerated);
-
-        
-        
-
     }
 
     /**
@@ -371,6 +368,7 @@ public class WorkingMemory {
 
     // Public method to call the quicksort function with the entire arraylist
     public static void sort(ArrayList<BaseEntity> list) {
+        
         quicksort(list, 0, list.size() - 1);
     }
 

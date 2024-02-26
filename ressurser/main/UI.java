@@ -41,7 +41,6 @@ public class UI {
         getArrowSprite();
         menuX = panel.screenWidth-6*panel.tileSize;
         menuY= panel.screenHeight+panel.tileSize*2;
-        
     }
 
     private void getArrowSprite(){

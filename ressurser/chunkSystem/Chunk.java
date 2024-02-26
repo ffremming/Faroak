@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.playable.Playable;
+import ressurser.baseEntity.tile.CliffTile;
 import ressurser.baseEntity.tile.Tile;
 
 public class Chunk extends TreeNode{
@@ -222,8 +223,9 @@ public class Chunk extends TreeNode{
         if (!loaded){
             
             if (generated){
-            generateTiles();
-            loadEntitiesFromFile();
+                initialLoad();
+            //generateTiles();
+            //loadEntitiesFromFile();
             }
             else{
                 initialLoad();
@@ -246,6 +248,7 @@ public class Chunk extends TreeNode{
         //method returns biome type- which is a streubg
         String biomeType =  chunkS.proceduralGen.calculateBiomeString(worldX, worldY);
         int height = (int)(chunkS.proceduralGen.getHeightValue(worldX,worldY)*1000);
+        if (height>100){return new Tile(chunkS.panel,biomeType,worldX,worldY,height, true);}
         return new Tile(chunkS.panel,biomeType,worldX,worldY,height);
         
     }
@@ -269,11 +272,24 @@ public class Chunk extends TreeNode{
         }
     }
 
+    /**iterates throught all tiles in chunk, checks if needed checking of neigbors */
     void connectTiles(){
-       
+       System.out.println("connect soon set neigbor");
         for (BaseEntity baseEntity:entities){
-            if (baseEntity instanceof Tile){
-                ((Tile)baseEntity).setNeighBors();
+            if (baseEntity instanceof Tile ||baseEntity instanceof CliffTile){
+                System.out.println(baseEntity.getClass());
+                
+                if (baseEntity instanceof CliffTile){
+                    if (((CliffTile)baseEntity).hasCompleteNeigbors() ||true){
+                        ((CliffTile)baseEntity).setNeighBors();
+                    }
+                } else{
+
+                    if (!((Tile)baseEntity).hasCompleteNeigbors()){
+                        ((Tile)baseEntity).setNeighBors();
+                        
+                    }
+                }
             }
         }
     }
@@ -302,9 +318,10 @@ public class Chunk extends TreeNode{
     }
 
 
+    /**not yet implemented... needs database for reading/writing */
     public void unLoad(){
-        loaded = false;
-        entities = null;
+        //loaded = false;
+        entities.clear();
     }
     
 

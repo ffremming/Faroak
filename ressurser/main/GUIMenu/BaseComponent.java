@@ -3,31 +3,33 @@ package ressurser.main.GUIMenu;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.image.BufferedImage;
 
 import ressurser.main.GamePanel;
 
-public abstract class BaseComponent {
+public abstract class BaseComponent extends Rectangle {
     //everything tat can be placed inside a container
-    BufferedImage activeImage,image1;
+    
     Color background = Color.white;
-    Color foreGround = Color.black;
+    Color foreground = Color.black;
     boolean enabled;
     boolean visible;
     boolean focus;
     boolean hover;
 
-    int height,width,x,y;
-    
     GamePanel panel;
+
+    public int padding;
+    int borderSize;
+    int margin;
 
     public BaseComponent(GamePanel panel){
         this.panel = panel;
     }
 
     public abstract void draw(Graphics2D g2);
-
     
 
     public void setY(int newY){
@@ -70,23 +72,19 @@ public abstract class BaseComponent {
     }
 
     public void setForeGround(Color color){
-        foreGround = color;
-    }
-
-    public void setActiveImage(BufferedImage image){
-        activeImage = image;
+        foreground = color;
     }
 
 
     public void drawRect(Graphics2D g2){
         g2.setColor(background);
         g2.fillRect(x,y,width,height);
-        g2.setColor(foreGround);
-        g2.setStroke(new BasicStroke(5.0f));
+        g2.setColor(foreground);
+        g2.setStroke(new BasicStroke(borderSize));
         g2.drawRect(x,y,width,height);
     }
 
-    public void hover(){
-        hover = true;
+    public void setHover(boolean bol){
+        hover = bol;
     }
 }

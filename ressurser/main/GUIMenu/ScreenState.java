@@ -29,21 +29,19 @@ public class ScreenState extends BaseComponent{
     public boolean remove(Container container){
         return containers.remove(container);
     }
-
+    
     @Override
     public void draw(Graphics2D g2) {
        if (visible){
 
         for (Container con: containers){
-            con.setCorrectedBounds();
             con.draw(g2);
-        
         }
-        drawChosenItem(g2);
+        
        }
-        
-        
     }
+
+    
 
     public void mousePressed(MouseEvent e){
         int xEvent = e.getX();
@@ -73,10 +71,8 @@ public class ScreenState extends BaseComponent{
                 if (yEvent >= con.y && yEvent<=con.y+con.height){
                     con.mouseMoved(e);
                 }
-
             }
         }
-
     }
 
     public void mouseWheelMoved(MouseWheelEvent e){
@@ -97,11 +93,7 @@ public class ScreenState extends BaseComponent{
         System.out.println("screenstate wheel moved");
 
     }
-
-
-    public void drawChosenItem(Graphics2D g2){
-       
-    }
+    
 
     public  void closeScreenState(){
 

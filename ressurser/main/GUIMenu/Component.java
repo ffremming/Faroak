@@ -19,12 +19,9 @@ public class Component extends BaseComponent{
 
     @Override
     public void draw(Graphics2D g2) {
-        
-    }
+        if (visible){
 
-    
-    public void draw(Graphics2D g2, int x,int y) {
-        
+        }
     }
 
     public void setContainer(Container thisContainer){

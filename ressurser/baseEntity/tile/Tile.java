@@ -6,7 +6,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 import ressurser.baseEntity.BaseEntity;
-import ressurser.baseEntity.gameObjects.GameObject;
+
 import ressurser.baseEntity.sprite.Sprite;
 import ressurser.main.GamePanel;
 import ressurser.main.ImageContainer;
@@ -20,11 +20,11 @@ public class Tile extends BaseEntity{
 
 
 
-    Tile [] neigbors = new Tile [4];
-    public Tile north;
-    Tile south;
-    Tile east;
-    Tile west;
+    public Tile [] neigbors = new Tile [4];
+    public Tile north = null;
+    Tile south = null;
+    Tile east= null;
+    Tile west = null;
 
     int zone;
 
@@ -36,6 +36,7 @@ public class Tile extends BaseEntity{
 
     int altitude;
 
+    boolean cliff = false;
 
 
     public Tile(GamePanel panel,String name, int worldX, int worldY,int altitude) {
@@ -48,6 +49,18 @@ public class Tile extends BaseEntity{
             lightSource = true;
         }
         
+    }
+
+    public Tile(GamePanel panel, String name, int worldX, int worldY, int altitude, boolean cliff) {
+        super(panel, name, worldX, worldY, (short)panel.tileSize,(short)panel.tileSize, (short)panel.tileSize, (short)panel.tileSize, (short)0, (short)0);
+        
+        this.altitude = altitude;
+        if (name.equals("ocean")){
+            animated = true;
+            solid = true;
+            lightSource = true;
+        }
+        this.cliff = cliff;
     }
 
     public boolean compareTo(Tile tile2){
@@ -218,7 +231,12 @@ public class Tile extends BaseEntity{
 
     public ArrayList<BufferedImage> getImages(){
         if (images.size()== 0){
-            setImages();
+            if (cliff){
+                setCliffImages();
+            } else {
+                setImages();
+            }
+            
         }
         return images;
     
@@ -227,54 +245,52 @@ public class Tile extends BaseEntity{
 
     
 
-    // not sure if i need this.
-    public void addSprite(Sprite sprite){
-        this.sprite = sprite;
-    }
+    
 
 
-    //idea that every tile contain gameobject, but not implementet. should not be done yet.
-    //well, could work for static objects, but not so good with non-statics. would not do this.
-    public void addGameObject(GameObject go){
-        
-    }
+    
 
     /**@return null - if direction is given is wrong OR there is no TILE */
     private Tile getTile(int direction){
+        Tile tile = null;
         if (direction == NORTH){
-            return panel.chunkSystem.getTile(new Point(worldX+width/2,worldY-width/2));
+             tile = panel.chunkSystem.getTile(new Point(worldX+width/2,worldY-width/2));
         }
         else if (direction == EAST){
-            return panel.chunkSystem.getTile(new Point(worldX+width*3/2,worldY+width/2));
+             tile = panel.chunkSystem.getTile(new Point(worldX+width*3/2,worldY+width/2));
         }
         else if (direction == SOUTH){
-            return panel.chunkSystem.getTile(new Point(worldX+width/2,worldY+width*3/2));
+             tile = panel.chunkSystem.getTile(new Point(worldX+width/2,worldY+width*3/2));
         }
         else if (direction == WEST){
-            return panel.chunkSystem.getTile(new Point(worldX-width/2,worldY+width/2));
+             tile = panel.chunkSystem.getTile(new Point(worldX-width/2,worldY+width/2));
         }
-
-        return null;
+        
+        return tile;
     }
 
 
 
 
     /**
-     * not yet implemented, implement if this will be used.
+     * trouble with cliffTile
      */
     public void setNeighBors(){
+      
         addNorthNeighBor(getTile(NORTH));
         addSouthNeighBor(getTile(SOUTH));
         addWestNeighBor(getTile(WEST));
         addEastNeighBor(getTile(EAST));
     }
+
+    public boolean hasCompleteNeigbors(){
+        return (north !=null && south!=null && west!= null && east!=null);
+    }
+
     public Tile[] getNeighbors(){
         Tile[] neighbors ={north,east,south,west};
         return neighbors;
     }
-
-
     private void addNorthNeighBor(Tile tile){
         north = tile;
     }
@@ -298,6 +314,71 @@ public class Tile extends BaseEntity{
         zone = thisZone;
     }
 
+    private void setCliffImages(){
+
+        int value = 0;
+        images.clear();
+        images.add(getImage());
+        System.out.println(neigbors);
+        System.out.println(neigbors[0]);
+        System.out.println(neigbors[1]);
+        System.out.println(neigbors[2]);
+        System.out.println(neigbors[3]);
+        if (!(getNeighbors()[0].cliff ) && getNeighbors()[3] .cliff &&getNeighbors()[1] .cliff ) {
+            value = 2;
+            //UP
+        } else if(((getNeighbors()[0] .cliff) && getNeighbors()[1] .cliff && !getNeighbors()[2] .cliff) &&! getNeighbors()[3] .cliff){
+            //CORNER DOWN LEFT
+            value = 7;
+
+        }else if(((getNeighbors()[0] .cliff) && getNeighbors()[1] .cliff && getNeighbors()[2] .cliff) && getNeighbors()[3] .cliff && !getNeighbors()[2].getNeighbors()[1].cliff){
+            //CORNER DOWN LEFT
+            value = 11;
+        
+        
+        }else if(((getNeighbors()[0] .cliff) && getNeighbors()[1] .cliff && getNeighbors()[2] .cliff) && getNeighbors()[3] .cliff && !getNeighbors()[2].getNeighbors()[3].cliff){
+            //CORNER DOWN LEFT
+            value = 12;
+        
+
+        }else if(((getNeighbors()[0] .cliff) && getNeighbors()[1] .cliff && getNeighbors()[2] .cliff) && getNeighbors()[3] .cliff && !getNeighbors()[0].getNeighbors()[1].cliff){
+            //CORNER DOWN LEFT
+            value = 13;
+        
+
+        }else if(((getNeighbors()[0] .cliff) && getNeighbors()[1] .cliff && getNeighbors()[2] .cliff) && getNeighbors()[3] .cliff && !getNeighbors()[0].getNeighbors()[3].cliff){
+            //CORNER DOWN LEFT
+            value = 14;
+        
+
+
+        
+        
+
+        } else if ((getNeighbors()[0] .cliff) && getNeighbors()[3] .cliff  && !getNeighbors()[2] .cliff &&! getNeighbors()[1] .cliff){
+            value = 9;
+            //CORNER DOWNRIGHT
+        } else if ((getNeighbors()[2] .cliff) && getNeighbors()[1] .cliff && !getNeighbors()[3] .cliff &&! getNeighbors()[0] .cliff ){
+            value = 1;
+            //CORNER UPPERLEFT
+        }else if ((getNeighbors()[2] .cliff) && getNeighbors()[3] .cliff && !getNeighbors()[0] .cliff &&! getNeighbors()[1] .cliff ){
+            value = 3;
+            //CORNER UPPERRIGHT
+        }else if((!(getNeighbors()[2] .cliff) && getNeighbors()[1] .cliff && getNeighbors()[3] .cliff )){
+            // DOWN 
+            value = 8;
+
+        } else if((!(getNeighbors()[3] .cliff) && getNeighbors()[0] .cliff && getNeighbors()[2] .cliff )){
+            // LEFT
+            value = 4;
+
+        } else if((!(getNeighbors()[1] .cliff) && getNeighbors()[0] .cliff && getNeighbors()[2] .cliff )){
+            // RIGHT
+            value = 6;
+        }
+        System.out.println(value);
+        images.add(panel.imageContainer.getTileImage("protoCliff"+value));w
+    }
 
 
     

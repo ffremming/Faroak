@@ -5,19 +5,16 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.awt.BasicStroke;
 
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.primitiveEntity;
 import ressurser.baseEntity.playable.Playable;
-import ressurser.baseEntity.sprite.Sprite;
-import ressurser.baseEntity.tile.Tile;
+
 import ressurser.chunkSystem.Chunk;
 import ressurser.main.GamePanel;
 
@@ -82,7 +79,7 @@ public class Camera extends primitiveEntity{
         ArrayList<BaseEntity> withinCam = panel.chunkSystem.workingMemory.getvisibleEntities();
         
         addbackendPrintData("amount entities visible: "+String.valueOf(withinCam.size()));
-       //panel.chunkSystem.workingMemory.writeInfo();
+        //panel.chunkSystem.workingMemory.writeInfo();
         //this only works if chunkysstem updates entites frequently
        
         //draw tiles first - not yet implemented
@@ -110,20 +107,17 @@ public class Camera extends primitiveEntity{
         if (testData){
             drawChunks(g2);
         }
+        drawObjectData(g2);
         long endDraw = System.nanoTime();
-        
-        
         drawHighlightetHitbox(g2,panel.chunkSystem.workingMemory.hoveredEntity);
-
         addbackendPrintData("drawtime ms: "+String.valueOf((endDraw-startDraw)/1000000));
         addbackendPrintData("remaining cap: "+String.valueOf((1000000000-(((endDraw-startDraw)*60)))));
         drawBackEndData(g2);
-        drawObjectData(g2);
-        
 
+        panel.UI.draw(g2);
+        
+        
         panel.g.dispose();
-        
-        
     }
 
     public void drawRelative(Graphics2D g2,BaseEntity entity){
@@ -141,9 +135,8 @@ public class Camera extends primitiveEntity{
         for (BufferedImage img:imagesCopy){
             g2.drawImage(img,x,y,entity.getWidth(),entity.getHeight(),null);  
         }
-        
-        
     }
+
     private void drawChunks(Graphics2D g2){
         float lineWidth = 2;
         BasicStroke stroke = new BasicStroke(lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
@@ -217,7 +210,6 @@ public class Camera extends primitiveEntity{
             g2.drawString(printData,20,y);
             y += 25;
         }
-        
         backEndData.clear();
     }
 
@@ -252,7 +244,6 @@ public class Camera extends primitiveEntity{
             worldX = entityX-width/2;
             worldY = entityY+height/2;
         }   
-        
     }
     //can add loads of other abilities
 

@@ -40,7 +40,7 @@ public class BaseMenu extends Container{
         option.setHeight(40);option.setWidth(100);
         Label quit = new Label(panel,"quit");
         quit.setHeight(40);quit.setWidth(100);
-
+        
         Button button = new Button(panel);
         button.setImages(b,bH,bP);
         button.setWidth(120);

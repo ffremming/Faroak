@@ -22,16 +22,5 @@ public class Main{
     //vindu.setLocationRelativeTo(null);
     vindu.setVisible(true);
     vindu.toFront();
-    
-   
-    //vindu.setFocusable(true);
-
-    //GamePanel gamePanel = new GamePanel();
-    //vindu.setSize(gamePanel.screenWidth,gamePanel.screenHeight);
-    //vindu.add(gamePanel);
-    
-    
-
-    //gamePanel.startGameThreaad();
     }
 }

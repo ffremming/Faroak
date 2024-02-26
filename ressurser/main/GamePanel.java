@@ -12,6 +12,8 @@ import ressurser.entity.spiller.Spiller;
 import ressurser.enviroment.EnviromentManager;
 import ressurser.enviroment.Lightning;
 import ressurser.itemBar.ItemBar;
+import ressurser.main.GUIMenu.Button;
+import ressurser.main.GUIMenu.Container;
 import ressurser.main.GUIMenu.MenuState;
 import ressurser.main.interactions.InventoryInteraction;
 import ressurser.main.interactions.MenuInteraction;
@@ -86,10 +88,11 @@ public class GamePanel extends JPanel implements Runnable{
     public Keys keys;
     public Mouse mouse;
     public InputHandlingSystem inputHandlingSystem;
+    public Container UI;
 
 
     Graphics2D g2;
-    public UI UI = new UI(this);
+   
     
     
     
@@ -179,6 +182,16 @@ public class GamePanel extends JPanel implements Runnable{
         keys = new Keys(this);
         inputHandlingSystem = new InputHandlingSystem(this);
         mouse = new Mouse(this);
+
+        UI = new Container(this,0,0,400,400);
+        UI.padding = 50;
+        UI.border = 30;
+        //UI.setVisible(true);
+        UI.add(new Button(this,"knapp"));
+       
+        UI.add(new Button(this,"knapp"));
+        UI.add(new Button(this,"knapp"));
+
     }
 
 
