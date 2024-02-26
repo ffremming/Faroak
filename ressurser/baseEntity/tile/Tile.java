@@ -35,6 +35,7 @@ public class Tile extends BaseEntity{
     ArrayList<BufferedImage> images = new ArrayList<>();
 
     int altitude;
+    int floor;
 
     boolean cliff = false;
 
@@ -42,7 +43,9 @@ public class Tile extends BaseEntity{
     public Tile(GamePanel panel,String name, int worldX, int worldY,int altitude) {
         super(panel, name, worldX, worldY, (short)panel.tileSize,(short)panel.tileSize, (short)panel.tileSize, (short)panel.tileSize, (short)0, (short)0);
         
+
         this.altitude = altitude;
+        floor = altitude/100;
         if (name.equals("ocean")){
             animated = true;
             solid = true;
@@ -55,6 +58,7 @@ public class Tile extends BaseEntity{
         super(panel, name, worldX, worldY, (short)panel.tileSize,(short)panel.tileSize, (short)panel.tileSize, (short)panel.tileSize, (short)0, (short)0);
         
         this.altitude = altitude;
+        floor = altitude/300;
         if (name.equals("ocean")){
             animated = true;
             solid = true;
@@ -102,7 +106,7 @@ public class Tile extends BaseEntity{
 
     /**sets all images based on animation cycle  */
     private void setAnimatedImages(int value){
-
+        
             images.clear();
             setAnimatedImage(value);
             boolean[] borders = {false,false,false,false};
@@ -229,13 +233,16 @@ public class Tile extends BaseEntity{
         return panel.tileM.isHigher(tile,this);
     }
 
+    private boolean isCliffDifference(Tile tile) {
+        return panel.tileM.cliffDifference(tile,this);
+    }
+
     public ArrayList<BufferedImage> getImages(){
         if (images.size()== 0){
-            if (cliff){
-                setCliffImages();
-            } else {
+            
                 setImages();
-            }
+                setCliffImages2();
+            
             
         }
         return images;
@@ -281,6 +288,31 @@ public class Tile extends BaseEntity{
         addSouthNeighBor(getTile(SOUTH));
         addWestNeighBor(getTile(WEST));
         addEastNeighBor(getTile(EAST));
+
+        intiateCliff();
+    }
+
+    private void intiateCliff() {
+       if (isCliff()){
+        cliff = true;
+       }
+    }
+
+    private boolean isCliff() {
+
+        for (int i = 0;i<4;i++){
+            Tile neightbor = getNeighbors()[i];
+            if (neightbor != null){
+
+                //litt usikker på logikken her:
+                if (neightbor.floor <floor && neightbor.floor>=0){
+                    
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public boolean hasCompleteNeigbors(){
@@ -377,9 +409,84 @@ public class Tile extends BaseEntity{
             value = 6;
         }
         System.out.println(value);
-        images.add(panel.imageContainer.getTileImage("protoCliff"+value));w
+        images.add(panel.imageContainer.getTileImage("protoCliff"+value));
+    }
+
+    private void setCliffImages2(){
+
+        int value = 0;
+       
+      
+        if ((getNeighbors()[0].floor < floor ) && getNeighbors()[3] .floor == floor &&getNeighbors()[1] .floor ==floor ) {
+            value = 2;
+            //UP
+        } else if(((getNeighbors()[0] .floor == floor) && getNeighbors()[1] .floor == floor && (getNeighbors()[2] .floor < floor)) && (getNeighbors()[3] .floor < floor)){
+            //CORNER DOWN LEFT
+            value = 7;
+
+        }else if(((getNeighbors()[0] .floor == floor) && getNeighbors()[1] .floor == floor && getNeighbors()[2] .floor == floor) && getNeighbors()[3] .floor == floor && (getNeighbors()[2].getNeighbors()[1].floor < floor)){
+            //CORNER DOWN LEFT
+            value = 12;
+        
+        
+        }else if(((getNeighbors()[0] .floor == floor) && getNeighbors()[1] .floor == floor && getNeighbors()[2] .floor == floor) && getNeighbors()[3] .floor == floor && (getNeighbors()[2].getNeighbors()[3].floor < floor)){
+            //CORNER DOWN LEFT
+            value = 11;
+        
+
+        }else if(((getNeighbors()[0] .floor == floor) && getNeighbors()[1] .floor == floor && getNeighbors()[2] .floor == floor) && getNeighbors()[3] .floor == floor && (getNeighbors()[0].getNeighbors()[1].floor) < floor){
+            //CORNER DOWN LEFT
+            value = 13;
+        
+
+        }else if(((getNeighbors()[0] .floor == floor) && getNeighbors()[1] .floor == floor && getNeighbors()[2] .floor == floor) && getNeighbors()[3] .floor == floor && (getNeighbors()[0].getNeighbors()[3].floor < floor)){
+            //CORNER DOWN LEFT
+            value = 14;
+        
+
+
+        
+        
+
+        } else if ((getNeighbors()[0] .floor == floor) && getNeighbors()[3] .floor == floor  && (getNeighbors()[2] .floor < floor) &&( getNeighbors()[1] .floor < floor)){
+            value = 9;
+            //CORNER DOWNRIGHT
+        } else if ((getNeighbors()[2] .floor == floor) && getNeighbors()[1] .floor == floor && (getNeighbors()[3] .floor < floor) &&( getNeighbors()[0] .floor < floor )){
+            value = 1;
+            //CORNER UPPERLEFT
+        }else if ((getNeighbors()[2] .floor == floor) && getNeighbors()[3] .floor == floor && (getNeighbors()[0] .floor < floor) &&( getNeighbors()[1] .floor < floor )){
+            value = 3;
+            //CORNER UPPERRIGHT
+        }else if(((getNeighbors()[2] .floor < floor) && getNeighbors()[1] .floor == floor && getNeighbors()[3] .floor == floor )){
+            // DOWN 
+            value = 8;
+
+        } else if(((getNeighbors()[3] .floor < floor) && getNeighbors()[0] .floor == floor && getNeighbors()[2] .floor == floor )){
+            // LEFT
+            value = 4;
+
+        } else if(((getNeighbors()[1] .floor < floor) && getNeighbors()[0] .floor == floor && getNeighbors()[2] .floor == floor )){
+            // RIGHT
+            value = 6;
+        }
+
+        else if (((getNeighbors()[1] .floor < floor) && getNeighbors()[0] .floor < floor && getNeighbors()[2] .floor == floor &&getNeighbors()[3] .floor < floor )){}
+
+        if (value != 0){cliff = true;images.add(panel.imageContainer.getTileImage("rockCliff"+value));}
+        
+        
     }
 
 
+
+    @Override
+    public String toString(){
+        return "class" +getClass()+"\nname: "+getName()+"\nsolid: " + solid+"\nanimated: "+animated + "\nlightSource: " + lightSource
+        + "\naltitude: "+altitude + "\nfloor: "+floor +  "\ncliff: "+cliff+
+        "\nnorth: "+north.getName()+ "\neast: "+east.getName() + "\nsouth: "+south.getName() + "\nwest: "+west.getName()
+       
+        ;
+
+    }
     
 }

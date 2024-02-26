@@ -56,7 +56,10 @@ public class GamePanel extends JPanel implements Runnable{
     public Graphics2D g ;
     public Camera camera;
 
+    
+
     // object components:
+    GenerationManager generationM;
     public TerrainGenSimplex terrainGen;
     public ObjectManager objM;
     public TileManager tileM;
@@ -97,13 +100,11 @@ public class GamePanel extends JPanel implements Runnable{
     
     
     
-    public int animatedSpriteCounter = 0; 
-    public int aniTeller = 0;
+ 
     
-    int PMoveValue = 0;
+   
 
-    public Boolean textOn = false;
-    public String textString;
+   
 
     public int gameState;
     public final int PLAYSTATE  = 1;
@@ -113,72 +114,49 @@ public class GamePanel extends JPanel implements Runnable{
     public final int OPTIONSTATE = 4;
 
     
-    public boolean dialoge;
-    public boolean textBox = false;
+
 
     boolean newGame;
     public JFrame frame;
     
     public GamePanel(JFrame frame,boolean newGame){
         this.frame = frame;
-        this.g=(Graphics2D) frame.getGraphics();
-        
         this.newGame = newGame;
         this.setPreferredSize(new Dimension(screenWidth,screenHeight));
         this.setBackground(Color.black);
         this.setDoubleBuffered(true);
+        this.setFocusable(true);
+        requestFocus();
         
-        //important - needs to make all this mess cleaner
+      
         
 
-        generateMap();
         
+        //OBJECT INITIATION
         setUpObjects();
 
+        //INPUTS
         addKeyListener(keys);
         addMouseListener(mouse);
         addMouseMotionListener(mouse);
        
-        this.setFocusable(true);
-        requestFocus();
+    
        
         
         
         
     }
 
-    private void generateMap(){
-        imageContainer = new ImageContainer();
-        chunkSystem = new ChunkSystem(this);
-        
-        mapH = new MapHandler(this);
-        //spiller = new Spiller(this,textString, 2000,500,(short) 40,(short) 128,(short) 48,(short) 48, (short)8,(short)( 128-48));
-        
-        //imageP = new ImagePainter();
-        //objM = new ObjectManager(this,newGame);
-        tileM = new TileManager(this);
-        chunkSystem.workingMemory.initial();
-        chunkSystem.workingMemory.update(new Point(0,0));
-    }
+    
    
     private void setUpObjects(){
-        Point p = getStartingPoint();
-        player = (new Playable(this, "red",p.x,p.y,(short)48,(short)96,(short)36,(short)32,(short)6,(short)64));
-        camera = new Camera(this,"camera",0,0,(short)screenWidth,(short)screenHeight);
-        chunkSystem.addEntity(player);
-        //dungeonM = new DungeonManager(this);
-        //interactionPlay = new PlayInteractionManager(this);
+       
 
-        //input = new KeyHandler(this);
-        //mouse = new MouseHandler(this);
-        //menu = new Meny(this);
-        //collisionC = new CollisionChecker(this);
-        //entityH = new EntityHandler(this);
-        //light = new Lightning(this);
+        generationM = new GenerationManager(this);
+        generationM.generateMap();
+
         enviromentM = new EnviromentManager(this);
-        //itemB = new ItemBar(this);
-        //drawingM = new DrawingManager(this);
-        //menuStateUI = new MenuState(this);
+       
         keys = new Keys(this);
         inputHandlingSystem = new InputHandlingSystem(this);
         mouse = new Mouse(this);
@@ -191,6 +169,12 @@ public class GamePanel extends JPanel implements Runnable{
        
         UI.add(new Button(this,"knapp"));
         UI.add(new Button(this,"knapp"));
+       
+
+        generationM.initiate();
+
+        
+        camera = new Camera(this,"camera",0,0,(short)screenWidth,(short)screenHeight);
 
     }
 
@@ -247,19 +231,7 @@ public class GamePanel extends JPanel implements Runnable{
         
     }
     
-    //has to be changed
-    public void playUpdate(){
-        
-
-        enviromentM.updateTicks();
-        //entityH.update();
-        
-        
-        
-
-        //update animation - shoudl be done in envoirment.
-        animatedSpriteCounter();
-    }
+   
 
 
     public void paintComponent(Graphics g){
@@ -272,16 +244,8 @@ public class GamePanel extends JPanel implements Runnable{
 
     
 
-    //has to be changed
-    public void animatedSpriteCounter(){        //skal kjøres hver gang spillet oppdaterer
-        animatedSpriteCounter ++;
-        if (animatedSpriteCounter%32 == 0){  //aktiveres hver 64
-            animatedSpriteCounter = 0;
-            aniTeller ++;
-            aniTeller = aniTeller % 2;
-            
-        }
-    }
+  
+   
 
     //has to be changed
    
@@ -301,10 +265,6 @@ public class GamePanel extends JPanel implements Runnable{
         }
     }
 
-
-
-    
-
     public int getFrameHeight(){
         return (int)frame.getBounds().getHeight();
     }
@@ -313,14 +273,5 @@ public class GamePanel extends JPanel implements Runnable{
         return (int)frame.getBounds().getWidth();
     }
 
-    private Point getStartingPoint(){
-        for (int x = -tileSize*10;x<=tileSize*10;x+=tileSize){
-            for (int y = -tileSize*10;y<=tileSize*10;y+=tileSize){
-                if (!(chunkSystem.workingMemory.solidCollision(new HitBox(x,y,tileSize*2,tileSize*2)))){
-                    return new Point(x,y);
-                }
-            }
-        }
-        return null;
-    }
+    
 }

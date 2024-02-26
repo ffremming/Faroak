@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -66,8 +67,12 @@ public class Camera extends primitiveEntity{
     public void draw(Graphics g){
         long startDraw = System.nanoTime();
         
+        if (followed == null){
+            centerAtPosition(new Point(0,0));
+        }else{
+            centerAtPosition(followed.getPoint());
+        }
         
-        centerAtPosition(followed.getPoint());
         
         
         Graphics2D g2 = (Graphics2D)g;
@@ -117,7 +122,7 @@ public class Camera extends primitiveEntity{
         panel.UI.draw(g2);
         
         
-        panel.g.dispose();
+        g2.dispose();
     }
 
     public void drawRelative(Graphics2D g2,BaseEntity entity){

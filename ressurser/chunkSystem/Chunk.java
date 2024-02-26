@@ -248,7 +248,7 @@ public class Chunk extends TreeNode{
         //method returns biome type- which is a streubg
         String biomeType =  chunkS.proceduralGen.calculateBiomeString(worldX, worldY);
         int height = (int)(chunkS.proceduralGen.getHeightValue(worldX,worldY)*1000);
-        if (height>100){return new Tile(chunkS.panel,biomeType,worldX,worldY,height, true);}
+        if (height>100){return new Tile(chunkS.panel,biomeType,worldX,worldY,height, false);}
         return new Tile(chunkS.panel,biomeType,worldX,worldY,height);
         
     }
@@ -272,12 +272,14 @@ public class Chunk extends TreeNode{
         }
     }
 
-    /**iterates throught all tiles in chunk, checks if needed checking of neigbors */
+    /**iterates throught all tiles in chunk, checks if needed checking of neigbors 
+     * change this to go back to original.
+    */
     void connectTiles(){
-       System.out.println("connect soon set neigbor");
+       
         for (BaseEntity baseEntity:entities){
             if (baseEntity instanceof Tile ||baseEntity instanceof CliffTile){
-                System.out.println(baseEntity.getClass());
+                
                 
                 if (baseEntity instanceof CliffTile){
                     if (((CliffTile)baseEntity).hasCompleteNeigbors() ||true){
@@ -320,7 +322,7 @@ public class Chunk extends TreeNode{
 
     /**not yet implemented... needs database for reading/writing */
     public void unLoad(){
-        //loaded = false;
+        loaded = false;
         entities.clear();
     }
     

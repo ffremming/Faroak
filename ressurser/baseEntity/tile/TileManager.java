@@ -47,10 +47,24 @@ public class TileManager {
         } else {
             return (getHeight(tile2) >getHeight(tile));
         }
-
-        
-
         //
+    }
+
+
+
+    /**returns true if tile2 is higher than tile */
+    public boolean cliffDifference(Tile tile, Tile tile2){
+
+        if (!tile.getName().equals("ocean")){
+            int hundreds1 = (tile.altitude) / 50;
+            int hundreds2 = (tile2.altitude) / 50;
+            
+            // Check if the hundreds digits are different
+            return hundreds1 < hundreds2;
+        }
+        return false;
+       
+        
     }
 
     private void setup(){
