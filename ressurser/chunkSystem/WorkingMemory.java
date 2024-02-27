@@ -217,7 +217,7 @@ public class WorkingMemory {
         ArrayList<BaseEntity> visible = new ArrayList<>();
 
         for (BaseEntity ent:sortedEntities){
-            if (chunkSystem.panel.camera.getHitBox().getAlteredHitBox(0,0,0,64*3).collision(ent.getHitBox())){
+            if (chunkSystem.panel.camera.getHitBox().collision(new HitBox(ent.getWorldX(),ent.getWorldY(),ent.getWidth(),ent.getHeight()))){
                 visible.add(ent);
             }
         }

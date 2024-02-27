@@ -35,6 +35,7 @@ import java.awt.Graphics;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import java.awt.image.BufferStrategy;
 
 
 
@@ -47,14 +48,12 @@ public class GamePanel extends JPanel implements Runnable{
     public final int screenHeight = tileSize *12;
     public final int screenWidth = tileSize *20;
     
-
     int aktivStreng = 1;
     
-   
-
     public Thread gameThread; 
     public Graphics2D g ;
     public Camera camera;
+    public BufferStrategy bufferStrategy;
 
     
 
@@ -173,7 +172,7 @@ public class GamePanel extends JPanel implements Runnable{
 
         generationM.initiate();
 
-        
+
         camera = new Camera(this,"camera",0,0,(short)screenWidth,(short)screenHeight);
 
     }
@@ -184,10 +183,18 @@ public class GamePanel extends JPanel implements Runnable{
         gameThread.start();
     }
 
+
+   
+
     @Override
     public void run() {
+       
         
+
+
         while (gameThread != null){
+
+           
             
             long drawStart = System.nanoTime();
             repaint();

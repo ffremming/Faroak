@@ -5,7 +5,9 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
 import java.awt.Point;
+import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -61,7 +63,6 @@ public class Camera extends primitiveEntity{
     public void follow(BaseEntity entity){
         //TODO
         this.followed = entity;
-
     }
     
     public void draw(Graphics g){
@@ -74,11 +75,18 @@ public class Camera extends primitiveEntity{
         }
         
         
+        GraphicsConfiguration gc = ((Graphics2D) g).getDeviceConfiguration();
+        int width = panel.getWidth(); // Assuming getWidth() returns the width of your drawing area
+        int height = panel.getHeight(); // Assuming getHeight() returns the height of your drawing area
+        BufferedImage image = gc.createCompatibleImage(width, height);
+        BufferedImage image2 = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
         
-        Graphics2D g2 = (Graphics2D)g;
+        // Draw on the compatible image
+        Graphics2D g2 = image2.createGraphics();
+
+        
+        //Graphics2D g2 = (Graphics2D)g;
         g2.setFont(new Font("Arial", Font.PLAIN, 7));
-        
-        
         
        
         ArrayList<BaseEntity> withinCam = panel.chunkSystem.workingMemory.getvisibleEntities();
@@ -112,6 +120,8 @@ public class Camera extends primitiveEntity{
         if (testData){
             drawChunks(g2);
         }
+
+        
         drawObjectData(g2);
         long endDraw = System.nanoTime();
         drawHighlightetHitbox(g2,panel.chunkSystem.workingMemory.hoveredEntity);
@@ -121,7 +131,9 @@ public class Camera extends primitiveEntity{
 
         panel.UI.draw(g2);
         
-        
+        System.out.println(endDraw-startDraw);
+        // BufferedImage optimized  = toCompatibleImage(image2); LESS EFFECTIVE
+        g.drawImage(image2, 0, 0, null);
         g2.dispose();
     }
 
@@ -129,17 +141,26 @@ public class Camera extends primitiveEntity{
         //TODO write functions in baseEntity and hitbox that makes it so you dont need to "draw relative" - could do it inside those functions.
        
 
-        int x = entity.getWorldX()-worldX;
-        int y = entity.getWorldY()-worldY;
-        if (getHitBox().contains(x,y) || getHitBox().contains(x+entity.getWidth(),y+entity.getWidth()) )
+        
+        if (getHitBox().intersects(entity.getWorldX(),entity.getWorldY(),entity.getWidth(),+entity.getHeight()) ){
 
-        g2.setColor(Color.WHITE);
-        g2.drawString(entity.getName(),x,y+15);
-        //g2.drawImage(entity.getImage(),x,y,64,64,null);     //can remove width and height.
-        ArrayList<BufferedImage> imagesCopy = new ArrayList<>(entity.getImages());
-        for (BufferedImage img:imagesCopy){
-            g2.drawImage(img,x,y,entity.getWidth(),entity.getHeight(),null);  
+            int x = entity.getWorldX()-worldX;
+            int y = entity.getWorldY()-worldY;
+
+            if (testData){
+                g2.setColor(Color.WHITE);
+                g2.drawString(entity.getName(),x,y+15);
+            }
+            
+            //g2.drawImage(entity.getImage(),x,y,64,64,null);     //can remove width and height.
+            ArrayList<BufferedImage> imagesCopy = new ArrayList<>(entity.getImages());
+            for (BufferedImage img:imagesCopy){
+                g2.drawImage(img,x,y,entity.getWidth(),entity.getHeight(),null);  
+                
+            }
         }
+
+        
     }
 
     private void drawChunks(Graphics2D g2){
@@ -314,4 +335,33 @@ public class Camera extends primitiveEntity{
 
 
     public void addbackendPrintData(String newString){backEndData.add(newString);}
+
+
+    private BufferedImage toCompatibleImage(BufferedImage image)
+{
+    // obtain the current system graphical settings
+    GraphicsConfiguration gfxConfig = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().
+        getDefaultConfiguration();
+
+    /*
+     * if image is already compatible and optimized for current system 
+     * settings, simply return it
+     */
+    if (image.getColorModel().equals(gfxConfig.getColorModel()))
+        return image;
+
+    // image is not optimized, so create a new image that is
+    BufferedImage newImage = gfxConfig.createCompatibleImage(
+            image.getWidth(), image.getHeight(), image.getTransparency());
+
+    // get the graphics context of the new image to draw the old image on
+    Graphics2D g2d = newImage.createGraphics();
+
+    // actually draw the image and dispose of context no longer needed
+    g2d.drawImage(image, 0, 0, null);
+    g2d.dispose();
+
+    // return the new optimized image
+    return newImage; 
+}
 }
