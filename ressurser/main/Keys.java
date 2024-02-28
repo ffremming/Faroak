@@ -38,6 +38,13 @@ public class Keys implements KeyListener{
         if (code == KeyEvent.VK_D){
             panel.inputHandlingSystem.setRight(true);
         }
+
+
+        if (code == KeyEvent.VK_N){
+            //new seed
+            panel.newSeed();
+
+        }
     }
 
     @Override

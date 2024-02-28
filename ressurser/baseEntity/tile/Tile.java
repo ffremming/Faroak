@@ -45,26 +45,24 @@ public class Tile extends BaseEntity{
         
 
         this.altitude = altitude;
-        floor = altitude/100;
-        if (name.equals("ocean")){
-            animated = true;
-            solid = true;
-            lightSource = true;
-        }
-        
+        setup();
     }
 
     public Tile(GamePanel panel, String name, int worldX, int worldY, int altitude, boolean cliff) {
         super(panel, name, worldX, worldY, (short)panel.tileSize,(short)panel.tileSize, (short)panel.tileSize, (short)panel.tileSize, (short)0, (short)0);
         
         this.altitude = altitude;
+        setup();
+    }
+
+
+    private void setup(){
         floor = altitude/300;
-        if (name.equals("ocean")){
+        if (getName().equals("ocean")){
             animated = true;
             solid = true;
             lightSource = true;
         }
-        this.cliff = cliff;
     }
 
     public boolean compareTo(Tile tile2){
@@ -74,7 +72,6 @@ public class Tile extends BaseEntity{
     @Override
     public void animate(int value){
         setAnimatedImages(value);
-        
     }
 
     /**value can be set between 0 and 2 */
@@ -241,7 +238,7 @@ public class Tile extends BaseEntity{
         if (images.size()== 0){
             
                 setImages();
-                setCliffImages2();
+                //setCliffImages2();
             
             
         }

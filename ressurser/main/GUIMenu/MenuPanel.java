@@ -75,7 +75,7 @@ public class MenuPanel extends JPanel {
             frame.add(gamePanel);
             gamePanel.requestFocusInWindow();
           
-
+            
             
            
             gamePanel.startGameThread();

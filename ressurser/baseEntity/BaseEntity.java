@@ -25,9 +25,9 @@ public class BaseEntity {
 
     Sprite sprite;
 
-    public int worldX;
+    public double worldX;
 
-    public int worldY;
+    public double worldY;
     protected short width;
 
     protected short height;

@@ -196,9 +196,9 @@ public class GamePanel extends JPanel implements Runnable{
 
            
             
-            long drawStart = System.nanoTime();
+            
             repaint();
-            long drawend = System.nanoTime();
+           
             Runnable updateThread = new Runnable() {
                 public void run() {
                     update();
@@ -266,7 +266,7 @@ public class GamePanel extends JPanel implements Runnable{
                 remainingTime = 0;
             }
             Thread.sleep((long)remainingTime);
-
+           
             camera.nextDrawTime += camera.splitTime;
         } catch (InterruptedException e) {e.printStackTrace();
         }
@@ -278,6 +278,14 @@ public class GamePanel extends JPanel implements Runnable{
 
     public int getFrameWidth(){
         return (int)frame.getBounds().getWidth();
+    }
+
+
+
+    public void newSeed() {
+        generationM.newSeed();
+        chunkSystem.workingMemory.simulate();
+        camera.follow(player);
     }
 
     

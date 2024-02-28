@@ -17,14 +17,26 @@ public class GenerationManager {
 
 
     public void generateMap(){
-        panel.imageContainer = new ImageContainer();
         panel.chunkSystem = new ChunkSystem(panel);
+        panel.imageContainer = new ImageContainer();
+       
         
         panel.mapH = new MapHandler(panel);
       
         panel.tileM = new TileManager(panel);
+      
         panel.chunkSystem.workingMemory.initial();
         panel.chunkSystem.workingMemory.update(new Point(0,0));
+        
+    }
+
+    public void newSeed(){
+        panel.chunkSystem = new ChunkSystem(panel);
+        panel.chunkSystem.workingMemory.initial();
+        panel.chunkSystem.workingMemory.update(new Point(0,0));
+
+        initiate();
+        panel.chunkSystem.workingMemory.update(panel.player.getPoint());
     }
 
 

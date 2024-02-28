@@ -131,7 +131,7 @@ public class Camera extends primitiveEntity{
 
         panel.UI.draw(g2);
         
-        System.out.println(endDraw-startDraw);
+        
         // BufferedImage optimized  = toCompatibleImage(image2); LESS EFFECTIVE
         g.drawImage(image2, 0, 0, null);
         g2.dispose();

@@ -1,10 +1,14 @@
 package ressurser.main;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 
 import javax.imageio.ImageIO;
 
@@ -22,7 +26,7 @@ public class ImageContainer {
 
     public BufferedImage getTileImage(String name){
         if (images.containsKey(name)){
-            return images.get(name);
+            return (images.get(name));
         }
         else{
             return retrieveTileSpriteImage(name);
@@ -40,13 +44,13 @@ public class ImageContainer {
     private void setupBaseImages(){
         try {
 
-            BufferedImage grass = ImageIO.read(new File("ressurser/images/tile/plains.png"));
-            BufferedImage mud = ImageIO.read(new File("ressurser/images/tile/mud.png"));
-            BufferedImage moss = ImageIO.read(new File("ressurser/images/tile/moss.png"));
-            BufferedImage sand = ImageIO.read(new File("ressurser/images/tile/sand.png"));
-            BufferedImage water = ImageIO.read(new File("ressurser/images/tile/ocean.png"));
-            BufferedImage dark_grass = ImageIO.read(new File("ressurser/images/tile/dark_grass.png"));
-            BufferedImage savanna = ImageIO.read(new File("ressurser/images/tile/savanna.png"));
+            BufferedImage grass = scaleImage( ImageIO.read(new File("ressurser/images/tile/plains.png")),64,64);
+            BufferedImage mud = scaleImage(ImageIO.read(new File("ressurser/images/tile/mud.png")),64,64);
+            BufferedImage moss = scaleImage(ImageIO.read(new File("ressurser/images/tile/moss.png")),64,64);
+            BufferedImage sand = scaleImage(ImageIO.read(new File("ressurser/images/tile/sand.png")),64,64);
+            BufferedImage water = scaleImage(ImageIO.read(new File("ressurser/images/tile/ocean.png")),64,64);
+            BufferedImage dark_grass = scaleImage(ImageIO.read(new File("ressurser/images/tile/dark_grass.png")),64,64);
+            BufferedImage savanna = scaleImage(ImageIO.read(new File("ressurser/images/tile/savanna.png")),64,64);
 
 
             images.put("plains",grass);
@@ -81,10 +85,9 @@ public class ImageContainer {
     private BufferedImage retrieveTileSpriteImage(String name){
         BufferedImage image = null;
         try {
-
-            image = ImageIO.read(new File("ressurser/images/tile/"+name+".png"));
             
-
+            image = scaleImage(ImageIO.read(new File("ressurser/images/tile/"+name+".png")),32,32);
+            
         }catch (IOException e) {
             // TODO Auto-generated catch block
             
@@ -100,24 +103,22 @@ public class ImageContainer {
 
                 if (rawName.charAt(rawName.length() - 1) == 'C') {
                     if (doesPNGFileExist("tile/"+removeNumberAtEnd(name)+"0")){
-                        image = getRotated(getTileImage(removeNumberAtEnd(name)+"0"),degrees);
+                        image = scaleImage(getRotated(getTileImage(removeNumberAtEnd(name)+"0"),degrees),32,32);
                     }
                     
                 } else if (rawName.charAt(rawName.length() - 1) == 'B') {
                     if (doesPNGFileExist("tile/"+removeNumberAtEnd(name)+"1")){
-                    image = getRotated(getTileImage(removeNumberAtEnd(name)+"1"),degrees);
+                    image = scaleImage(getRotated(getTileImage(removeNumberAtEnd(name)+"1"),degrees),32,32);
                     }
                 }
-
-                
                 
             } catch (Exception e1) {
                 // TODO Auto-generated catch block
                 System.out.println("tried to rotate image, something went wrong:");
-                
             }
         }
-
+        
+       
         images.put(name,image);
         return image;
     }
@@ -250,4 +251,32 @@ public class ImageContainer {
         objectImages.put(name,images);
         return images;
     }
+
+
+   
+        public static BufferedImage scaleImage(BufferedImage originalImage, int scaledWidth, int scaledHeight) {
+            // Create a new buffered image with the desired size and type
+            BufferedImage scaledImage = new BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_ARGB);
+    
+            // Create a graphics context from the scaled image
+            Graphics2D g2d = scaledImage.createGraphics();
+    
+            // Set rendering hints for pixelated scaling
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+    
+            // Create an AffineTransform for scaling
+            AffineTransform transform = AffineTransform.getScaleInstance(
+                    (double) scaledWidth / originalImage.getWidth(),
+                    (double) scaledHeight / originalImage.getHeight()
+            );
+    
+            // Create an AffineTransformOp and apply the transformation
+            AffineTransformOp op = new AffineTransformOp(transform, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+            op.filter(originalImage, scaledImage);
+    
+            // Dispose of the graphics context
+            g2d.dispose();
+    
+            return scaledImage;
+        }
 }
