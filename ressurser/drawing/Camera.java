@@ -16,10 +16,11 @@ import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.primitiveEntity;
-import ressurser.baseEntity.playable.Playable;
+import ressurser.baseEntity.playable.Moveable;
 
 import ressurser.chunkSystem.Chunk;
 import ressurser.main.GamePanel;
+import ressurser.main.GUIMenu.ItemContainer;
 
 public class Camera extends primitiveEntity{
 
@@ -127,9 +128,11 @@ public class Camera extends primitiveEntity{
         drawHighlightetHitbox(g2,panel.chunkSystem.workingMemory.hoveredEntity);
         addbackendPrintData("drawtime ms: "+String.valueOf((endDraw-startDraw)/1000000));
         addbackendPrintData("remaining cap: "+String.valueOf((1000000000-(((endDraw-startDraw)*60)))));
+        addbackendPrintData("UI: "+panel.container.width +","+ panel.container.height);
         drawBackEndData(g2);
 
-        panel.UI.draw(g2);
+        //panel.UI.draw(g2);
+        panel.container.draw(g2);
         
         
         // BufferedImage optimized  = toCompatibleImage(image2); LESS EFFECTIVE
@@ -144,8 +147,8 @@ public class Camera extends primitiveEntity{
         
         if (getHitBox().intersects(entity.getWorldX(),entity.getWorldY(),entity.getWidth(),+entity.getHeight()) ){
 
-            int x = entity.getWorldX()-worldX;
-            int y = entity.getWorldY()-worldY;
+            int x = (int)(entity.getWorldX()-worldX);
+            int y = (int)(entity.getWorldY()-worldY);
 
             if (testData){
                 g2.setColor(Color.WHITE);
@@ -169,16 +172,16 @@ public class Camera extends primitiveEntity{
         g2.setStroke(stroke);
         ArrayList<Chunk> chunkCopy = new ArrayList<>(panel.chunkSystem.workingMemory.getChunks());
         for (Chunk chunk:chunkCopy){
-            int x = chunk.getWorldX()-worldX;
-            int y = chunk.getWorldY()-worldY;
+            int x = (int)(chunk.getWorldX()-worldX);
+            int y = (int)(chunk.getWorldY()-worldY);
             g2.setColor(Color.white);
             g2.drawRect(x,y,(int)chunk.getWidth(),(int)chunk.getHeight());     //can remove width and height.
         }
     }
 
     private void drawHitBox(Graphics2D g2,BaseEntity entity){
-        int x = entity.getHitBox().getWorldX()-worldX;
-        int y = entity.getHitBox().getWorldY()-worldY;
+        int x = (int)(entity.getHitBox().getWorldX()-worldX);
+        int y = (int)(entity.getHitBox().getWorldY()-worldY);
 
         int width = (int)entity.getHitBox().getWidth();
         int height = (int)entity.getHitBox().getHeight();
@@ -189,15 +192,15 @@ public class Camera extends primitiveEntity{
        
         
          g2.drawRect(x,y,width,height);
-         if (entity instanceof Playable){
-            Rectangle rect = ((Playable) entity).getHitboxInfront();
-            g2.drawRect(rect.x-worldX,rect.y-worldY,rect.width,rect.height);
+         if (entity instanceof Moveable){
+            Rectangle rect = ((Moveable) entity).getHitboxInfront();
+            g2.drawRect((int)(rect.x-worldX),(int)(rect.y-worldY),rect.width,rect.height);
          }
     }
 
     private void drawHighlightetHitbox(Graphics2D g2,BaseEntity entity){
-        int x = entity.getHitBox().getWorldX()-worldX;
-        int y = entity.getHitBox().getWorldY()-worldY;
+        int x = (int)(entity.getHitBox().getWorldX()-worldX);
+        int y = (int)(entity.getHitBox().getWorldY()-worldY);
 
         int width = (int)entity.getHitBox().getWidth();
         int height = (int)entity.getHitBox().getHeight();
@@ -208,15 +211,15 @@ public class Camera extends primitiveEntity{
        
         
          g2.drawRect(x,y,width,height);
-         if (entity instanceof Playable){
-            Rectangle rect = ((Playable) entity).getHitboxInfront();
-            g2.drawRect(rect.x-worldX,rect.y-worldY,rect.width,rect.height);
+         if (entity instanceof Moveable){
+            Rectangle rect = ((Moveable) entity).getHitboxInfront();
+            g2.drawRect((int)(rect.x-worldX),(int)(rect.y-worldY),rect.width,rect.height);
          }
     }
 
     private void drawCoords(Graphics2D g2,BaseEntity entity){
-        int x = entity.getWorldX()-worldX;
-        int y = entity.getWorldY()-worldY+30;
+        int x = (int)(entity.getWorldX()-worldX);
+        int y = (int)(entity.getWorldY()-worldY+30);
 
         int width = (int)entity.getWidth();
         int height = (int)entity.getHeight();
@@ -263,8 +266,8 @@ public class Camera extends primitiveEntity{
     */
     private void center(BaseEntity entity){
         if (entity != null){
-            int entityX = entity.getWorldX();
-            int entityY = entity.getWorldY();
+            int entityX = (int)entity.getWorldX();
+            int entityY = (int)entity.getWorldY();
 
             //get the startValues for x and y
             worldX = entityX-width/2;
@@ -308,8 +311,8 @@ public class Camera extends primitiveEntity{
 
         for (BaseEntity baseE: visible){
             if (baseE.lightSource){
-                for (int x = baseE.getWorldX()-worldX-300;x<baseE.getWorldX()-worldX+300;x++){
-                    for (int y = baseE.getWorldY()-worldY-300;y<baseE.getWorldY()-worldY+300;y++){
+                for (int x = (int)(baseE.getWorldX()-worldX-300);x<baseE.getWorldX()-worldX+300;x++){
+                    for (int y = (int)(baseE.getWorldY()-worldY-300);y<baseE.getWorldY()-worldY+300;y++){
                         if (x>=0 && x< width && y>= 0 && y<height){
                             if (image.getRGB(x,y)!=0x00000000 ){
                                 image.setRGB(x, y, 0x00000000);
@@ -324,7 +327,7 @@ public class Camera extends primitiveEntity{
         }
         
        
-
+       
         
         // Dispose of the graphics context
         g2d.dispose();

@@ -35,7 +35,7 @@ public class HitBox extends Rectangle{
      */
     public HitBox(BaseEntity baseEntity,int hitBoxWidth,int hitBoxHeight,int relativeXPlusValue,int relativeYPlusValue){
         //make rectangle
-        super(baseEntity.worldX+relativeXPlusValue,baseEntity.worldY+relativeYPlusValue,hitBoxWidth,hitBoxHeight);
+        super((int)(baseEntity.worldX)+relativeXPlusValue,(int)(baseEntity.worldY)+relativeYPlusValue,hitBoxWidth,hitBoxHeight);
         this.baseEntity = baseEntity;
 
         //relative values - the ditance from the objects coords to the hitboxs coords.
@@ -46,14 +46,14 @@ public class HitBox extends Rectangle{
 
     // not done.... 
     public HitBox(BaseEntity entity){
-        super(entity.worldX,entity.worldY,entity.width,entity.height);
+        super((int)(entity.worldX),(int)(entity.worldY),entity.width,entity.height);
     }
 
     /**
      * based on a hitbox without a connected entity.
      */
-    public HitBox(int worldX,int worldY,int width, int height){
-        super(worldX,worldY,width,height);
+    public HitBox(double worldX,double worldY,int width, int height){
+        super((int)worldX,(int)worldY,width,height);
     }
 
 
@@ -87,9 +87,8 @@ public class HitBox extends Rectangle{
 
     public void updateCoords(){
         if (baseEntity != null){
-            x = baseEntity.getWorldX()+relativeXValue;
-            y = baseEntity.getWorldY()+relativeYValue;
-        
+            x = ((int)baseEntity.getWorldX())+relativeXValue;
+            y = (int)baseEntity.getWorldY()+relativeYValue;
         }
     }
 
@@ -121,7 +120,7 @@ public class HitBox extends Rectangle{
     }
 
     public void draw(Graphics2D g2 ,Spiller player){
-        g2.drawRect(getWorldX()-(player.worldX)+player.screenX,getWorldY()-(player.worldY)+player.screenY,width,height);
+        g2.drawRect((int)(getWorldX()-(player.worldX)+player.screenX),(int)(getWorldY()-(player.worldY)+player.screenY),width,height);
      
     }
 

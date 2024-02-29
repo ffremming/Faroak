@@ -6,7 +6,7 @@ import java.util.ArrayList;
 
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.HitBox;
-import ressurser.baseEntity.playable.Playable;
+import ressurser.baseEntity.playable.Moveable;
 import ressurser.baseEntity.tile.CliffTile;
 import ressurser.baseEntity.tile.Tile;
 
@@ -302,7 +302,7 @@ public class Chunk extends TreeNode{
         ArrayList<BaseEntity> toBeRemoved = new ArrayList<>();
         for (BaseEntity baseE:entities){
             //should be changed to moveable
-            if (baseE instanceof Playable){
+            if (baseE instanceof Moveable){
                 if (!(this.collision(baseE.getHitBox()))){
 
                     //to stop concurrentmodification

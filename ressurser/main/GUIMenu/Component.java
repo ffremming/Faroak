@@ -20,7 +20,7 @@ public class Component extends BaseComponent{
     @Override
     public void draw(Graphics2D g2) {
         if (visible){
-
+            
         }
     }
 

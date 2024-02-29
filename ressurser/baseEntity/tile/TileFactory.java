@@ -28,7 +28,7 @@ public class TileFactory {
     HashMap<Integer,Integer> tileZone = new HashMap<>();
     HashMap<Integer,Boolean> tileAnimated = new HashMap<>();
     HashMap<Integer,Integer> tileHeight = new HashMap<>();
-    HashMap<Integer,TileSprite> tileSprites = new HashMap<>();
+   
 
 
     //file hashMap

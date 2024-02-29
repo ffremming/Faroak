@@ -217,7 +217,7 @@ public class WorkingMemory {
         ArrayList<BaseEntity> visible = new ArrayList<>();
 
         for (BaseEntity ent:sortedEntities){
-            if (chunkSystem.panel.camera.getHitBox().collision(new HitBox(ent.getWorldX(),ent.getWorldY(),ent.getWidth(),ent.getHeight()))){
+            if (chunkSystem.panel.camera.getHitBox().collision(new HitBox((ent.getWorldX()),ent.getWorldY(),ent.getWidth(),ent.getHeight()))){
                 visible.add(ent);
             }
         }
@@ -296,8 +296,8 @@ public class WorkingMemory {
     ///END COLLISION::::::::
 
     public void setHoveredEntity(int x,int y){
-        int worldX =  chunkSystem.panel.camera.getWorldX()+x;
-        int worldY =  chunkSystem.panel.camera.getWorldY()+y;
+        int worldX =  (int)chunkSystem.panel.camera.getWorldX()+x;
+        int worldY =  (int)chunkSystem.panel.camera.getWorldY()+y;
         ArrayList<BaseEntity> entities = getEntitiesCollidedWith(new Point(worldX,worldY));
         chunkSystem.panel.camera.addbackendPrintData(worldX +","+worldY);
         for (BaseEntity baseE:entities){

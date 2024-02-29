@@ -258,16 +258,16 @@ public class Tile extends BaseEntity{
     private Tile getTile(int direction){
         Tile tile = null;
         if (direction == NORTH){
-             tile = panel.chunkSystem.getTile(new Point(worldX+width/2,worldY-width/2));
+             tile = panel.chunkSystem.getTile(new Point((int)worldX+width/2,(int)worldY-width/2));
         }
         else if (direction == EAST){
-             tile = panel.chunkSystem.getTile(new Point(worldX+width*3/2,worldY+width/2));
+             tile = panel.chunkSystem.getTile(new Point((int)worldX+width*3/2,(int)worldY+width/2));
         }
         else if (direction == SOUTH){
-             tile = panel.chunkSystem.getTile(new Point(worldX+width/2,worldY+width*3/2));
+             tile = panel.chunkSystem.getTile(new Point((int)worldX+width/2,(int)worldY+width*3/2));
         }
         else if (direction == WEST){
-             tile = panel.chunkSystem.getTile(new Point(worldX-width/2,worldY+width/2));
+             tile = panel.chunkSystem.getTile(new Point((int)worldX-width/2,(int)worldY+width/2));
         }
         
         return tile;

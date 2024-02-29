@@ -14,19 +14,19 @@ public class InputHandlingSystem {
 
     public void update(){
         if (up){
-            panel.player.addVelocity(new Vector(0,-1));
+            panel.player.addVelocity(new Vector(0,-2));
         }
 
         if (left){
-            panel.player.addVelocity(new Vector(-1,0));
+            panel.player.addVelocity(new Vector(-2,0));
         }
             
         if (down){
-            panel.player.addVelocity(new Vector(0,1));
+            panel.player.addVelocity(new Vector(0,2));
         }
 
         if (right){
-            panel.player.addVelocity(new Vector(1,0));
+            panel.player.addVelocity(new Vector(2,0));
         }
 
         //setting the hovered entities from mouse input

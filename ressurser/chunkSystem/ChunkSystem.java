@@ -12,7 +12,7 @@ import javax.swing.JFrame;
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.HitBox;
-import ressurser.baseEntity.playable.Playable;
+import ressurser.baseEntity.playable.Moveable;
 import ressurser.baseEntity.tile.CliffTile;
 import ressurser.baseEntity.tile.Tile;
 import ressurser.chunkSystem.terrainGeneration.EntityFactory;
@@ -174,8 +174,8 @@ public class ChunkSystem {
 
     public ArrayList<Chunk> getAllChunksInRenderDistance(BaseEntity entity){
 
-        int centerX = entity.getWorldX()+entity.getWidth()/2;
-        int centerY = entity.getWorldY()-entity.getHeight()/2;
+        int centerX = ((int)entity.getWorldX()+entity.getWidth()/2);
+        int centerY = (int)entity.getWorldY()-entity.getHeight()/2;
         return getAllChunksInRenderDistancefromPoint(new Point(centerX,centerY));
     }
 

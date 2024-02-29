@@ -2,7 +2,7 @@ package ressurser.main;
 import java.awt.Point;
 
 import ressurser.baseEntity.HitBox;
-import ressurser.baseEntity.playable.Playable;
+import ressurser.baseEntity.playable.Moveable;
 import ressurser.baseEntity.tile.TileManager;
 import ressurser.chunkSystem.ChunkSystem;
 import ressurser.drawing.Camera;
@@ -42,7 +42,7 @@ public class GenerationManager {
 
     public void initiate(){
         Point p = getStartingPoint();
-        panel.player = (new Playable(panel, "red",p.x,p.y,(short)48,(short)96,(short)36,(short)32,(short)6,(short)64));
+        panel.player = (new Moveable(panel, "red",p.x,p.y,(short)48,(short)96,(short)36,(short)32,(short)6,(short)64));
         panel.chunkSystem.addEntity(panel.player);
     }
 

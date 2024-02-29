@@ -10,8 +10,8 @@ public class ItemBar extends ItemContainer{
 
     
 
-    public ItemBar(GamePanel panel, int rows, int cols, int slotWidth, int slotHeight) {
-        super(panel, rows, cols, slotWidth, slotHeight);
+    public ItemBar(GamePanel panel, int rows, int cols) {
+        super(panel, rows, cols);
        
     }
 

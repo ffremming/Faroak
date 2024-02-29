@@ -44,7 +44,7 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
 
     @Override
     public void mousePressed(MouseEvent e) {
-        panel.player.setPath(panel.chunkSystem.workingMemory.getPath(panel.player,new Point(e.getX()+panel.camera.getWorldX(),e.getY()+panel.camera.getWorldY())));
+        panel.player.setPath(panel.chunkSystem.workingMemory.getPath(panel.player,new Point(e.getX()+((int)(panel.camera.getWorldX())),e.getY()+(int)panel.camera.getWorldY())));
         panel.UI.mousePressed(e);
         
     }

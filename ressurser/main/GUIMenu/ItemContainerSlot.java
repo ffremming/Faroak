@@ -16,6 +16,8 @@ public class ItemContainerSlot extends Component{
 
         setBackground(Color.LIGHT_GRAY);
         setForeGround(Color.DARK_GRAY);
+        height = 64;
+        width = 64;
     }
 
 
@@ -39,7 +41,9 @@ public class ItemContainerSlot extends Component{
         if (item!= null){
             g2.drawImage(item.sprite,x,y,null);
         }
-        if (hover){}
+        if (hover){
+            
+        }
         
     }
 

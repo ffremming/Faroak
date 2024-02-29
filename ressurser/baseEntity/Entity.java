@@ -9,7 +9,7 @@ public class Entity extends BaseEntity{
 
     
 
-    protected ArrayList<BufferedImage> images = new ArrayList<>();
+    
     protected int animationIndex = 0;
 
     public Entity(GamePanel panel, String name, int worldX, int worldY, short width, short height, short hitBoxWidth,

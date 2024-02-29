@@ -14,7 +14,7 @@ public class MenuState extends ScreenState{
     ItemBar itemBar;
     public MenuState(GamePanel panel) {
         super(panel);
-        add(new BaseMenu(panel));
+       
 
         itemC = new ItemContainer(panel,3,8,60,60);
         itemC.setX(50);

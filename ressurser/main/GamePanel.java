@@ -1,7 +1,7 @@
 package ressurser.main;
 
 import ressurser.baseEntity.HitBox;
-import ressurser.baseEntity.playable.Playable;
+import ressurser.baseEntity.playable.Moveable;
 import ressurser.baseEntity.tile.TileManager;
 import ressurser.chunkSystem.ChunkSystem;
 
@@ -14,6 +14,7 @@ import ressurser.enviroment.Lightning;
 import ressurser.itemBar.ItemBar;
 import ressurser.main.GUIMenu.Button;
 import ressurser.main.GUIMenu.Container;
+import ressurser.main.GUIMenu.ItemContainer;
 import ressurser.main.GUIMenu.MenuState;
 import ressurser.main.interactions.InventoryInteraction;
 import ressurser.main.interactions.MenuInteraction;
@@ -86,11 +87,12 @@ public class GamePanel extends JPanel implements Runnable{
     public MenuState menuStateUI;
     public SpriteLoader spriteLoader;
 
-    public Playable player;
+    public Moveable player;
     public Keys keys;
     public Mouse mouse;
     public InputHandlingSystem inputHandlingSystem;
     public Container UI;
+    public ItemContainer container;
 
 
     Graphics2D g2;
@@ -160,7 +162,7 @@ public class GamePanel extends JPanel implements Runnable{
         inputHandlingSystem = new InputHandlingSystem(this);
         mouse = new Mouse(this);
 
-        UI = new Container(this,0,0,400,400);
+        UI = new Container(this,100,100);
         UI.padding = 50;
         UI.border = 30;
         //UI.setVisible(true);
@@ -169,7 +171,7 @@ public class GamePanel extends JPanel implements Runnable{
         UI.add(new Button(this,"knapp"));
         UI.add(new Button(this,"knapp"));
        
-
+        container = new ItemContainer(this,3,7,100,100);
         generationM.initiate();
 
 

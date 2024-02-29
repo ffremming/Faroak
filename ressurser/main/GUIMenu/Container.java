@@ -16,8 +16,6 @@ public class Container extends BaseComponent{
     //INVENTORY
     int rows;
     int cols;
-    int slotWidth;
-    int slotHeight;
 
     ArrayList<Component> content = new ArrayList<>();
     public int border;
@@ -25,14 +23,27 @@ public class Container extends BaseComponent{
     public Container(GamePanel panel) {
         super(panel);
     }
-    public Container(GamePanel panel,int x,int y,int width,int height) {
+    public Container(GamePanel panel,int x,int y) {
         super(panel);
         this.x = x;
         this.y = y;
-        this.width = width;
-        this.height = height;
     }
 
+    public void add(ItemContainerSlot comp){
+        if (content.size()== 0){
+            //comp.y = y+padding;
+            //comp.x = x+padding;
+
+        } else {
+            Component previous = content.get(content.size()-1);
+            //comp.y = y+previous.y+previous.height + padding;
+            //comp.x = x + padding;
+        }
+        content.add(comp);
+        comp.setContainer(this);
+    }
+
+    /** for adding UI elements */
     public void add(Component comp){
         if (content.size()== 0){
             comp.y = y+padding;
@@ -48,13 +59,17 @@ public class Container extends BaseComponent{
         comp.setContainer(this);
     }
 
+
+
     public boolean remove(Component comp){
         return content.remove(comp);
     }
 
     public void draw(Graphics2D g2){
+        
         if (visible){
             drawRect(g2);
+            System.out.println("draw");
             for (Component comp:content){
                 comp.draw(g2);
             }

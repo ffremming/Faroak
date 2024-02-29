@@ -16,7 +16,7 @@ public class BaseEntity {
 
     short age;
     String name;
-    String nameID;
+    String ID;
     protected byte type;
 
     protected boolean solid;
@@ -35,7 +35,7 @@ public class BaseEntity {
     protected HitBox hitBox;
     int hitBoxWidth,hitBoxHeight,relativeXValue,relativeYValue;
     
-
+    protected ArrayList<BufferedImage> images = new ArrayList<>();
     //might need to change to sprite.
     public boolean animated;
 
@@ -102,10 +102,10 @@ public class BaseEntity {
     }
 
 
-    public int getWorldX() {
+    public double getWorldX() {
         return worldX;
     }
-    public int getWorldY() {
+    public double getWorldY() {
         return worldY;
     }
 
@@ -126,19 +126,12 @@ public class BaseEntity {
 
     }
 
-    public String getNameID(){
-        return nameID;
+    public String getID(){
+        return ID;
     }
 
     //got to check out if this actually works.. a functions should be made to decide what col u are in.
-    public int getRow() {
-        return worldX/panel.tileSize;
-    }
-
-
-    public int getCol() {
-        return worldY/panel.tileSize;
-    }
+   
 
 
     public String getName() {
@@ -174,8 +167,8 @@ public class BaseEntity {
 
     public void draw(Camera camera,Graphics2D g2){
         
-        int x = getWorldX()-camera.worldX;
-        int y = getWorldY()-camera.worldY;
+        int x = (int) (getWorldX()-camera.worldX);
+        int y =  (int) (getWorldY()-camera.worldY);
 
         g2.setColor(Color.WHITE);
        
@@ -197,7 +190,7 @@ public class BaseEntity {
         
     }
     public Point getPoint() {
-        return new Point(worldX,worldY);
+        return new Point((int)worldX,(int)worldY);
     }
 
     public boolean isSolid(){
@@ -206,7 +199,11 @@ public class BaseEntity {
 
     @Override
     public String toString(){
-        return name+"\nsolid: " + solid+"\nanimated: "+animated + "\nlightSource: " + lightSource; 
+        return name+"\nsolid: " + solid+"\nanimated: "+animated + "\nlightSource: " + lightSource +
+        "\ncoords: "+worldX+", "+worldY;
 
+    }
+    protected void setName(String name){
+        this.name = name;
     }
 }
