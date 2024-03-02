@@ -6,6 +6,8 @@ import java.awt.event.MouseWheelEvent;
 
 import ressurser.main.GamePanel;
 import ressurser.meny.items.Item;
+import java.awt.BasicStroke;
+import java.awt.Point;
 
 public class Component extends BaseComponent{
 
@@ -13,19 +15,21 @@ public class Component extends BaseComponent{
 
     public Component(GamePanel panel) {
         super(panel);
-        setHeight(40);setWidth(100);
-        //TODO Auto-generated constructor stub
+       
+       
     }
 
     @Override
     public void draw(Graphics2D g2) {
+        g2.setStroke(new BasicStroke(borderSize));;
         if (visible){
             
+            drawRect(g2);
         }
     }
 
     public void setContainer(Container thisContainer){
-        this.container = thisContainer;
+        container = thisContainer;
     }
 
     public void mousePressed(MouseEvent e){
@@ -50,6 +54,15 @@ public class Component extends BaseComponent{
 
     public void addItem(Item item){
        
+    }
+    public void setPadding(int value){
+        padding = value;
+    }
+
+    public void center(Point p){
+        int newX = p.x - this.width / 2;
+        int newY = p.y - this.height / 2;
+        this.setLocation(newX, newY);
     }
    
     

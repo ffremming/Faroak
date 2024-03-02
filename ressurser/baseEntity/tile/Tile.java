@@ -204,19 +204,19 @@ public class Tile extends BaseEntity{
 
         }
             
-        if ((borders[0] && borders[1] ) &&(getNeighbors()[0].getName() == getNeighbors()[1].getName() )){
+        if ((borders[0] && borders[1] ) &&(getNeighbors()[0].getName().equals( getNeighbors()[1].getName()) )){
             images.add(panel.imageContainer.getTileImage(getNeighbors()[0].getName()+"C"+1));
         }
 
-        if ((borders[1] && borders[2] ) &&(getNeighbors()[1].getName() == getNeighbors()[2].getName() )){
+        if ((borders[1] && borders[2] ) &&(getNeighbors()[1].getName() .equals( getNeighbors()[2].getName()) )){
             images.add(panel.imageContainer.getTileImage(getNeighbors()[1].getName()+"C"+2));
         }
 
-        if ((borders[2] && borders[3] ) &&(getNeighbors()[2].getName() == getNeighbors()[3].getName() )){
+        if ((borders[2] && borders[3] ) &&(getNeighbors()[2].getName() .equals( getNeighbors()[3].getName()) )){
             images.add(panel.imageContainer.getTileImage(getNeighbors()[2].getName()+"C"+3));
         }
 
-        if ((borders[3] && borders[0] ) &&(getNeighbors()[3].getName() == getNeighbors()[0].getName() )){
+        if ((borders[3] && borders[0] ) &&(getNeighbors()[3].getName() .equals( getNeighbors()[0].getName()) )){
             images.add(panel.imageContainer.getTileImage(getNeighbors()[3].getName()+"C"+4));
         }
 

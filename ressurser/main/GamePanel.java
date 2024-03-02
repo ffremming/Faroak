@@ -16,6 +16,7 @@ import ressurser.main.GUIMenu.Button;
 import ressurser.main.GUIMenu.Container;
 import ressurser.main.GUIMenu.ItemContainer;
 import ressurser.main.GUIMenu.MenuState;
+import ressurser.main.GUIMenu.UserInferface;
 import ressurser.main.interactions.InventoryInteraction;
 import ressurser.main.interactions.MenuInteraction;
 import ressurser.main.interactions.OptionInteraction;
@@ -92,13 +93,15 @@ public class GamePanel extends JPanel implements Runnable{
     public Mouse mouse;
     public InputHandlingSystem inputHandlingSystem;
     public Container UI;
-    public ItemContainer container;
+    public UserInferface userInterface;
+    //public ItemContainer container;
 
 
     Graphics2D g2;
    
     
-    
+    public int height;
+    public int width;
     
     
  
@@ -145,7 +148,7 @@ public class GamePanel extends JPanel implements Runnable{
        
         
         
-        
+       
     }
 
     
@@ -170,8 +173,14 @@ public class GamePanel extends JPanel implements Runnable{
        
         UI.add(new Button(this,"knapp"));
         UI.add(new Button(this,"knapp"));
+
        
-        container = new ItemContainer(this,3,7,100,100);
+        userInterface = new UserInferface(this,0,0);
+        userInterface.setVisible(true);
+        userInterface.enable();
+        
+        
+        
         generationM.initiate();
 
 
@@ -191,14 +200,14 @@ public class GamePanel extends JPanel implements Runnable{
     @Override
     public void run() {
        
-        
+       
 
 
         while (gameThread != null){
 
            
             
-            
+          
             repaint();
            
             Runnable updateThread = new Runnable() {

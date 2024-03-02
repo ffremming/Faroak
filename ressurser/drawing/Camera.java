@@ -17,7 +17,7 @@ import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.primitiveEntity;
 import ressurser.baseEntity.playable.Moveable;
-
+import ressurser.baseEntity.tile.Tile;
 import ressurser.chunkSystem.Chunk;
 import ressurser.main.GamePanel;
 import ressurser.main.GUIMenu.ItemContainer;
@@ -36,6 +36,9 @@ public class Camera extends primitiveEntity{
     ArrayList<String> backEndData = new ArrayList<>();
 
     public boolean testData = false;
+
+
+    public int setWidth;
 
     public Camera(GamePanel panel, String name, int worldX, int worldY, short width, short height) {
         super(panel, name, worldX, worldY, (short) panel.screenWidth,(short)(panel.screenHeight));
@@ -125,14 +128,15 @@ public class Camera extends primitiveEntity{
         
         drawObjectData(g2);
         long endDraw = System.nanoTime();
+        
         drawHighlightetHitbox(g2,panel.chunkSystem.workingMemory.hoveredEntity);
         addbackendPrintData("drawtime ms: "+String.valueOf((endDraw-startDraw)/1000000));
         addbackendPrintData("remaining cap: "+String.valueOf((1000000000-(((endDraw-startDraw)*60)))));
-        addbackendPrintData("UI: "+panel.container.width +","+ panel.container.height);
+       
         drawBackEndData(g2);
 
         //panel.UI.draw(g2);
-        panel.container.draw(g2);
+        panel.userInterface.draw(g2);
         
         
         // BufferedImage optimized  = toCompatibleImage(image2); LESS EFFECTIVE
@@ -154,11 +158,21 @@ public class Camera extends primitiveEntity{
                 g2.setColor(Color.WHITE);
                 g2.drawString(entity.getName(),x,y+15);
             }
+
+            int shadowX = (int)(entity.getHitBox().x-worldX)-10;
+            int shadowY = (int)(entity.getHitBox().y-worldY)+10;
+           
             
             //g2.drawImage(entity.getImage(),x,y,64,64,null);     //can remove width and height.
+            if (!(entity instanceof Tile)){
+                g2.setColor(new Color(100,100,100,40));
+                g2.fillOval(shadowX,shadowY,entity.getHitBox().width+20,entity.getHitBox().height);
+            }
+            
             ArrayList<BufferedImage> imagesCopy = new ArrayList<>(entity.getImages());
             for (BufferedImage img:imagesCopy){
                 g2.drawImage(img,x,y,entity.getWidth(),entity.getHeight(),null);  
+                
                 
             }
         }
@@ -199,7 +213,8 @@ public class Camera extends primitiveEntity{
     }
 
     private void drawHighlightetHitbox(Graphics2D g2,BaseEntity entity){
-        int x = (int)(entity.getHitBox().getWorldX()-worldX);
+        if (entity!= null){
+            int x = (int)(entity.getHitBox().getWorldX()-worldX);
         int y = (int)(entity.getHitBox().getWorldY()-worldY);
 
         int width = (int)entity.getHitBox().getWidth();
@@ -215,6 +230,7 @@ public class Camera extends primitiveEntity{
             Rectangle rect = ((Moveable) entity).getHitboxInfront();
             g2.drawRect((int)(rect.x-worldX),(int)(rect.y-worldY),rect.width,rect.height);
          }
+        }
     }
 
     private void drawCoords(Graphics2D g2,BaseEntity entity){
@@ -243,20 +259,22 @@ public class Camera extends primitiveEntity{
     }
 
     private void drawObjectData(Graphics g2){
-        g2.setColor(Color.white);
-        g2.setFont(new Font("Arial", Font.PLAIN, 16));
-        int y = 20;
-        ArrayList<String> printables = new ArrayList<>();
-
-        
-        for (String streng:(panel.chunkSystem.workingMemory.hoveredEntity.toString().split("\n"))){
-            printables.add(streng);
-        }
-
-        for (String printData:printables){
-           
-            g2.drawString(printData,panel.screenWidth-150,y);
-            y += 25;
+        if (panel.chunkSystem.workingMemory.hoveredEntity != null){
+            g2.setColor(Color.white);
+            g2.setFont(new Font("Arial", Font.PLAIN, 16));
+            int y = 20;
+            ArrayList<String> printables = new ArrayList<>();
+    
+            
+            for (String streng:(panel.chunkSystem.workingMemory.hoveredEntity.toString().split("\n"))){
+                printables.add(streng);
+            }
+    
+            for (String printData:printables){
+               
+                g2.drawString(printData,panel.screenWidth-150,y);
+                y += 25;
+            }
         }
     }
 
@@ -367,4 +385,10 @@ public class Camera extends primitiveEntity{
     // return the new optimized image
     return newImage; 
 }
+    public void setWidth(int i) {
+        width = (short)i;
+    }
+    public void setHeight(int i) {
+      height = (short) i;
+    }
 }

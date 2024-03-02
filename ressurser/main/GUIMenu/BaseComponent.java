@@ -12,8 +12,8 @@ import ressurser.main.GamePanel;
 public abstract class BaseComponent extends Rectangle {
     //everything tat can be placed inside a container
     
-    Color background = Color.white;
-    Color foreground = Color.black;
+    Color background ;
+    Color foreground;
     boolean enabled;
     boolean visible;
     boolean focus;
@@ -27,6 +27,8 @@ public abstract class BaseComponent extends Rectangle {
 
     public BaseComponent(GamePanel panel){
         this.panel = panel;
+        
+        
     }
 
     public abstract void draw(Graphics2D g2);
@@ -77,14 +79,16 @@ public abstract class BaseComponent extends Rectangle {
 
 
     public void drawRect(Graphics2D g2){
+
         g2.setColor(background);
         g2.fillRect(x,y,width,height);
         g2.setColor(foreground);
-        g2.setStroke(new BasicStroke(borderSize));
+        
         g2.drawRect(x,y,width,height);
     }
 
     public void setHover(boolean bol){
         hover = bol;
+        
     }
 }

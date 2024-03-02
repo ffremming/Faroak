@@ -19,7 +19,7 @@ public class Button extends Component{
         height = 50;
         borderSize = 5;
         foreground = Color.white;
-        background = Color.lightGray;
+        background = Color.red;
     }
    
     // need image - 2 or three versions per
@@ -43,13 +43,21 @@ public class Button extends Component{
     }
     
     public void draw(Graphics2D g2){
-        if (hover){background = Color.DARK_GRAY;} else {
-            background = Color.lightGray;
+
+        setWidth(container.width-30);
+        setHeight(width/4);
+
+        if (hover){
+            setBackground(new Color(160,160,160));
+            setForeGround(Color.black);
+        } else {
+            setBackground(Color.gray);
+            setForeGround(Color.black);
         }
        
         drawRect(g2);
         g2.setColor(foreground);
-        g2.drawString(text,x+width/2-(30-text.length()*2),y+(height/2));
+        g2.drawString(text,(int)(x+(width/2)-(text.length()*3.5)),y+(height/2));
     }
 
     public void mouseMoved(MouseEvent e){

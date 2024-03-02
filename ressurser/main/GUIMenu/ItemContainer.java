@@ -13,6 +13,8 @@ public class ItemContainer extends Container {
     int indeks = 0;
     int maxIndeks = 8;
     int minIndeks = 0;
+    int slotHeight;
+    int slotWidth;
     
 
     public ItemContainer(GamePanel panel,int rows,int cols,int x,int y) {
@@ -26,24 +28,25 @@ public class ItemContainer extends Container {
         this.y = y;
         visible = true;
 
-
+       
+        padding = 10;
+        
+        this.slotHeight = ((height)+padding*2)/rows;
+        this.slotWidth = (width+padding*2)/cols;
         addSlots();
-        setWidth(64*cols+20);
-        setHeight(64*rows+20);
+        setBackground(Color.lightGray);
+        setForeGround(Color.gray);
+        
     }
 
     private void addSlots(){
         for (int i = 0;i<rows;i++){
             for (int j = 0;j<cols;j++){
-                ItemContainerSlot itemCS = new ItemContainerSlot(panel);
+                
+                ItemContainerSlot itemCS = new ItemContainerSlot(panel,x+j*((width)/cols),y+i*((height)/rows),slotWidth,slotHeight,j,i);
                 add(itemCS);
-               
-            
-              
-              
             }
         }
-      
     }
 
     public void mouseReleased(){
@@ -54,9 +57,12 @@ public class ItemContainer extends Container {
         //items might be spreaded
     }
     public  void draw(Graphics2D g2){
+        setWidth((int)1.5*panel.width/3);
+
+        setHeight((int)getWidth()/2);
         super.draw(g2);
-        //g2.fillRect(x,y,width,height);
-         drawIndexSlot(g2);
+
+        
     }
 
     private void drawIndexSlot(Graphics2D g2){

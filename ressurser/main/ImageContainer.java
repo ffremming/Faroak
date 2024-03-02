@@ -117,7 +117,9 @@ public class ImageContainer {
                 System.out.println("tried to rotate image, something went wrong:");
             }
         }
-        
+        if (name.startsWith("grass")){
+            System.out.println(name +",,,"+image);
+        }
        
         images.put(name,image);
         return image;

@@ -248,10 +248,30 @@ public class Chunk extends TreeNode{
         //method returns biome type- which is a streubg
         String biomeType =  chunkS.proceduralGen.calculateBiomeString(worldX, worldY);
         int height = (int)(chunkS.proceduralGen.getHeightValue(worldX,worldY)*1000);
-        if (height>100){return new Tile(chunkS.panel,biomeType,worldX,worldY,height, false);}
+
+        //if (height>100){return new Tile(chunkS.panel,biomeType,worldX,worldY,height, false);}
+
+        if(biomeType.equals("grass")){
+            double value = (Math.abs(chunkS.proceduralGen.getVegetationMidFreq(worldX,worldY)));
+            double intervals = 6/1;
+            
+            int number = (int)(value*intervals);
+            number ++;
+            
+            if (number>7){number = 7;}
+
+            String streng = "grass"+number;
+            if (number <2){streng = "grass";}
+
+            return new Tile(chunkS.panel,streng,worldX,worldY,height);
+        }
+
+
         return new Tile(chunkS.panel,biomeType,worldX,worldY,height);
         
     }
+
+   
 
     private BaseEntity getSingelEntity(int worldX,int worldY){
 

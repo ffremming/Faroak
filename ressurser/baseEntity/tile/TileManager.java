@@ -69,8 +69,16 @@ public class TileManager {
 
     private void setup(){
         tileHeight.put("plains",100);
+        tileHeight.put("grass",87);
+        tileHeight.put("grass2",86);
+        tileHeight.put("grass3",85);
+        tileHeight.put("grass4",84);
+        tileHeight.put("grass5",83);
+        tileHeight.put("grass6",82);
+        tileHeight.put("grass7",81);
+
         tileHeight.put("mud",20);
-        tileHeight.put("swamp",80);
+        tileHeight.put("swamp",70);
         tileHeight.put("desert",10);
         tileHeight.put("beach",7);
         tileHeight.put("wetBeach",5);
@@ -78,6 +86,7 @@ public class TileManager {
         tileHeight.put("forest",101);
         tileHeight.put("savanna",15);
         tileHeight.put("seasonal forest",50);
+        
     }
 
     

@@ -5,13 +5,15 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
+import java.awt.BasicStroke;
+import java.awt.Color;
 
 import ressurser.main.GamePanel;
 
     
 
 
-public class Container extends BaseComponent{
+public class Container extends Component{
 
     //INVENTORY
     int rows;
@@ -22,11 +24,20 @@ public class Container extends BaseComponent{
 
     public Container(GamePanel panel) {
         super(panel);
+        
     }
     public Container(GamePanel panel,int x,int y) {
         super(panel);
         this.x = x;
         this.y = y;
+    }
+
+    public Container(GamePanel panel,int x,int y,int cols,int rows) {
+        super(panel);
+        this.x = x;
+        this.y = y;
+        this.cols = cols;
+        this.rows = rows;
     }
 
     public void add(ItemContainerSlot comp){
@@ -45,16 +56,6 @@ public class Container extends BaseComponent{
 
     /** for adding UI elements */
     public void add(Component comp){
-        if (content.size()== 0){
-            comp.y = y+padding;
-            comp.x = x+padding;
-
-        } else {
-            Component previous = content.get(content.size()-1);
-            comp.y = y+previous.y+previous.height + padding;
-            comp.x = x + padding;
-        }
-
         content.add(comp);
         comp.setContainer(this);
     }
@@ -69,9 +70,33 @@ public class Container extends BaseComponent{
         
         if (visible){
             drawRect(g2);
-            System.out.println("draw");
+           
+          
+           int count = 0;
             for (Component comp:content){
-                comp.draw(g2);
+                
+                if (comp instanceof ItemContainerSlot){
+                    ((ItemContainerSlot)comp).draw(g2);
+                   
+
+                } else{
+                    if (rows!= 0 && cols != 0){
+                        comp.x = x +((width/2)-(comp.width/2));
+                        if (count!= 0){
+                            comp.y = content.get(count-1).y +content.get(count-1).height + padding; 
+                        } else {
+                            comp.y = y + comp.height/(content.size());
+                        }
+                        
+                        System.out.println("draw container4");
+                        comp.draw(g2);
+                        count ++;
+                    } else {
+                        comp.draw(g2);
+                    }
+                    
+                }
+                
             }
         }
        
@@ -96,13 +121,14 @@ public class Container extends BaseComponent{
 
         int xEvent = e.getX();
         int yEvent = e.getY();
-
+        setHover(true);
         for (Component comp:content){
             if (comp.contains(new Point(xEvent,yEvent))){
-                setHover(true);
+                comp.setHover(true);
                 comp.mouseMoved(e);
             } else {
                 comp.setHover(false);
+                comp.hover = false;
             }
         }
     }
@@ -127,8 +153,26 @@ public class Container extends BaseComponent{
         //if an item is chosen, place item on chosen slot
     }
 
-    public void mouseDragged(){
-        //items might be spreaded
+    public void mouseDragged(MouseEvent e) {
+       
+    }
+
+    public void mouseClicked(MouseEvent e) {
+       
+    }
+
+    @Override
+    public void setHover(boolean bol){
+        hover = bol;
+        for (Component comp:content){
+            comp.setHover(bol);
+        }
+    }
+
+    public Point getCenter() {
+        int centerX = x + width / 2;
+        int centerY = y + height / 2;
+        return new Point(centerX, centerY);
     }
     
 }

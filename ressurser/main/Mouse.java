@@ -19,13 +19,13 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
 
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
-        // TODO Auto-generated method stub
+        panel.userInterface.mouseWheelMoved(e);
         
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        // TODO Auto-generated method stub
+        panel.userInterface.mouseDragged(e);
        
     }
 
@@ -34,18 +34,22 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
         this.x = e.getX();
         this.y = e.getY();
         panel.UI.mouseMoved(e);
+        panel.userInterface.mouseMoved(e);
         
     }
 
     @Override
     public void mouseClicked(MouseEvent e) {
-       
+        panel.userInterface.mouseClicked(e);
     }
 
     @Override
     public void mousePressed(MouseEvent e) {
-        panel.player.setPath(panel.chunkSystem.workingMemory.getPath(panel.player,new Point(e.getX()+((int)(panel.camera.getWorldX())),e.getY()+(int)panel.camera.getWorldY())));
-        panel.UI.mousePressed(e);
+        if (!panel.userInterface.isEnabled()){
+            panel.player.setPath(panel.chunkSystem.workingMemory.getPath(panel.player,new Point(e.getX()+((int)(panel.camera.getWorldX())),e.getY()+(int)panel.camera.getWorldY())));
+        }
+        
+        panel.userInterface.mousePressed(e);
         
     }
 

@@ -5,20 +5,32 @@ import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 
 import ressurser.main.GamePanel;
+import java.awt.BasicStroke;
 import ressurser.meny.items.Item;
 
 public class ItemContainerSlot extends Component{
 
     Item item;
+    int col;
+    int row;
 
-    public ItemContainerSlot(GamePanel panel) {
+    public ItemContainerSlot(GamePanel panel,int x,int y,int width,int height,int col,int row) {
         super(panel);
 
-        setBackground(Color.LIGHT_GRAY);
-        setForeGround(Color.DARK_GRAY);
-        height = 64;
-        width = 64;
+
+        
+        borderSize = 1;
+        
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        setBackground(Color.green);
+        setForeGround(Color.black);
+        this.col = col;
+        this.row = row;
     }
+
 
 
     public void addItem(Item item){
@@ -31,36 +43,50 @@ public class ItemContainerSlot extends Component{
     }   
 
     public void hover(){
+        hover = true;
     }
 
     public void press(){
     }
 
     public void draw(Graphics2D g2){
+       
         drawRect(g2);
-        if (item!= null){
-            g2.drawImage(item.sprite,x,y,null);
-        }
-        if (hover){
-            
-        }
+    }
+    @Override
+    public void drawRect(Graphics2D g2){
+       
         
+        if (hover){
+            setBackground(Color.white);
+            setForeGround(new Color(240,240,240));
+        } else {
+            setBackground(Color.gray);
+            setForeGround(Color.black);
+        }
+
+
+        width = (container.width-(8*(container.cols+1)))/(container.cols) ;
+        height = (container.height- (8*(container.rows+1)))/(container.rows) ;
+
+       
+        
+        
+        x = container.x + col*(width+8) +8 ;
+        y = container.y + row*(height+8) +8;
+        g2.setColor(background);
+        g2.fillRect(x,y,width,height);
+        g2.setColor(foreground);
+        g2.drawRect(x,y,width,height);
     }
 
     public void mousePressed(MouseEvent e){
         switchItems();
-        System.out.println(" slot pressed");
+       
     }
 
     private void switchItems(){
-        Item newItem = null;
-        newItem = panel.menuStateUI.chosenItem;
-
-        panel.menuStateUI.chosenItem = item;
-        item = newItem;
-
-        System.out.println(item);
-        System.out.println(panel.menuStateUI.chosenItem);
+       
     }
 
     public Item getItem(){

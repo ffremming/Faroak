@@ -45,6 +45,17 @@ public class Keys implements KeyListener{
             panel.newSeed();
 
         }
+
+        if (code == KeyEvent.VK_E){
+            panel.userInterface.toggleInventory();
+        }
+            
+
+        if (code == KeyEvent.VK_ESCAPE){
+            panel.userInterface.toggleMenu();
+        }
+        
+        
     }
 
     @Override

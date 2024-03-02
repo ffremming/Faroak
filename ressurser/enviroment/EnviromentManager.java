@@ -36,6 +36,8 @@ public class EnviromentManager {
             //based on camera, but should be something that is followed.
             panel.chunkSystem.workingMemory.update(panel.camera.getHitBox().getCenter());
             tick++;
+            updatePanelDimensions();
+            
 
             //ageAllObjects();
             updateAnimation();
@@ -51,6 +53,13 @@ public class EnviromentManager {
                 }
             } 
         }
+    }
+
+    public void updatePanelDimensions(){
+        panel.width = (int)panel.getSize().getWidth();
+        panel.height = (int)panel.getSize().getHeight();
+        panel.camera.setWidth((panel.width));
+        panel.camera.setHeight((panel.height));
     }
 
     
@@ -89,21 +98,7 @@ public class EnviromentManager {
         return lightLevel;
     }
 
-    protected void ageAllObjects(){
-        ObjectManager objM = panel.objM;
-       
-        for (SuperObject [] o:objM.map[panel.mapH.activeMapType][panel.mapH.activeMapNumber]){
-            for (SuperObject ob:o){
-                if (ob!= null){
-                  
-                    if (ob instanceof Ageable){
-                        ((Ageable)ob).age();
-                       
-                    }
-                }
-            }
-        }
-    }
+    
 
     public void setCaveEnvoirment(){
         activeEnviroment = caveEnviroment;
