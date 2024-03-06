@@ -60,6 +60,8 @@ public class EnviromentManager {
         panel.height = (int)panel.getSize().getHeight();
         panel.camera.setWidth((panel.width));
         panel.camera.setHeight((panel.height));
+        panel.camera.getHitBox().width = panel.width;
+        panel.camera.getHitBox().height = panel.height;
     }
 
     

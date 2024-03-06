@@ -89,6 +89,7 @@ public class HitBox extends Rectangle{
         if (baseEntity != null){
             x = ((int)baseEntity.getWorldX())+relativeXValue;
             y = (int)baseEntity.getWorldY()+relativeYValue;
+            
         }
     }
 

@@ -1,7 +1,7 @@
 package ressurser.main;
 
-import ressurser.baseEntity.HitBox;
-import ressurser.baseEntity.playable.Moveable;
+
+import ressurser.baseEntity.playable.Playable;
 import ressurser.baseEntity.tile.TileManager;
 import ressurser.chunkSystem.ChunkSystem;
 
@@ -62,7 +62,7 @@ public class GamePanel extends JPanel implements Runnable{
     // object components:
     GenerationManager generationM;
     public TerrainGenSimplex terrainGen;
-    public ObjectManager objM;
+    
     public TileManager tileM;
     public DungeonManager dungeonM;
     public ImagePainter imageP;
@@ -76,9 +76,8 @@ public class GamePanel extends JPanel implements Runnable{
 
     public KeyHandler input;
     
-    public Spiller spiller;
-    public Meny menu;
-    public CollisionChecker collisionC;
+    
+    
     public EntityHandler entityH;
     public Lightning light;
     public EnviromentManager enviromentM;
@@ -88,7 +87,7 @@ public class GamePanel extends JPanel implements Runnable{
     public MenuState menuStateUI;
     public SpriteLoader spriteLoader;
 
-    public Moveable player;
+    public Playable player;
     public Keys keys;
     public Mouse mouse;
     public InputHandlingSystem inputHandlingSystem;

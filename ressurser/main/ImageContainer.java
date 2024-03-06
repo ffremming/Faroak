@@ -19,6 +19,7 @@ public class ImageContainer {
 
     public HashMap<String,BufferedImage> images = new HashMap<>();
     public HashMap<String,ArrayList<BufferedImage>> objectImages = new HashMap<>();
+    public HashMap<String,BufferedImage> itemImages = new HashMap<>();
 
     public ImageContainer(){
         setupBaseImages();
@@ -40,6 +41,8 @@ public class ImageContainer {
     private void loadBufferedImage(String name){
 
     }
+
+
 
     private void setupBaseImages(){
         try {
@@ -281,4 +284,28 @@ public class ImageContainer {
     
             return scaledImage;
         }
+
+    public BufferedImage getItemImage(String name){
+        if (itemImages.containsKey(name)){
+            return (images.get(name));
+        }
+        else{
+            return retrieveItemImage(name);
+        }
+
+        
+    
+    }
+    private BufferedImage retrieveItemImage(String name) {
+        BufferedImage image = null;
+        try {
+            
+            image = scaleImage(ImageIO.read(new File("ressurser/images/items/"+name+".png")),32,32);
+            
+        }catch (IOException e) {
+            
+        }
+        itemImages.put(name,image);
+        return image;
+    }   
 }

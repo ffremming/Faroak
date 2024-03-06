@@ -1,8 +1,9 @@
-package ressurser.baseEntity;
+package ressurser.baseEntity.gameObject;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
+import ressurser.baseEntity.Entity;
 import ressurser.main.GamePanel;
 
 public class GameObject extends Entity{

@@ -15,7 +15,7 @@ public class Moveable extends Entity {
 
     private Vector velocity = new Vector();
     private Vector direction = new Vector(1,1); 
-    private ArrayList<Vector> path = new ArrayList<>();
+    protected ArrayList<Vector> path = new ArrayList<>();
 
     private double movementSpeed = 1;
     private int directionIndex = 0;
@@ -30,13 +30,44 @@ public class Moveable extends Entity {
 
     public HitBox getHitboxInfront(){
 
-        int movementX = (int)(3*direction.getX());
-        int movementY = (int)(3*direction.getY());
+        int movementX = (int)(1*direction.getX());
+        int movementY = (int)(1*direction.getY());
 
         HitBox usingHB = getHitBox();
         usingHB.updateCoords();
         HitBox inFront = new HitBox(usingHB.x+movementX,usingHB.y+movementY,usingHB.width,usingHB.height);
 
+        return inFront;
+      
+    }
+
+    public HitBox GetInteractIonHitBox(){
+
+        int xVal = 0;
+        int yVal = 0;
+
+        if (directionIndex == 0){
+            yVal = -50;
+            xVal-= ((64/2)-(getHitBox().width/2));
+        }
+        else if (directionIndex == 1){
+            xVal = getHitBox().width/2;
+            yVal-= ((64/2)-(getHitBox().height/2));
+        }
+        else if (directionIndex == 2){
+            //yVal = (int)getHitBox().getHeight();
+            xVal-= ((64/2)-(getHitBox().width/2));
+            
+        }
+        else if (directionIndex == 3){
+            yVal-= ((64/2)-(getHitBox().height/2));
+            xVal = -(64-(getHitBox().width/2));
+        }
+
+        HitBox usingHB = getHitBox();
+        usingHB.updateCoords();
+        HitBox inFront = new HitBox(usingHB.x+xVal,usingHB.y+yVal,64,64);
+        System.out.println(inFront);
         return inFront;
       
     }
@@ -64,7 +95,7 @@ public class Moveable extends Entity {
         }
         }
         //Could check for directional changes..
-
+        
         if (direction.getX()>0){
                 //moves right
                 directionIndex = 1;
@@ -232,6 +263,12 @@ public class Moveable extends Entity {
     }
     public void addPath(ArrayList<Vector> newPath){
         path.addAll(newPath);
+    }
+
+
+    public void interact() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'interact'");
     }
 
     

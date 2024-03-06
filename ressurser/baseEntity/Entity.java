@@ -16,9 +16,6 @@ public class Entity extends BaseEntity{
             short hitBoxHeight, short relativeXPLus, short relativeYPlus) {
         super(panel, name, worldX, worldY, width, height, hitBoxWidth, hitBoxHeight, relativeXPLus, relativeYPlus);
         //TODO Auto-generated constructor stub
-
-        
-       
     }
 
     /**

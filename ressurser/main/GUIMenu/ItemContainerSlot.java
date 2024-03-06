@@ -80,7 +80,33 @@ public class ItemContainerSlot extends Component{
         g2.drawRect(x,y,width,height);
     }
 
+    public void drawRectInPos(Graphics2D g2,int x,int y){
+        System.out.println("drawRect In pos");
+        if (hover){
+            setBackground(Color.white);
+            setForeGround(new Color(240,240,240));
+        } else {
+            setBackground(Color.gray);
+            setForeGround(Color.black);
+        }
+
+        width = (container.width-(8*(container.cols+1)))/(container.cols) ;
+        height = width;
+
+        this.x = x;
+        this.y = y;
+
+        g2.setColor(background);
+        g2.fillRect(x,y,width,height);
+        g2.setColor(foreground);
+        g2.drawRect(x,y,width,height);
+
+    }
+
+
+
     public void mousePressed(MouseEvent e){
+
         switchItems();
        
     }

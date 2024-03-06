@@ -15,7 +15,7 @@ public class BaseEntity {
     public GamePanel panel;
 
     short age;
-    String name;
+    protected String name;
     String ID;
     protected byte type;
 

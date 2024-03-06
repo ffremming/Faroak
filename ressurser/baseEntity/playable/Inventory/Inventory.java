@@ -7,7 +7,7 @@ import ressurser.baseEntity.playable.Playable;
 public class Inventory {
     
     public ArrayList<Stack> inventory = new ArrayList<>();
-    final int SIZE = 7*4;
+    final int SIZE = 9*4;
 
 
     public Inventory(Playable player){
@@ -53,4 +53,15 @@ public class Inventory {
         return inventory.get(index).getOneItem();
     }
 
+    public int getSize() {
+       return SIZE;
+    }
+
+    /**returns the stack in the given position */
+    public Stack getStack(int i) {
+        if (i<SIZE){
+            return inventory.get(i);
+        }
+        return null;
+    }
 }

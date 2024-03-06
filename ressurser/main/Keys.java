@@ -24,19 +24,28 @@ public class Keys implements KeyListener{
         int code = e.getKeyCode();
         if (code == KeyEvent.VK_W){
            panel.inputHandlingSystem.setUp(true);
+           panel.player.nullPath();
         }
 
         
         if (code == KeyEvent.VK_A){
             panel.inputHandlingSystem.setLeft(true);
+            panel.player.nullPath();
         }
 
         if (code == KeyEvent.VK_S){
             panel.inputHandlingSystem.setDown(true);
+            panel.player.nullPath();
         }
 
         if (code == KeyEvent.VK_D){
             panel.inputHandlingSystem.setRight(true);
+            panel.player.nullPath();
+        }
+
+        if (code == KeyEvent.VK_SPACE){
+            panel.player.interact();
+            
         }
 
 

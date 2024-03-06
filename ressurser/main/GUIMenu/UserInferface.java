@@ -4,11 +4,12 @@ import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.awt.Graphics2D;
 
+import ressurser.baseEntity.playable.Inventory.Inventory;
 import ressurser.main.GamePanel;
 
 public class UserInferface extends Container{
 
-    ItemContainer inventory;
+    PlayerInventory inventoryUI;
     Container menu;
 
 
@@ -25,13 +26,7 @@ public class UserInferface extends Container{
         setBackground(new Color(0,0,0,0));
         setForeGround(new Color(0,0,0,0));
 
-        inventory = new ItemContainer(panel,3,7,400,300);
-        inventory.setPadding(20);
-        add(inventory);
-        inventory.visible = true;
-       
         
-        inventory.center(getCenter());
         
         
 
@@ -52,24 +47,35 @@ public class UserInferface extends Container{
         menu.visible = false;
         menu.setBackground(Color.LIGHT_GRAY);
         menu.setForeGround(Color.DARK_GRAY);
+    }
+
+    public void addContainer(Inventory inventory){
+
+
+        int rows = inventory.getSize()/9;
+        int cols = 9;
         
 
+        inventoryUI = new PlayerInventory(panel,rows,cols,400,300,inventory);
+        inventoryUI.setPadding(20);
+        add(inventoryUI);
+        inventoryUI.visible = true;
+       
         
-
-
-
+        inventoryUI.center(getCenter());
+        
     }
 
     public void toggleInventory(){
         if (enabled){
-            if (inventory.visible){
+            if (inventoryUI.visible){
                 cleanUI();
-                inventory.visible = false;
-                inventory.enabled = false;
+                inventoryUI.visible = false;
+                inventoryUI.enabled = false;
             } else {
                 cleanUI();
-                inventory.visible = true;
-                inventory.enabled = true;
+                inventoryUI.visible = true;
+                inventoryUI.enabled = true;
             }
         }
     }
@@ -95,8 +101,13 @@ public class UserInferface extends Container{
     public void draw(Graphics2D g2){
         width = panel.width;
         height = panel.height;
-        inventory.center(getCenter());
+        if (inventoryUI!= null){
+            inventoryUI.center(getCenter());
+        }
+        
+        inventoryUI.setWidth((int)(0.8*panel.width/2));
 
+        inventoryUI.setHeight((int)inventoryUI.getWidth()/2);
 
 
         menu.width = width/6;
@@ -120,8 +131,8 @@ public class UserInferface extends Container{
     public void cleanUI(){
         menu.visible = false;
         menu.enabled = false;
-        inventory.enabled = false;
-        inventory.visible = false;
+        inventoryUI.enabled = false;
+        inventoryUI.visible = false;
     }
 
     public boolean isEnabled(){

@@ -51,8 +51,8 @@ public class Camera extends primitiveEntity{
         super(panel,name);
         //follow(panel.spiller);
         
-        worldX = -50;
-        worldY = -50;
+        worldX = 0;
+        worldY = 0;
         width = (short)panel.screenWidth;
         height = (short)panel.screenHeight;
         hitBox = new HitBox(this);
@@ -159,14 +159,14 @@ public class Camera extends primitiveEntity{
                 g2.drawString(entity.getName(),x,y+15);
             }
 
-            int shadowX = (int)(entity.getHitBox().x-worldX)-10;
-            int shadowY = (int)(entity.getHitBox().y-worldY)+10;
+            int shadowX = (int)(entity.getHitBox().x-worldX)-5;
+            int shadowY = (int)(entity.getHitBox().y-worldY)+15;
            
             
             //g2.drawImage(entity.getImage(),x,y,64,64,null);     //can remove width and height.
             if (!(entity instanceof Tile)){
-                g2.setColor(new Color(100,100,100,40));
-                g2.fillOval(shadowX,shadowY,entity.getHitBox().width+20,entity.getHitBox().height);
+                g2.setColor(new Color(100,100,150,60));
+                g2.fillOval(shadowX,shadowY,entity.getHitBox().width+10,entity.getHitBox().height);
             }
             
             ArrayList<BufferedImage> imagesCopy = new ArrayList<>(entity.getImages());
@@ -209,6 +209,10 @@ public class Camera extends primitiveEntity{
          if (entity instanceof Moveable){
             Rectangle rect = ((Moveable) entity).getHitboxInfront();
             g2.drawRect((int)(rect.x-worldX),(int)(rect.y-worldY),rect.width,rect.height);
+
+            HitBox interactionHB = ((Moveable) entity).GetInteractIonHitBox();
+            g2.drawRect((int)(interactionHB.x-worldX),(int)(interactionHB.y-worldY),interactionHB.width,interactionHB.height);
+
          }
     }
 
@@ -229,6 +233,11 @@ public class Camera extends primitiveEntity{
          if (entity instanceof Moveable){
             Rectangle rect = ((Moveable) entity).getHitboxInfront();
             g2.drawRect((int)(rect.x-worldX),(int)(rect.y-worldY),rect.width,rect.height);
+
+
+            HitBox interactionHB = ((Moveable) entity).GetInteractIonHitBox();
+            g2.drawRect((int)(interactionHB.x-worldX),(int)(interactionHB.y-worldY),interactionHB.width,interactionHB.height);
+
          }
         }
     }

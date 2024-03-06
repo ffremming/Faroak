@@ -3,6 +3,7 @@ package ressurser.main.GUIMenu;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
+import ressurser.baseEntity.playable.Inventory.Inventory;
 import ressurser.main.GamePanel;
 import ressurser.meny.items.Item;
 
@@ -15,9 +16,10 @@ public class ItemContainer extends Container {
     int minIndeks = 0;
     int slotHeight;
     int slotWidth;
+    Inventory inventory;
     
 
-    public ItemContainer(GamePanel panel,int rows,int cols,int x,int y) {
+    public ItemContainer(GamePanel panel,int rows,int cols,int x,int y,Inventory inventory) {
         super(panel);
         
         //maxIndeks = cols-1;
@@ -37,6 +39,7 @@ public class ItemContainer extends Container {
         setBackground(Color.lightGray);
         setForeGround(Color.gray);
         
+        this.inventory = inventory;
     }
 
     private void addSlots(){
@@ -57,10 +60,33 @@ public class ItemContainer extends Container {
         //items might be spreaded
     }
     public  void draw(Graphics2D g2){
-        setWidth((int)1.5*panel.width/3);
+        
 
-        setHeight((int)getWidth()/2);
-        super.draw(g2);
+        if (visible){
+            drawRect(g2);
+           
+          
+           int count = 0;
+            for (Component comp:content){
+                
+                if (comp instanceof ItemContainerSlot){
+                    ((ItemContainerSlot)comp).draw(g2);
+                    if (inventory!= null){
+                        g2.drawImage(panel.imageContainer.getItemImage(inventory.getStack(rows*cols).getName()),x,y,null);
+                    }
+                   
+                   
+
+                } else{
+                    
+                    
+                }
+                
+            }
+        }
+       
+
+       
 
         
     }
