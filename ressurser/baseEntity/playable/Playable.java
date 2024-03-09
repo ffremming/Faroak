@@ -1,12 +1,17 @@
 package ressurser.baseEntity.playable;
 
+import ressurser.baseEntity.BaseEntity;
+import ressurser.baseEntity.Entity;
+import ressurser.baseEntity.gameObject.GameObject;
 import ressurser.baseEntity.playable.Inventory.Inventory;
 import ressurser.baseEntity.playable.Inventory.Item;
 import ressurser.main.GamePanel;
+import java.awt.Rectangle;
 
 public class Playable extends Moveable{
 
     
+    private static final String BaseEntity = null;
     Inventory inventory;
     Item equipped;
 
@@ -16,18 +21,32 @@ public class Playable extends Moveable{
         //TODO Auto-generated constructor stub
 
         inventory = new Inventory(null);
+        panel.userInterface.clear();
         panel.userInterface.addContainer(inventory);
     }
 
     /** 
      * method should try to interact with whatever is in front. if any tools is equiped, that tool is used*/ 
     public void interact(){
+    
+        for (BaseEntity ent:panel.chunkSystem.workingMemory.getEntities()){
+            if (ent instanceof GameObject){
+              
+                //TODO this does not work yet.
+                GameObject e = (GameObject) ent;
+                if (e.getHitBox().intersects(getInteractionHitBox())){
+                    e.interact(this);
+                }
+            }
+        }
 
     }
 
     public void nullPath(){
         path.clear();
     }
+
+    
 
     
 

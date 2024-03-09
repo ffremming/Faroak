@@ -19,6 +19,7 @@ public class Moveable extends Entity {
 
     private double movementSpeed = 1;
     private int directionIndex = 0;
+    private HitBox interactionHitBox;
 
     public Moveable(GamePanel panel, String name, int worldX, int worldY, short width, short height, short hitBoxWidth,
             short hitBoxHeight, short relativeXPLus, short relativeYPlus) {
@@ -41,7 +42,7 @@ public class Moveable extends Entity {
       
     }
 
-    public HitBox GetInteractIonHitBox(){
+    public HitBox setInteractIonHitBox(){
 
         int xVal = 0;
         int yVal = 0;
@@ -67,9 +68,16 @@ public class Moveable extends Entity {
         HitBox usingHB = getHitBox();
         usingHB.updateCoords();
         HitBox inFront = new HitBox(usingHB.x+xVal,usingHB.y+yVal,64,64);
-        System.out.println(inFront);
         return inFront;
       
+    }
+
+
+    public HitBox getInteractionHitBox(){
+        if (interactionHitBox == null){
+            interactionHitBox = setInteractIonHitBox();
+        }
+        return interactionHitBox;
     }
 
     @Override
@@ -127,6 +135,10 @@ public class Moveable extends Entity {
 
     /**not used.. */
     public void move() {
+        //resets interactionHitbox
+        interactionHitBox = null;
+
+
         panel.camera.addbackendPrintData("velocity: "+String.valueOf(velocity));
         double movementX;
         double movementY;

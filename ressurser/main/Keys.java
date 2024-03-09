@@ -43,11 +43,17 @@ public class Keys implements KeyListener{
             panel.player.nullPath();
         }
 
+        
         if (code == KeyEvent.VK_SPACE){
             panel.player.interact();
             
         }
 
+        if (code == KeyEvent.VK_T){
+            panel.camera.toggleTestData();
+            
+        }
+       
 
         if (code == KeyEvent.VK_N){
             //new seed

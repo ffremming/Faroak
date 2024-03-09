@@ -28,7 +28,7 @@ public class ItemContainer extends Container {
         this.cols = cols;
         this.x = x;
         this.y = y;
-        visible = true;
+        
 
        
         padding = 10;

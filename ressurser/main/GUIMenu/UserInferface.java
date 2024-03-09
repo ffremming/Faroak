@@ -59,7 +59,7 @@ public class UserInferface extends Container{
         inventoryUI = new PlayerInventory(panel,rows,cols,400,300,inventory);
         inventoryUI.setPadding(20);
         add(inventoryUI);
-        inventoryUI.visible = true;
+        
        
         
         inventoryUI.center(getCenter());
@@ -142,6 +142,10 @@ public class UserInferface extends Container{
             }
         }
         return false;
+    }
+
+    public void clear() {
+        content.clear();
     }
 
     

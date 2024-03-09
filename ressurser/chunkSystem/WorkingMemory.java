@@ -7,6 +7,7 @@ import java.util.Collections;
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.Vector;
+import ressurser.baseEntity.gameObject.GameObject;
 import ressurser.baseEntity.tile.Tile;
 
 /** 
@@ -18,9 +19,14 @@ public class WorkingMemory {
 
     ArrayList<Chunk> workingChunks = new ArrayList<>();
     public ArrayList<BaseEntity> workingEntities = new ArrayList<>();
+    
     ArrayList<BaseEntity> sortedEntities = new ArrayList<>();
+    ArrayList<BaseEntity> removalQueue = new ArrayList<>();
     ChunkSystem chunkSystem;
+
     public BaseEntity hoveredEntity = null;
+
+    
 
     
     public WorkingMemory(ChunkSystem chunkSystem){
@@ -153,7 +159,7 @@ public class WorkingMemory {
      * updates/simulates all actions of the entities
      */
     public void simulate(){
-        
+        clearRemovalQueue();
         int nonTile = 0;
 
         ArrayList<BaseEntity> simulatedEntites = new ArrayList<>(workingEntities);
@@ -393,6 +399,22 @@ public class WorkingMemory {
     // Public method to call the insertion sort function with the entire arraylist
     public static void insertionSort(ArrayList<BaseEntity> list) {
         insertionSort(list, 0, list.size() - 1);
+    }
+
+    /**firstly remove from sorted */
+    public void addToRemovalQueue(BaseEntity ent) {
+        removalQueue.add(ent);
+    }
+
+    /**should be called in beginning of every simulate
+     * removes all entities in removalQueue from workingEntities and sortedEntities
+    */
+    public void clearRemovalQueue() {
+        for (BaseEntity ent:removalQueue){
+            sortedEntities.remove(ent);
+            chunkSystem.removeEntity(ent);
+        }
+        removalQueue.clear();
     }
 
 }

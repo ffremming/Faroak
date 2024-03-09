@@ -15,8 +15,7 @@ public class Component extends BaseComponent{
 
     public Component(GamePanel panel) {
         super(panel);
-       
-       
+        visible = false;
     }
 
     @Override

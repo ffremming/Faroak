@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 import ressurser.main.GamePanel;
+import java.awt.Rectangle;
 
 public class Entity extends BaseEntity{
 
@@ -18,10 +19,8 @@ public class Entity extends BaseEntity{
         //TODO Auto-generated constructor stub
     }
 
-    /**
-     * is called from the entity class. when an entity interacts with another entity.
-     */
-    public void interact(BaseEntity entity){
-        entity.interact(this);
+    public Rectangle getRectangle() {
+        return new Rectangle((int)worldX,(int) worldY, width, height);
+       
     }
 }

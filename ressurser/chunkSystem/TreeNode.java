@@ -148,9 +148,11 @@ public class TreeNode extends HitBox{
 
     public boolean removeEntity (BaseEntity entity) {
         for(int i=0; i<children.length; i++) {
-            if (children[i].contains(entity.getHitBox())||children[i].intersects(entity.getHitBox())){
+            if (children[i].contains(entity.getHitBox())||children[i].intersects(entity.getHitBox()) ||children[i].intersects(new Rectangle((int)(entity.getWorldX()),(int)entity.getWorldY(),(int)entity.getWidth(),(int)entity.getHeight()))){
                
-                return children[i].removeEntity(entity);
+                if (children[i].removeEntity(entity)){
+                    return true;
+                }
                 
 
             }

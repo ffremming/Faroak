@@ -58,6 +58,10 @@ public class Camera extends primitiveEntity{
         hitBox = new HitBox(this);
     }
 
+    public void toggleTestData(){
+        testData = !testData;
+    }
+
 
 
 
@@ -204,42 +208,38 @@ public class Camera extends primitiveEntity{
         BasicStroke stroke = new BasicStroke(lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
         g2.setStroke(stroke);
        
-        
-         g2.drawRect(x,y,width,height);
-         if (entity instanceof Moveable){
+        g2.drawRect(x,y,width,height);
+        g2.drawString("Hitbox: x=" + entity.getHitBox().x + ", y=" + entity.getHitBox().y + ", width=" + width + ", height=" + height, x, y - 10);
+        if (entity instanceof Moveable){
             Rectangle rect = ((Moveable) entity).getHitboxInfront();
             g2.drawRect((int)(rect.x-worldX),(int)(rect.y-worldY),rect.width,rect.height);
+            g2.drawString("Infront: x=" + rect.x + ", y=" + rect.y + ", width=" + rect.width + ", height=" + rect.height, (int)(rect.x-worldX), (int)(rect.y-worldY) - 10);
 
-            HitBox interactionHB = ((Moveable) entity).GetInteractIonHitBox();
+            HitBox interactionHB = ((Moveable) entity).getInteractionHitBox();
             g2.drawRect((int)(interactionHB.x-worldX),(int)(interactionHB.y-worldY),interactionHB.width,interactionHB.height);
-
-         }
+            g2.drawString("Interaction: x=" + interactionHB.x + ", y=" + interactionHB.y + ", width=" + interactionHB.width + ", height=" + interactionHB.height, (int)(interactionHB.x-worldX), (int)(interactionHB.y-worldY) - 10);
+        }
+        
+        
+        
     }
 
     private void drawHighlightetHitbox(Graphics2D g2,BaseEntity entity){
         if (entity!= null){
-            int x = (int)(entity.getHitBox().getWorldX()-worldX);
-        int y = (int)(entity.getHitBox().getWorldY()-worldY);
 
-        int width = (int)entity.getHitBox().getWidth();
-        int height = (int)entity.getHitBox().getHeight();
-        g2.setColor(Color.white);
-        float lineWidth = 2f;
-        BasicStroke stroke = new BasicStroke(lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
-        g2.setStroke(stroke);
-       
-        
-         g2.drawRect(x,y,width,height);
-         if (entity instanceof Moveable){
-            Rectangle rect = ((Moveable) entity).getHitboxInfront();
-            g2.drawRect((int)(rect.x-worldX),(int)(rect.y-worldY),rect.width,rect.height);
+            HitBox thisHB = entity.getHitBox();
+            int x = (int) (thisHB.getWorldX()-worldX);
+            int y = (int) (thisHB.getWorldY()-worldY);
+
+            int width = (int)entity.getHitBox().getWidth();
+            int height = (int)entity.getHitBox().getHeight();
 
 
-            HitBox interactionHB = ((Moveable) entity).GetInteractIonHitBox();
-            g2.drawRect((int)(interactionHB.x-worldX),(int)(interactionHB.y-worldY),interactionHB.width,interactionHB.height);
 
-         }
+            g2.drawImage(panel.imageContainer.getOutline(entity.getImages().get(0)),(int)(entity.getWorldX()-worldX),(int)(entity.getWorldY()-worldY),(int)entity.getWidth(),(int)entity.getHeight(),null);
+
         }
+    
     }
 
     private void drawCoords(Graphics2D g2,BaseEntity entity){

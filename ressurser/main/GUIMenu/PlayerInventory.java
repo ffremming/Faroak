@@ -36,7 +36,7 @@ public class PlayerInventory  extends ItemContainer{
                     if (comp instanceof ItemContainerSlot){
                         ((ItemContainerSlot)comp).drawRectInPos(g2,comp.x,panel.height-(100-padding/2));
                         
-                        System.out.println("barrect");
+                        
                             if (inventory.getStack(rows*cols)!=null){
                                 g2.drawImage(panel.imageContainer.getItemImage(inventory.getStack(rows*cols).getName()),x,y,null);
                            

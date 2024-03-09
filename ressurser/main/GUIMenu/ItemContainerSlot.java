@@ -81,7 +81,7 @@ public class ItemContainerSlot extends Component{
     }
 
     public void drawRectInPos(Graphics2D g2,int x,int y){
-        System.out.println("drawRect In pos");
+        
         if (hover){
             setBackground(Color.white);
             setForeGround(new Color(240,240,240));

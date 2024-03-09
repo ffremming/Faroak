@@ -35,7 +35,7 @@ public class BaseEntity {
     protected HitBox hitBox;
     int hitBoxWidth,hitBoxHeight,relativeXValue,relativeYValue;
     
-    protected ArrayList<BufferedImage> images = new ArrayList<>();
+    public ArrayList<BufferedImage> images = new ArrayList<>();
     //might need to change to sprite.
     public boolean animated;
 
@@ -118,13 +118,7 @@ public class BaseEntity {
         //panel.drawingM.draw
     }
 
-    /**
-     * interaction that is called from the interactionOrigin.
-     * 
-     */
-    public void interact(Entity interactionOrigin) {
-
-    }
+    
 
     public String getID(){
         return ID;

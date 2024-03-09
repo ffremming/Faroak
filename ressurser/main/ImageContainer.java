@@ -12,6 +12,7 @@ import java.awt.image.AffineTransformOp;
 
 import javax.imageio.ImageIO;
 
+import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.sprite.TileSprite;
 import ressurser.chunkSystem.terrainGeneration.Biome;
 
@@ -308,4 +309,112 @@ public class ImageContainer {
         itemImages.put(name,image);
         return image;
     }   
+
+
+
+    /** returns outline image */
+    public BufferedImage getOutline(BufferedImage originalImage){
+        
+        // Create a new buffered image for the outline
+        BufferedImage outlineImage = new BufferedImage(originalImage.getWidth(), originalImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+
+        // Create a graphics context for the outline image and fill it with white
+        Graphics2D g = outlineImage.createGraphics();
+        g.setColor(Color.WHITE);
+        //g.fillRect(0, 0, outlineImage.getWidth(), outlineImage.getHeight());
+        // Iterate over each pixel in the original image
+        for (int x = 0; x < originalImage.getWidth(); x++) {
+            for (int y = 0; y < originalImage.getHeight(); y++) {
+                // Get the color of the pixel in the original image
+                int pixel = originalImage.getRGB(x, y);
+                Color color = new Color(pixel, true);
+
+                // If the pixel is not transparent or less than 30% transparent, check its surrounding pixels
+                if (color.getAlpha() > 76 ) { // 76 is approximately 30% of 255
+                    // Check the surrounding pixels
+                    for (int dx = -1; dx <= 1; dx++) {
+                        for (int dy = -1; dy <= 1; dy++) {
+                            int nx = x + dx;
+                            int ny = y + dy;
+
+                            // If the surrounding pixel is within the image bounds and is transparent or less than 30% transparent, set it to white
+                            if (nx >= 0 && nx < originalImage.getWidth() && ny >= 0 && ny < originalImage.getHeight()) {
+                                int neighborPixel = originalImage.getRGB(nx, ny);
+                                Color neighborColor = new Color(neighborPixel, true);
+
+                                if (neighborColor.getAlpha() <= 76) { // 76 is approximately 30% of 255
+                                    outlineImage.setRGB(nx, ny, Color.WHITE.getRGB());
+                                }
+                            } else {
+                                if (color.getAlpha() > 76) { // 76 is approximately 30% of 255
+                                    outlineImage.setRGB(x, y, Color.WHITE.getRGB());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return outlineImage;
+    }
+
+
+    public BufferedImage reduceTransparency(BufferedImage image) {
+
+        BufferedImage result = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = result.createGraphics();
+        g.drawImage(image, 0, 0, image.getWidth(), image.getHeight(), null);
+        g.dispose();
+
+        
+        for (int i = 0; i < result.getWidth(); i++) {
+            for (int j = 0; j < result.getHeight(); j++) {
+                int argb = result.getRGB(i, j);
+                int alpha = (argb >> 24) & 0xFF;
+               
+                int reducedAlpha = (int) (alpha * 0.3); // reduce to 10%
+                
+                int rgb = argb & 0x00ffffff; // get the rgb values
+                int newArgb = (reducedAlpha << 24) | rgb; // combine reduced alpha and rgb
+               
+
+                result.setRGB(i, j, newArgb);
+            }
+        }
+
+        return result;
+    }
+
+public boolean checkIntersection(Entity entity1, Entity entity2) {
+    //BufferedImage entity1Outline = getOutline(entity1.images.get(0));
+    //BufferedImage entity2Outline = getOutline(entity2.images.get(0));
+
+
+    BufferedImage entity1Outline = (entity1.images.get(0));
+    BufferedImage entity2Outline = (entity2.images.get(0));
+
+
+    for (int x = 0; x < entity1Outline.getWidth(); x++) {
+        for (int y = 0; y < entity1Outline.getHeight(); y++) {
+            int alpha1 = (entity1Outline.getRGB(x, y) >> 24) & 0xFF;
+            if (alpha1 > 128) { // if alpha value is high
+                int worldX = (int)(x + entity1.getWorldX()+30);
+                int worldY = (int)(y + entity1.getWorldY());
+                if (worldX >= entity2.getWorldX() && worldX < entity2.getWorldX() + entity2Outline.getWidth() &&
+                    worldY >= entity2.getWorldY() && worldY < entity2.getWorldY() + entity2Outline.getHeight()) {
+                    int alpha2 = (entity2Outline.getRGB((int)(worldX - entity2.getWorldX()),(int)( worldY - entity2.getWorldY())) >> 24) & 0xFF;
+                    if (alpha2 > 128) { // if alpha value is high
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+    
+
 }
