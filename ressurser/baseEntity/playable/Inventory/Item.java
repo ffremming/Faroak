@@ -11,7 +11,7 @@ public class Item extends BaseEntity {
     public Item(GamePanel panel, String name) {
         super(panel, name);
         //TODO Auto-generated constructor stub
-       
+        images.add(panel.imageContainer.getItemImage(name));
     }
     
     

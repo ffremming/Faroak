@@ -4,8 +4,10 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 
 import ressurser.baseEntity.playable.Inventory.Inventory;
+import ressurser.baseEntity.playable.Inventory.Item;
+import ressurser.baseEntity.playable.Inventory.Stack;
 import ressurser.main.GamePanel;
-import ressurser.meny.items.Item;
+
 
 public class ItemContainer extends Container {
 
@@ -72,7 +74,14 @@ public class ItemContainer extends Container {
                 if (comp instanceof ItemContainerSlot){
                     ((ItemContainerSlot)comp).draw(g2);
                     if (inventory!= null){
-                        g2.drawImage(panel.imageContainer.getItemImage(inventory.getStack(rows*cols).getName()),x,y,null);
+                        
+                        Stack stack =  (inventory.getStack(rows*cols));
+                        Item item = stack.getItem(0);
+                        if (item != null){
+                            System.out.println("drawing item");
+                            g2.drawImage(item.images.get(0),comp.x+padding,comp.y+padding,comp.width-padding*2,comp.height-padding*2,null);
+                        }
+                       
                     }
                    
                    

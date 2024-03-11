@@ -23,7 +23,15 @@ public class Playable extends Moveable{
         inventory = new Inventory(null);
         panel.userInterface.clear();
         panel.userInterface.addContainer(inventory);
+
+
+        Item hammer = new Item(panel,"hammer");
+        addItem(hammer);
+        equipped = hammer;
+
     }
+
+
 
     /** 
      * method should try to interact with whatever is in front. if any tools is equiped, that tool is used*/ 
@@ -44,6 +52,14 @@ public class Playable extends Moveable{
 
     public void nullPath(){
         path.clear();
+    }
+
+    public void addItem(Item item){
+        inventory.addItem(item);
+    }
+
+    public Item getItem(){
+        return equipped;
     }
 
     

@@ -3,8 +3,9 @@ package ressurser.main.GUIMenu;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
+import ressurser.baseEntity.playable.Inventory.Item;
 import ressurser.main.GamePanel;
-import ressurser.meny.items.Item;
+
 
 public class ItemBar extends ItemContainer{
 

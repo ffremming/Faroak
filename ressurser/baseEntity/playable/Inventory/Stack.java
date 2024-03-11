@@ -43,7 +43,7 @@ public class Stack extends BaseEntity{
             setName(newStack.getName());
         }
 
-        getOneItem();
+        
         while (!isFull() && !newStack.isEmpty()){
             addItem(newStack.getOneItem());
         }
@@ -55,7 +55,7 @@ public class Stack extends BaseEntity{
        return items;
     }
 
-    /** if not empty, return last item */
+    /** if not empty, return last item, removes the item*/
     public Item getOneItem() {
         
         Item item = null;
@@ -74,12 +74,23 @@ public class Stack extends BaseEntity{
         return item;
     }
 
+
+    public Item getItem(int index){
+        if (!isEmpty()){
+            return items.get(index);
+        } else {
+            return null;
+        }
+        
+    }
+
     public int getAmount() {
         return items.size();
     }
     public int getStackLimit() {
         return stackLimit;
     }
+
 
 
 

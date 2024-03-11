@@ -6,7 +6,7 @@ import java.awt.event.MouseEvent;
 
 import ressurser.main.GamePanel;
 import java.awt.BasicStroke;
-import ressurser.meny.items.Item;
+import ressurser.baseEntity.playable.Inventory.Item;
 
 public class ItemContainerSlot extends Component{
 

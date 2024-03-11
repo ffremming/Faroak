@@ -1,36 +1,31 @@
 package ressurser.baseEntity;
 
-import java.awt.Color;
+
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
-import ressurser.baseEntity.sprite.Sprite;
-import ressurser.drawing.Camera;
+
 import ressurser.main.GamePanel;
 
 public class BaseEntity {
 
     public GamePanel panel;
 
-    short age;
+    private int age;
     protected String name;
-    String ID;
-    protected byte type;
-
+    private String ID;
     protected boolean solid;
 
-    byte TILE = 0;protected byte SUPEROBJECT = 1;byte ENTITY = 2;
+    
 
-    Sprite sprite;
+    
 
     public double worldX;
-
     public double worldY;
-    protected short width;
-
-    protected short height;
+    protected int width;
+    protected int height;
 
     protected HitBox hitBox;
     int hitBoxWidth,hitBoxHeight,relativeXValue,relativeYValue;
@@ -140,10 +135,10 @@ public class BaseEntity {
     public Boolean getAnimated() {
         return animated;
     }
-    public short getWidth() {
+    public int getWidth() {
         return width;
     }
-    public short getHeight() {
+    public int getHeight() {
         return height;
     }
     /**positions wiht the center of object at point */
@@ -159,18 +154,7 @@ public class BaseEntity {
         hitBox.updateCoords();
     }   
 
-    public void draw(Camera camera,Graphics2D g2){
-        
-        int x = (int) (getWorldX()-camera.worldX);
-        int y =  (int) (getWorldY()-camera.worldY);
-
-        g2.setColor(Color.WHITE);
-       
-        g2.drawImage(sprite.getImage(),x,y,64,64,null);
-        g2.drawString(getName(),x,y+15);
-
-        //UNCOMPLETED. NEEDS A BETTER METHOD FOR DRAWING USING THE SPRITE SHIT
-    }
+    
     public ArrayList<BufferedImage> getImages() {
         ArrayList<BufferedImage> arr = new ArrayList<>();
         arr.add(getImage());
@@ -199,5 +183,12 @@ public class BaseEntity {
     }
     protected void setName(String name){
         this.name = name;
+    }
+
+    public void age(){
+        age++;
+    }
+    public int getAge(){
+        return age;
     }
 }

@@ -21,7 +21,7 @@ import ressurser.main.interactions.InventoryInteraction;
 import ressurser.main.interactions.MenuInteraction;
 import ressurser.main.interactions.OptionInteraction;
 import ressurser.main.interactions.PlayInteractionManager;
-import ressurser.meny.Meny;
+
 import ressurser.objects.ObjectManager;
 import ressurser.sprites.SpriteLoader;
 import ressurser.tileSpriteGenerator.ImagePainter;

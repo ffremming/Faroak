@@ -10,6 +10,8 @@ import ressurser.main.GamePanel;
 
 public class GameObject extends Entity{
 
+    
+
     public GameObject(GamePanel panel, String name, int worldX, int worldY, short width, short height, short hitBoxWidth,
             short hitBoxHeight, short i, short j,boolean solid) {
         super(panel, name, worldX, worldY, width, height, hitBoxWidth, hitBoxHeight, i, j);
@@ -57,9 +59,9 @@ public class GameObject extends Entity{
         return image;
     }
 
-
     public void interact(Playable playable) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'interact'");
+       
     }
+
+    
 }

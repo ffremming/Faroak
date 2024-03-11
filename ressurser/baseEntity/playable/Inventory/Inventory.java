@@ -30,7 +30,8 @@ public class Inventory {
                 }
             }
         }
-        return false;
+        addStack(new Stack(null, item.getName())).addItem(item);
+        return true;
     }
 
     /**adds one stack of given stack. Should be sorted and placed correctly

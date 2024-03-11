@@ -1,5 +1,6 @@
 package ressurser.enviroment;
 
+import ressurser.baseEntity.BaseEntity;
 import ressurser.main.GamePanel;
 import ressurser.objects.Ageable;
 import ressurser.objects.Farmable;
@@ -9,7 +10,7 @@ import ressurser.objects.SuperObject;
 public class EnviromentManager {
     GamePanel panel;
     int ms = 0;
-    int tick = 0;
+    int second = 0;
     int minutes = 4;
     int days = 0;
     int lightLevel;
@@ -35,24 +36,31 @@ public class EnviromentManager {
             
             //based on camera, but should be something that is followed.
             panel.chunkSystem.workingMemory.update(panel.camera.getHitBox().getCenter());
-            tick++;
+            second++;
             updatePanelDimensions();
             
 
             //ageAllObjects();
             updateAnimation();
             //panel.objM.updatePlants();
-            if (tick%60 == 0){
+            if (second%60 == 0){
                 minutes ++;
+                ageAll();
                 if (minutes%16 == 0){
                     //panel.objM.updatePlants();
                     days ++;
-                    tick = 0;
+                    second = 0;
                     minutes = 0;
                     ms = 0;
                 }
             } 
         }
+    }
+
+    private void ageAll() {
+       for (BaseEntity ent:panel.chunkSystem.workingMemory.getEntities()){
+           ent.age();
+       }
     }
 
     public void updatePanelDimensions(){
