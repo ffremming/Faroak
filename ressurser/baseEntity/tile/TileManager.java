@@ -3,14 +3,12 @@ package ressurser.baseEntity.tile;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 
-import ressurser.baseEntity.sprite.TileSprite;
+
 import ressurser.main.GamePanel;
 
 public class TileManager {
     
     GamePanel panel;
-
-    HashMap<String,TileSprite> tileSprites = new HashMap<>();
     public HashMap<String,Integer> tileHeight = new HashMap<>();
 
     /**helper for tiles. can keep inportant information about tiles etc... */

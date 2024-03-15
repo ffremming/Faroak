@@ -30,7 +30,7 @@ public class InputHandlingSystem {
         }
 
         //setting the hovered entities from mouse input
-        panel.chunkSystem.workingMemory.setHoveredEntity(panel.mouse.x,panel.mouse.y);
+        panel.world.setHoveredEntity(panel.mouse.x,panel.mouse.y);
         
         
 

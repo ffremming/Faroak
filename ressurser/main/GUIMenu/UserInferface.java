@@ -2,6 +2,7 @@ package ressurser.main.GUIMenu;
 
 import java.awt.Color;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.awt.Graphics2D;
 
 import ressurser.baseEntity.playable.Inventory.Inventory;
@@ -116,6 +117,13 @@ public class UserInferface extends Container{
 
         menu.center(getCenter());
         super.draw(g2);
+
+        //temporary item in hand
+        if (panel.player.getTempInHand()!= null){
+            BufferedImage tempImg = panel.imageContainer.getItemImage(panel.player.getTempInHand().getName());
+            g2.drawImage(tempImg,panel.mouse.getX()-25,panel.mouse.getY()-25,50,50,null);
+        }
+       
 
     }
 

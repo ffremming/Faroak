@@ -1,11 +1,7 @@
 package ressurser.baseEntity.playable;
 
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.util.ArrayList;
-
-import javax.imageio.ImageIO;
-
 import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.Vector;
@@ -89,10 +85,6 @@ public class Moveable extends Entity {
     }
 
     private void updateAnimation() {
-
-
-        double oldX = direction.getX();
-        double oldY = direction.getY();
 
         //chechks for direction cahnges, might not be necacarry
 
@@ -213,10 +205,7 @@ public class Moveable extends Entity {
 
     /**moves hitbox and checks for collisions, moves hitbox back */
     private boolean isCollided(HitBox hitBox) {
-
-        //TODO THIS MUST BE TESTED THOUROGLY
-       
-        boolean collision = panel.chunkSystem.workingMemory.solidCollision(hitBox);
+        boolean collision = panel.world.solidCollision(hitBox);
         panel.camera.addbackendPrintData("collision: "+String.valueOf(collision));
         return collision;
     }
@@ -244,7 +233,7 @@ public class Moveable extends Entity {
         return arr;
     }
 
-    private int getCorrespondingSpriteIndex() {//TODO
+    private int getCorrespondingSpriteIndex() {
         int index = (directionIndex)*3;
         if (index <0){index = 0;}
         
@@ -279,7 +268,6 @@ public class Moveable extends Entity {
 
 
     public void interact() {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'interact'");
     }
 

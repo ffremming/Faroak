@@ -23,7 +23,7 @@ public class ItemContainer extends Container {
 
     public ItemContainer(GamePanel panel,int rows,int cols,int x,int y,Inventory inventory) {
         super(panel);
-        
+        this.inventory = inventory;
         //maxIndeks = cols-1;
 
         this.rows = rows;
@@ -37,19 +37,23 @@ public class ItemContainer extends Container {
         
         this.slotHeight = ((height)+padding*2)/rows;
         this.slotWidth = (width+padding*2)/cols;
+
+        
         addSlots();
         setBackground(Color.lightGray);
         setForeGround(Color.gray);
         
-        this.inventory = inventory;
+        
     }
 
     private void addSlots(){
+        int count = 0;
         for (int i = 0;i<rows;i++){
             for (int j = 0;j<cols;j++){
                 
-                ItemContainerSlot itemCS = new ItemContainerSlot(panel,x+j*((width)/cols),y+i*((height)/rows),slotWidth,slotHeight,j,i);
+                ItemContainerSlot itemCS = new ItemContainerSlot(panel,x+j*((width)/cols),y+i*((height)/rows),slotWidth,slotHeight,j,i,count,inventory);
                 add(itemCS);
+                count++;
             }
         }
     }
@@ -74,8 +78,10 @@ public class ItemContainer extends Container {
                 if (comp instanceof ItemContainerSlot){
                     ((ItemContainerSlot)comp).draw(g2);
                     if (inventory!= null){
+                      
+                        Stack stack =  inventory.getStack(count);
                         
-                        Stack stack =  (inventory.getStack(rows*cols));
+
                         Item item = stack.getItem(0);
                         if (item != null){
                             System.out.println("drawing item");
@@ -90,6 +96,7 @@ public class ItemContainer extends Container {
                     
                     
                 }
+                count++;
                 
             }
         }

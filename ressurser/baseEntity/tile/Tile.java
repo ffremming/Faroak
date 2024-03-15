@@ -1,13 +1,8 @@
 package ressurser.baseEntity.tile;
-
-import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-
 import ressurser.baseEntity.BaseEntity;
-
-import ressurser.baseEntity.sprite.Sprite;
 import ressurser.main.GamePanel;
 import ressurser.main.ImageContainer;
 
@@ -26,9 +21,7 @@ public class Tile extends BaseEntity{
     Tile east= null;
     Tile west = null;
 
-    int zone;
-
-    public Sprite sprite;
+  
 
     //midlertidig
     public BufferedImage image;
@@ -41,7 +34,7 @@ public class Tile extends BaseEntity{
 
 
     public Tile(GamePanel panel,String name, int worldX, int worldY,int altitude) {
-        super(panel, name, worldX, worldY, (short)panel.tileSize,(short)panel.tileSize, (short)panel.tileSize, (short)panel.tileSize, (short)0, (short)0);
+        super(panel, name, worldX, worldY, (int)panel.tileSize,(int)panel.tileSize, (int)panel.tileSize, (int)panel.tileSize, (short)0, (short)0);
         
 
         this.altitude = altitude;
@@ -258,16 +251,16 @@ public class Tile extends BaseEntity{
     private Tile getTile(int direction){
         Tile tile = null;
         if (direction == NORTH){
-             tile = panel.chunkSystem.getTile(new Point((int)worldX+width/2,(int)worldY-width/2));
+             tile = panel.world.getTile(new Point((int)worldX+width/2,(int)worldY-width/2));
         }
         else if (direction == EAST){
-             tile = panel.chunkSystem.getTile(new Point((int)worldX+width*3/2,(int)worldY+width/2));
+             tile = panel.world.getTile(new Point((int)worldX+width*3/2,(int)worldY+width/2));
         }
         else if (direction == SOUTH){
-             tile = panel.chunkSystem.getTile(new Point((int)worldX+width/2,(int)worldY+width*3/2));
+             tile = panel.world.getTile(new Point((int)worldX+width/2,(int)worldY+width*3/2));
         }
         else if (direction == WEST){
-             tile = panel.chunkSystem.getTile(new Point((int)worldX-width/2,(int)worldY+width/2));
+             tile = panel.world.getTile(new Point((int)worldX-width/2,(int)worldY+width/2));
         }
         
         return tile;
@@ -339,9 +332,7 @@ public class Tile extends BaseEntity{
         animated = boolean1;
     }
 
-    public void setZone(Integer thisZone) {
-        zone = thisZone;
-    }
+    
 
     private void setCliffImages(){
 

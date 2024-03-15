@@ -3,8 +3,6 @@ package ressurser.main;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-import ressurser.baseEntity.Vector;
-
 public class Keys implements KeyListener{
 
     GamePanel panel;
@@ -15,8 +13,6 @@ public class Keys implements KeyListener{
 
     @Override
     public void keyTyped(KeyEvent e) {
-        // TODO Auto-generated method stub
-        //throw new UnsupportedOperationException("Unimplemented method 'keyTyped'");
     }
 
     @Override

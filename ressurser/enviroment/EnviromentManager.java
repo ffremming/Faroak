@@ -2,10 +2,6 @@ package ressurser.enviroment;
 
 import ressurser.baseEntity.BaseEntity;
 import ressurser.main.GamePanel;
-import ressurser.objects.Ageable;
-import ressurser.objects.Farmable;
-import ressurser.objects.ObjectManager;
-import ressurser.objects.SuperObject;
 
 public class EnviromentManager {
     GamePanel panel;
@@ -35,7 +31,7 @@ public class EnviromentManager {
         if (ms%panel.camera.FPS == 0){
             
             //based on camera, but should be something that is followed.
-            panel.chunkSystem.workingMemory.update(panel.camera.getHitBox().getCenter());
+            panel.world.update(panel.camera.getHitBox().getCenter());
             second++;
             updatePanelDimensions();
             
@@ -58,7 +54,7 @@ public class EnviromentManager {
     }
 
     private void ageAll() {
-       for (BaseEntity ent:panel.chunkSystem.workingMemory.getEntities()){
+       for (BaseEntity ent:panel.world.getEntities()){
            ent.age();
        }
     }
@@ -127,7 +123,7 @@ public class EnviromentManager {
         if (animationValue == 3){
             animationValue = 0;
         }
-        panel.chunkSystem.workingMemory.animate(animationValue);
+        panel.world.animate(animationValue);
     }
 
 }

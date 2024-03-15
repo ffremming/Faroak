@@ -1,13 +1,6 @@
 package ressurser.baseEntity;
-
-
-import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
-
-import ressurser.entity.spiller.Spiller;
-
-
 
 public class HitBox extends Rectangle{
 
@@ -118,11 +111,6 @@ public class HitBox extends Rectangle{
 
     public BaseEntity getEntity() {
         return baseEntity;
-    }
-
-    public void draw(Graphics2D g2 ,Spiller player){
-        g2.drawRect((int)(getWorldX()-(player.worldX)+player.screenX),(int)(getWorldY()-(player.worldY)+player.screenY),width,height);
-     
     }
 
     public Point getCenter(){

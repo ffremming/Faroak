@@ -2,8 +2,6 @@ package ressurser.baseEntity.tile;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import ressurser.baseEntity.sprite.Sprite;
 import ressurser.main.GamePanel;
 
 public class TileFactory {
@@ -45,44 +43,8 @@ public class TileFactory {
         setUpTileHashMapHeight();
     }
 
-    // when setting up a tile:
-    // 0. read the right data
-    // 1. create the tile object.
-    //2. create the tile sprite
-    // add the sprite to the object
-    //3. resturn the object
-
-    public Sprite getTileSprite(Tile tile){
-
-        TileSprite newSprite;
-
-        if (tile.zone == WILDERNESS){
-            // needs an wilderness dictionary.
-
-
-
-            //if all neightbors is from the same zone:
-            if (tile.north.zone == WILDERNESS &&tile.west.zone == WILDERNESS&&tile.south.zone == WILDERNESS&&tile.east.zone == WILDERNESS){
-                
-                
-
-                
-            } 
-        }
-
-    }
     
-
-    public Tile getNewTile(int keyNumber,int worldCol,int worldRow){
-        String tileName = tileNames.get(keyNumber);
-
-        Tile tile = new Tile(panel,tileName,worldRow*panel.tileSize,worldCol*panel.tileSize);
-        tile.setCollision(tileCollision.get(keyNumber));
-        tile.setAnimated(tileAnimated.get(keyNumber));
-        tile.setZone(tileZone.get(keyNumber));
-
-        Sprite tileSprite = new Sprite(tile);
-    }
+    
 
 
     /**
@@ -151,17 +113,7 @@ public class TileFactory {
     }
 
     
-    private void setUpTileHashMapSprites(){
-        tileSprites.put(0,new TileSprite(tileNames.get(0)+".png",panel));
-        tileSprites.put(1,new TileSprite(tileNames.get(0)+".png",panel));
-        tileSprites.put(2,new TileSprite(tileNames.get(0)+".png",panel));
-        tileSprites.put(3,new TileSprite(tileNames.get(0)+".png",panel));
-        tileSprites.put(4,new TileSprite(tileNames.get(0)+".png",panel));
-        tileSprites.put(5,new TileSprite(tileNames.get(0)+".png",panel));
-        tileSprites.put(6,new TileSprite(tileNames.get(0)+".png",panel));
-        tileSprites.put(7,new TileSprite(tileNames.get(0)+".png",panel));
-        tileSprites.put(8,new TileSprite(tileNames.get(0)+".png",panel));
-    }
+    
 
     
        

@@ -4,8 +4,10 @@ import java.awt.Point;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.playable.Moveable;
 import ressurser.baseEntity.playable.Playable;
+import ressurser.baseEntity.playable.Inventory.ItemManager;
 import ressurser.baseEntity.tile.TileManager;
 import ressurser.chunkSystem.ChunkSystem;
+import ressurser.chunkSystem.WorkingMemory;
 import ressurser.drawing.Camera;
 
 public class GenerationManager {
@@ -18,40 +20,40 @@ public class GenerationManager {
 
 
     public void generateMap(){
-        panel.chunkSystem = new ChunkSystem(panel);
+        panel.world = new WorkingMemory(panel);
         panel.imageContainer = new ImageContainer();
-       
+        panel.itemM = new ItemManager(panel);
         
         panel.mapH = new MapHandler(panel);
       
         panel.tileM = new TileManager(panel);
       
-        panel.chunkSystem.workingMemory.initial();
-        panel.chunkSystem.workingMemory.update(new Point(0,0));
+        panel.world.initial();
+        panel.world.update(new Point(0,0));
         
     }
 
     public void newSeed(){
-        panel.chunkSystem = new ChunkSystem(panel);
-        panel.chunkSystem.workingMemory.initial();
-        panel.chunkSystem.workingMemory.update(new Point(0,0));
+        panel.world = new WorkingMemory(panel);
+        panel.world.initial();
+        panel.world.update(new Point(0,0));
 
         initiate();
-        panel.chunkSystem.workingMemory.update(panel.player.getPoint());
+        panel.world.update(panel.player.getPoint());
     }
 
 
     public void initiate(){
         Point p = getStartingPoint();
         panel.player = (new Playable(panel, "red",p.x,p.y,(short)48,(short)96,(short)36,(short)32,(short)6,(short)64));
-        panel.chunkSystem.addEntity(panel.player);
+        panel.world.placeEntity(panel.player);
     }
 
 
     private Point getStartingPoint(){
         for (int x = -panel.tileSize*10;x<=panel.tileSize*10;x+=panel.tileSize){
             for (int y = -panel.tileSize*10;y<=panel.tileSize*10;y+=panel.tileSize){
-                if (!(panel.chunkSystem.workingMemory.solidCollision(new HitBox(x,y,panel.tileSize*2,panel.tileSize*2)))){
+                if (!(panel.world.solidCollision(new HitBox(x,y,panel.tileSize*2,panel.tileSize*2)))){
                     return new Point(x,y);
                 }
             }

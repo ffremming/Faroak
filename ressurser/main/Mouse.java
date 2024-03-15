@@ -1,11 +1,11 @@
 package ressurser.main;
 
-import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+
 
 public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListener  {
 
@@ -19,6 +19,14 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
 
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
+        System.out.println(panel.player.getInventory().getIndex());
+        if (e.getWheelRotation()<0){
+            panel.player.getInventory().decreaseIndex();
+            System.out.println(panel.player.getInventory().getIndex());
+        } else if (e.getWheelRotation()>0){
+            panel.player.getInventory().increseIndex();
+        }
+       
         panel.userInterface.mouseWheelMoved(e);
         
     }
@@ -46,10 +54,14 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
     @Override
     public void mousePressed(MouseEvent e) {
         if (!panel.userInterface.isEnabled()){
-            panel.player.setPath(panel.chunkSystem.workingMemory.getPath(panel.player,new Point(e.getX()+((int)(panel.camera.getWorldX())),e.getY()+(int)panel.camera.getWorldY())));
+            //panel.player.setPath(panel.world.getPath(panel.player,new Point(e.getX()+((int)(panel.camera.getWorldX())),e.getY()+(int)panel.camera.getWorldY())));
+            panel.world.tryPlaceEntity(panel.player.getEquipped());
+            System.out.println("try place entity");
+        } else{
+            panel.userInterface.mousePressed(e);
         }
         
-        panel.userInterface.mousePressed(e);
+        
         
     }
 
@@ -70,6 +82,14 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
         // TODO Auto-generated method stub
        
         
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
     }
     
 }

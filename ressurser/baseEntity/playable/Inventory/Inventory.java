@@ -8,6 +8,7 @@ public class Inventory {
     
     public ArrayList<Stack> inventory = new ArrayList<>();
     final int SIZE = 9*4;
+    int index = 0;
 
 
     public Inventory(Playable player){
@@ -24,14 +25,15 @@ public class Inventory {
     */
     public boolean addItem(Item item){
         for (Stack stack:inventory){
-            if (stack.getName().equals(item.getName())){
+            System.out.println(stack.getName());
+            if (stack.isEmpty()){
                 if (stack.addItem(item)){
                     return true;
                 }
             }
         }
-        addStack(new Stack(null, item.getName())).addItem(item);
-        return true;
+        
+        return false;
     }
 
     /**adds one stack of given stack. Should be sorted and placed correctly
@@ -64,5 +66,39 @@ public class Inventory {
             return inventory.get(i);
         }
         return null;
+    }
+
+    @Override
+    public String toString() {
+        String s = "";
+        for (Stack stack:inventory){
+            s+=stack.getName()+"\n";
+        }
+        return s;
+    }
+
+    public void setStack(int number, Stack tempInHand) {
+        inventory.set(number, tempInHand);
+    }
+
+    public void increseIndex(){
+        
+        if (index<9){
+            index++;
+        }
+    }
+
+    public void decreaseIndex(){
+        if (index>0){
+            index--;
+        }
+    }
+
+    public void setIndex(int newIndex){
+        this.index = newIndex;
+    }
+
+    public int getIndex(){
+        return index;
     }
 }

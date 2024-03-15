@@ -1,62 +1,36 @@
 package ressurser.main;
 
-
 import ressurser.baseEntity.playable.Playable;
+import ressurser.baseEntity.playable.Inventory.ItemManager;
 import ressurser.baseEntity.tile.TileManager;
-import ressurser.chunkSystem.ChunkSystem;
-
+import ressurser.chunkSystem.WorkingMemory;
 import ressurser.drawing.Camera;
-import ressurser.drawing.DrawingManager;
-import ressurser.entity.EntityHandler;
-import ressurser.entity.spiller.Spiller;
 import ressurser.enviroment.EnviromentManager;
-import ressurser.enviroment.Lightning;
-import ressurser.itemBar.ItemBar;
 import ressurser.main.GUIMenu.Button;
 import ressurser.main.GUIMenu.Container;
-import ressurser.main.GUIMenu.ItemContainer;
-import ressurser.main.GUIMenu.MenuState;
 import ressurser.main.GUIMenu.UserInferface;
-import ressurser.main.interactions.InventoryInteraction;
-import ressurser.main.interactions.MenuInteraction;
-import ressurser.main.interactions.OptionInteraction;
-import ressurser.main.interactions.PlayInteractionManager;
-
-import ressurser.objects.ObjectManager;
-import ressurser.sprites.SpriteLoader;
-import ressurser.tileSpriteGenerator.ImagePainter;
 import ressurser.worldGeneration.TerrainGenSimplex;
-import ressurser.worldGeneration.dungeonGenerator.DungeonManager;
-
 import java.awt.Dimension;
 import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Point;
 import java.lang.reflect.InvocationTargetException;
 import java.awt.Graphics;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import java.awt.image.BufferStrategy;
+
 
 
 
 public class GamePanel extends JPanel implements Runnable{
     public int tileSize = 64;
-
-    public boolean gameOption = false;
-    public boolean arrowYes = false;
     
     public final int screenHeight = tileSize *12;
     public final int screenWidth = tileSize *20;
     
-    int aktivStreng = 1;
+   
     
     public Thread gameThread; 
-    public Graphics2D g ;
     public Camera camera;
-    public BufferStrategy bufferStrategy;
-
     
 
     // object components:
@@ -64,63 +38,30 @@ public class GamePanel extends JPanel implements Runnable{
     public TerrainGenSimplex terrainGen;
     
     public TileManager tileM;
-    public DungeonManager dungeonM;
-    public ImagePainter imageP;
+    public ItemManager itemM;
     public ImageContainer imageContainer;
     
-    public ChunkSystem chunkSystem;
-    public PlayInteractionManager interactionPlay;
-    public MenuInteraction interactionMenu;
-    public InventoryInteraction interactionInventory;
-    public OptionInteraction interactionOption;
 
-    public KeyHandler input;
-    
-    
-    
-    public EntityHandler entityH;
-    public Lightning light;
     public EnviromentManager enviromentM;
-    public ItemBar itemB;
     public MapHandler mapH;
-    public DrawingManager drawingM;
-    public MenuState menuStateUI;
-    public SpriteLoader spriteLoader;
-
+    
     public Playable player;
     public Keys keys;
     public Mouse mouse;
     public InputHandlingSystem inputHandlingSystem;
     public Container UI;
     public UserInferface userInterface;
+    public WorkingMemory world;
     //public ItemContainer container;
-
-
-    Graphics2D g2;
    
     
     public int height;
     public int width;
     
-    
- 
-    
-   
-
-   
-
-    public int gameState;
-    public final int PLAYSTATE  = 1;
-    public final int DIALOGSTATE = 2;
-    public final int MENUSTATE = 3;
-    public final int INVENTORYSTATE = 4;
-    public final int OPTIONSTATE = 4;
-
-    
-
-
     boolean newGame;
     public JFrame frame;
+
+    
     
     public GamePanel(JFrame frame,boolean newGame){
         this.frame = frame;
@@ -142,6 +83,7 @@ public class GamePanel extends JPanel implements Runnable{
         addKeyListener(keys);
         addMouseListener(mouse);
         addMouseMotionListener(mouse);
+        addMouseWheelListener(mouse);
        
     
        
@@ -154,7 +96,7 @@ public class GamePanel extends JPanel implements Runnable{
    
     private void setUpObjects(){
        
-
+        
         generationM = new GenerationManager(this);
         generationM.generateMap();
 
@@ -184,7 +126,7 @@ public class GamePanel extends JPanel implements Runnable{
 
 
         camera = new Camera(this,"camera",0,0,(short)screenWidth,(short)screenHeight);
-
+        
     }
 
 
@@ -232,30 +174,15 @@ public class GamePanel extends JPanel implements Runnable{
         
         enviromentM.updateTicks();
         inputHandlingSystem.update();
-        chunkSystem.workingMemory.simulate();
-        if (gameState == PLAYSTATE ){
-            //playUpdate();
-
-        } else if (gameState == MENUSTATE){
-            //ingenting hittil
-        } else if (gameState == DIALOGSTATE){
-           //?
-        }else if (gameState == OPTIONSTATE){
-            
-        
-        }  
-
-        
+        world.simulate(); 
     }
     
    
 
 
     public void paintComponent(Graphics g){
-        
         super.paintComponent(g); 
         camera.draw(g);
-        
     }
 
 
@@ -290,11 +217,9 @@ public class GamePanel extends JPanel implements Runnable{
         return (int)frame.getBounds().getWidth();
     }
 
-
-
     public void newSeed() {
         generationM.newSeed();
-        chunkSystem.workingMemory.simulate();
+        world.simulate();
         camera.follow(player);
     }
 

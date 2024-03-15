@@ -11,6 +11,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.List;
 
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.Entity;
@@ -97,14 +98,14 @@ public class Camera extends primitiveEntity{
         g2.setFont(new Font("Arial", Font.PLAIN, 7));
         
        
-        ArrayList<BaseEntity> withinCam = panel.chunkSystem.workingMemory.getvisibleEntities();
+        ArrayList<BaseEntity> withinCam = panel.world.getvisibleEntities();
         
         addbackendPrintData("amount entities visible: "+String.valueOf(withinCam.size()));
         //panel.chunkSystem.workingMemory.writeInfo();
         //this only works if chunkysstem updates entites frequently
        
         //draw tiles first - not yet implemented
-        for (BaseEntity baseE :panel.chunkSystem.workingMemory.getVisibleTiles()){
+        for (BaseEntity baseE :panel.world.getVisibleTiles()){
             drawRelative(g2,baseE);
             if (testData){
                 drawHitBox(g2,baseE);
@@ -129,11 +130,12 @@ public class Camera extends primitiveEntity{
             drawChunks(g2);
         }
 
+        g2.drawImage(createDarkImage(withinCam),0,0,null);
         
         drawObjectData(g2);
         long endDraw = System.nanoTime();
         
-        drawHighlightetHitbox(g2,panel.chunkSystem.workingMemory.hoveredEntity);
+        drawHighlightetHitbox(g2,panel.world.hoveredEntity);
         addbackendPrintData("drawtime ms: "+String.valueOf((endDraw-startDraw)/1000000));
         addbackendPrintData("remaining cap: "+String.valueOf((1000000000-(((endDraw-startDraw)*60)))));
        
@@ -188,7 +190,7 @@ public class Camera extends primitiveEntity{
         float lineWidth = 2;
         BasicStroke stroke = new BasicStroke(lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
         g2.setStroke(stroke);
-        ArrayList<Chunk> chunkCopy = new ArrayList<>(panel.chunkSystem.workingMemory.getChunks());
+        ArrayList<Chunk> chunkCopy = new ArrayList<>(panel.world.getChunks());
         for (Chunk chunk:chunkCopy){
             int x = (int)(chunk.getWorldX()-worldX);
             int y = (int)(chunk.getWorldY()-worldY);
@@ -268,14 +270,14 @@ public class Camera extends primitiveEntity{
     }
 
     private void drawObjectData(Graphics g2){
-        if (panel.chunkSystem.workingMemory.hoveredEntity != null){
+        if (panel.world.hoveredEntity != null){
             g2.setColor(Color.white);
             g2.setFont(new Font("Arial", Font.PLAIN, 16));
             int y = 20;
             ArrayList<String> printables = new ArrayList<>();
     
             
-            for (String streng:(panel.chunkSystem.workingMemory.hoveredEntity.toString().split("\n"))){
+            for (String streng:(panel.world.hoveredEntity.toString().split("\n"))){
                 printables.add(streng);
             }
     
@@ -399,5 +401,31 @@ public class Camera extends primitiveEntity{
     }
     public void setHeight(int i) {
       height = (short) i;
+    }
+
+
+    public BufferedImage createDarkImage(List<BaseEntity> entities) {
+        // Determine the dimensions of the image based on the maximum WorldX and WorldY
+        
+        
+        
+        // Create a BufferedImage with the determined dimensions
+        BufferedImage darkImage = new BufferedImage(width ,height, BufferedImage.TYPE_INT_ARGB);
+        
+        // Loop through the entities and set lighter spots based on their lightLvl
+        for (BaseEntity entity : entities) {
+            int lightLvl = entity.getLightLvl(); // Assuming getLightLvl() returns the light level of the entity
+            if (getHitBox().intersects(entity.getHitBox())){
+                if (lightLvl > 0) {
+                    int x = (int)(entity.getWorldX()-worldX);
+                    int y = (int)(entity.getWorldY()-worldY);
+    
+                    int rgb = (255 << 24) | (lightLvl << 16) | (lightLvl << 8) | lightLvl; // Lighter spot color
+                    if (x>=0 && x< width && y>= 0 && y<height)
+                    darkImage.setRGB(x, y, rgb);
+                }
+            }
+            }   
+        return darkImage;
     }
 }

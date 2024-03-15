@@ -30,9 +30,7 @@ public class ChunkSystem {
 
     
     GamePanel panel;
-
     public WorkingMemory workingMemory;
-    
     //renderdistance is the distance from the player to the border of where entities is rendered.
     int renderDistance ;
     TreeNode parent;
@@ -43,6 +41,7 @@ public class ChunkSystem {
     //the size of treeNode is defined by the SIZEPOW - which is the value x that results in 2^x, which is the width of the entire chunkSystem(in the beginning.)
         
     final int SIZEPOW = 8;// 5072 chunks.
+    protected boolean generate = false;
     //the size 1 results in 16 chunks
     //the size 2 results in 64 chunks
     //etc 256 ...
@@ -52,7 +51,7 @@ public class ChunkSystem {
     
     public static void main(){
         GamePanel panel = new GamePanel(new JFrame(),true);
-        ChunkSystem chunky = new ChunkSystem(panel);
+        ChunkSystem chunky = new ChunkSystem(panel,8);
         chunky.setUpTest();
         chunky.handleOutOfBounds(new Point(-1050,-1070));
         //chunky.testExpandingSystem(0,0);
@@ -92,31 +91,28 @@ public class ChunkSystem {
      * 
      * if the chunksystem is not big enought, it should create another parent.
      */
-    public ChunkSystem(GamePanel panel){
+    public ChunkSystem(GamePanel panel,int SizePow){
         this.panel = panel;
         
         proceduralGen = new ProceduralGeneration();
         entityFactory = new EntityFactory(proceduralGen, panel);
+
         //this should be lower. but not sure yet.
         renderDistance = 14*panel.tileSize;
         
     
         
-
+        if (SizePow<1){
+            SizePow = SIZEPOW;
+        }
        
-        parent = new TreeNode(this,-(int)Math.pow(2,SIZEPOW)*panel.tileSize*8,-(int)Math.pow(2,SIZEPOW)*panel.tileSize*8,(int)Math.pow(2,SIZEPOW)*panel.tileSize*16,(int)Math.pow(2,SIZEPOW)*panel.tileSize*16);
-        //addEntity(new Playable(panel, "red",-32,-32,(short)48,(short)96,(short)48,(short)96,(short)0,(short)0));
-
-        this.workingMemory = new WorkingMemory(this);
-
-
+        parent = new TreeNode(this,-(int)Math.pow(2,SizePow)*panel.tileSize*8,-(int)Math.pow(2,SizePow)*panel.tileSize*8,(int)Math.pow(2,SizePow)*panel.tileSize*16,(int)Math.pow(2,SizePow)*panel.tileSize*16);
+       
     }
 
     private void setUpTest(){
         
-
         //removeEntitiesInBound()
-    
         generateTileInAllChunks();
         writeALlInfo();
     }

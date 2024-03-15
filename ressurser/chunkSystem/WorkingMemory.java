@@ -8,29 +8,28 @@ import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.Vector;
 import ressurser.baseEntity.gameObject.GameObject;
+import ressurser.baseEntity.playable.Inventory.Stack;
 import ressurser.baseEntity.tile.Tile;
-
+import ressurser.main.GamePanel;
+import ressurser.baseEntity.playable.Inventory.Item;
 /** 
  * This class should work as the interface for chunkSystem. it has information about relevant entities,
  *  without having the complexity of the chunkSystem.
  * is not done. NOTE - many functions in chunkSystem should be changed or removed for cleaner and more readable code.
  */
 public class WorkingMemory {
-
+   
     ArrayList<Chunk> workingChunks = new ArrayList<>();
     public ArrayList<BaseEntity> workingEntities = new ArrayList<>();
-    
     ArrayList<BaseEntity> sortedEntities = new ArrayList<>();
     ArrayList<BaseEntity> removalQueue = new ArrayList<>();
     ChunkSystem chunkSystem;
-
     public BaseEntity hoveredEntity = null;
-
+    GamePanel panel;
     
-
     
-    public WorkingMemory(ChunkSystem chunkSystem){
-        this.chunkSystem = chunkSystem;
+    public WorkingMemory(GamePanel panel){
+        this.chunkSystem = new ChunkSystem(panel,8);
     }
 
     /**starts the system up. connect tiles toghetet after all tiles are made. */
@@ -247,7 +246,7 @@ public class WorkingMemory {
         for (BaseEntity ent:getBaseEntities()){
             if (ent instanceof Tile){
                 if (ent.getHitBox().contains(p)){
-                    //return (Tile)ent;
+                    return (Tile)ent;
                 }
             }
         }
@@ -417,4 +416,36 @@ public class WorkingMemory {
         removalQueue.clear();
     }
 
+    public void placeEntity(BaseEntity ent){
+        if (!solidCollision(ent.getHitBox()))
+        chunkSystem.addEntity(ent);
+    }
+
+    public void removeEntity(BaseEntity ent){
+        chunkSystem.removeEntity(ent);
+    }
+
+    public void tryPlaceEntity(Stack equipped) {
+        if (equipped!= null && !(equipped.isEmpty())){
+
+            BaseEntity ent = equipped.getItem(0);
+            BaseEntity go = ((Item) ent).getPhysicalRepresentation();
+            System.out.println("ent is: "+ent);
+            System.out.println("go is: "+go);
+            
+            if (go instanceof GameObject){
+                GameObject pr = (GameObject)go;
+
+                pr.setWorldX(chunkSystem.panel.camera.getWorldX()+(int)chunkSystem.panel.mouse.getX()-(pr.getWidth()/2));
+                pr.setWorldY(chunkSystem.panel.camera.getWorldY()+(int)chunkSystem.panel.mouse.getY()-(pr.getHeight()/2));
+
+                if (!solidCollision(pr.getHitBox())){
+                    placeEntity(pr);
+                    equipped.removeOneItem();
+                    System.out.println("placed entity");
+                    System.out.println(pr);
+                }  
+            }
+        }
+    }
 }

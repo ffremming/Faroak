@@ -3,7 +3,6 @@ package ressurser.baseEntity.gameObject;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
-import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.playable.Playable;
 import ressurser.main.GamePanel;
@@ -12,8 +11,8 @@ public class GameObject extends Entity{
 
     
 
-    public GameObject(GamePanel panel, String name, int worldX, int worldY, short width, short height, short hitBoxWidth,
-            short hitBoxHeight, short i, short j,boolean solid) {
+    public GameObject(GamePanel panel, String name, int worldX, int worldY, int width, int height, int hitBoxWidth,
+            int hitBoxHeight, int i, int j,boolean solid) {
         super(panel, name, worldX, worldY, width, height, hitBoxWidth, hitBoxHeight, i, j);
         this.solid = solid;
         getImage();
@@ -53,7 +52,7 @@ public class GameObject extends Entity{
 
             images = panel.imageContainer.getObjectImages(name);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
+  
             e.printStackTrace();
         }
         return image;

@@ -13,7 +13,6 @@ import java.awt.image.AffineTransformOp;
 import javax.imageio.ImageIO;
 
 import ressurser.baseEntity.Entity;
-import ressurser.baseEntity.sprite.TileSprite;
 import ressurser.chunkSystem.terrainGeneration.Biome;
 
 public class ImageContainer {
@@ -76,10 +75,8 @@ public class ImageContainer {
     
 
         } catch (IOException e) {
-            // TODO Auto-generated catch block
+            
             System.out.println("problem with base load of images");
-            //e.printStackTrace();
-
         }
     }
 
@@ -93,9 +90,6 @@ public class ImageContainer {
             image = scaleImage(ImageIO.read(new File("ressurser/images/tile/"+name+".png")),32,32);
             
         }catch (IOException e) {
-            // TODO Auto-generated catch block
-            
-            
             //create the right image from file
             try {
                
@@ -117,7 +111,6 @@ public class ImageContainer {
                 }
                 
             } catch (Exception e1) {
-                // TODO Auto-generated catch block
                 System.out.println("tried to rotate image, something went wrong:");
             }
         }
@@ -163,25 +156,7 @@ public class ImageContainer {
         return -1;
     }
 
-    public void setTileImages(TileSprite tileSprite) {
-        
-        //main background
-        tileSprite.setMain(retrieveTileSpriteImage(tileSprite.getName()));
 
-        //corners
-        tileSprite.corner0 = retrieveTileSpriteImage(tileSprite.getName() +"C" +"0");
-        tileSprite.corner0 = retrieveTileSpriteImage(tileSprite.getName() +"C" +"1");
-        tileSprite.corner0 = retrieveTileSpriteImage(tileSprite.getName() +"C" +"2");
-        tileSprite.corner0 = retrieveTileSpriteImage(tileSprite.getName() +"C" +"3");
-
-        //borders
-        tileSprite.border0 = retrieveTileSpriteImage(tileSprite.getName() +"B" +"0");
-        tileSprite.border0 = retrieveTileSpriteImage(tileSprite.getName() +"B" +"1");
-        tileSprite.border0 = retrieveTileSpriteImage(tileSprite.getName() +"B" +"2");
-        tileSprite.border0 = retrieveTileSpriteImage(tileSprite.getName() +"B" +"3");
-
-        
-    }
 
     
 
@@ -209,7 +184,6 @@ public class ImageContainer {
         images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/left3.png")));
         
     } catch (IOException e) {
-        // TODO Auto-generated catch block
         System.out.println(name + " could not load the sprites of playable");
         e.printStackTrace();
     }
@@ -288,7 +262,7 @@ public class ImageContainer {
 
     public BufferedImage getItemImage(String name){
         if (itemImages.containsKey(name)){
-            return (images.get(name));
+            return (itemImages.get(name));
         }
         else{
             return retrieveItemImage(name);
@@ -299,13 +273,22 @@ public class ImageContainer {
     }
     private BufferedImage retrieveItemImage(String name) {
         BufferedImage image = null;
+        System.out.println("mongooo");
         try {
-            
-            image = scaleImage(ImageIO.read(new File("ressurser/images/items/"+name+".png")),32,32);
-            
-        }catch (IOException e) {
-            
+            File file = new File("ressurser/images/items/"+name+".png");
+            if(file.exists()){
+                image = ImageIO.read(file);
+                System.out.println("#loaded item image");
+            } else {
+                System.out.println("File does not exist: " + file.getAbsolutePath());
+            }
+        } catch (IOException e) {
+            System.out.println("Error while reading the file: " + e.getMessage());
         }
+        if (image == null){
+            System.out.println("itemImage is null, something went wrong.");
+        }
+        System.out.println("itemImage"+image);
         itemImages.put(name,image);
         return image;
     }   

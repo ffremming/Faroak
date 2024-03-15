@@ -3,18 +3,24 @@ package ressurser.main.GUIMenu;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 
 import ressurser.main.GamePanel;
 import java.awt.BasicStroke;
+
+import ressurser.baseEntity.playable.Inventory.Inventory;
 import ressurser.baseEntity.playable.Inventory.Item;
+import ressurser.baseEntity.playable.Inventory.Stack;
 
 public class ItemContainerSlot extends Component{
 
     Item item;
     int col;
     int row;
+    Inventory inventory;
+    int number; 
 
-    public ItemContainerSlot(GamePanel panel,int x,int y,int width,int height,int col,int row) {
+    public ItemContainerSlot(GamePanel panel,int x,int y,int width,int height,int col,int row,int number,Inventory inventory) {
         super(panel);
 
 
@@ -29,6 +35,8 @@ public class ItemContainerSlot extends Component{
         setForeGround(Color.black);
         this.col = col;
         this.row = row;
+        this.inventory = inventory;
+        this.number = number;
     }
 
 
@@ -49,9 +57,11 @@ public class ItemContainerSlot extends Component{
     public void press(){
     }
 
-    public void draw(Graphics2D g2){
+    public void draw(Graphics2D g2,int count,Inventory inventory){
        
         drawRect(g2);
+
+        
     }
     @Override
     public void drawRect(Graphics2D g2){
@@ -72,15 +82,18 @@ public class ItemContainerSlot extends Component{
        
         
         
+        
         x = container.x + col*(width+8) +8 ;
         y = container.y + row*(height+8) +8;
         g2.setColor(background);
         g2.fillRect(x,y,width,height);
         g2.setColor(foreground);
         g2.drawRect(x,y,width,height);
+
+        drawContent(g2,number,inventory);
     }
 
-    public void drawRectInPos(Graphics2D g2,int x,int y){
+    public void drawRectInPos(Graphics2D g2,int x,int y,boolean indexed){
         
         if (hover){
             setBackground(Color.white);
@@ -101,6 +114,43 @@ public class ItemContainerSlot extends Component{
         g2.setColor(foreground);
         g2.drawRect(x,y,width,height);
 
+        if (inventory!= null){
+            if (inventory.getStack(number) != null){
+                if (!inventory.getStack(number).getName().equals("empty")){
+                    if (inventory.getStack(number)!= null){
+                        BufferedImage image = panel.imageContainer.getItemImage(inventory.getStack(number).getName());
+                        
+                        g2.drawImage(image, x, y, width, height, null);
+                    }
+                }
+            }
+        }
+        if (indexed){
+            g2.setColor(Color.white);
+            g2.setStroke(new BasicStroke(5));
+            g2.drawRect(x-1,y-1,width+2,height+2);
+
+            g2.setColor(foreground);
+            g2.setStroke(new BasicStroke(1));
+            
+        }
+        
+
+
+    }
+    public void drawContent(Graphics2D g2,int count,Inventory inventory){
+        if (inventory!= null){
+            if (inventory.getStack(count) != null){
+                if (!inventory.getStack(count).getName().equals("empty")){
+                    if (inventory.getStack(count)!= null){
+                        BufferedImage image = panel.imageContainer.getItemImage(inventory.getStack(count).getName());
+                        
+                        g2.drawImage(image, x, y, width, height, null);
+                        g2.drawString(inventory.getStack(count).getAmount()+"", x+width-10, y+height-10);
+                    }
+                }
+            }
+        }
     }
 
 
@@ -112,8 +162,18 @@ public class ItemContainerSlot extends Component{
     }
 
     private void switchItems(){
+    
+        Stack tempInHand = panel.player.getTempInHand();
+        Stack thisStack = getStack();
+    
+        panel.player.setTempInHand(thisStack);
+        setStack(tempInHand);
        
     }
+
+    
+
+
 
     public Item getItem(){
         
@@ -124,5 +184,13 @@ public class ItemContainerSlot extends Component{
 
     public void mouseMoved(MouseEvent e){
         hover();
+    }
+
+    private Stack getStack(){
+        return inventory.getStack(number);
+    }
+
+    private void setStack(Stack tempInHand) {
+        inventory.setStack(number,tempInHand);
     }
 }

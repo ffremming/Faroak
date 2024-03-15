@@ -98,7 +98,7 @@ public class Stack extends BaseEntity{
         return getAmount() >= stackLimit;
     }
 
-    protected boolean isEmpty(){
+    public boolean isEmpty(){
         return items.size() <= 0;
     }
 
@@ -112,6 +112,12 @@ public class Stack extends BaseEntity{
        return (itm.getName().equals(getName()));
 
         
+    }
+
+    public void removeOneItem() {
+        if (!isEmpty()){
+            items.remove(items.size()-1);
+        }
     }
     
 }

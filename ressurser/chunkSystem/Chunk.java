@@ -193,7 +193,7 @@ public class Chunk extends TreeNode{
     private void initialLoad(){
        generateTiles();
        generateEntities();
-       generated = true;
+       //generated = true;
        amtGenerated ++;
 
     }
@@ -222,7 +222,7 @@ public class Chunk extends TreeNode{
 
         if (!loaded){
             
-            if (generated){
+            if (!generated&chunkS.generate){
                 initialLoad();
             //generateTiles();
             //loadEntitiesFromFile();
@@ -265,10 +265,7 @@ public class Chunk extends TreeNode{
 
             return new Tile(chunkS.panel,streng,worldX,worldY,height);
         }
-
-
         return new Tile(chunkS.panel,biomeType,worldX,worldY,height);
-        
     }
 
    
@@ -276,8 +273,6 @@ public class Chunk extends TreeNode{
     private BaseEntity getSingelEntity(int worldX,int worldY){
 
         return chunkS.entityFactory.getEntity(worldX,worldY);
-
-
     }
 
     private void addEntitiesToChunk(){

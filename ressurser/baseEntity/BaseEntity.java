@@ -35,8 +35,9 @@ public class BaseEntity {
     public boolean animated;
 
     public boolean lightSource = false;
+    public int light = 0;
 
-    public BaseEntity(GamePanel panel,String name,int worldX,int worldY,short width,short height,short hitBoxWidth,short hitBoxHeight,int i,int j){
+    public BaseEntity(GamePanel panel,String name,int worldX,int worldY,int width,int height,int hitBoxWidth,int hitBoxHeight,int i,int j){
         this.panel = panel;
 
 
@@ -190,5 +191,16 @@ public class BaseEntity {
     }
     public int getAge(){
         return age;
+    }
+
+    public void setWorldX(double x){
+        worldX = x;
+    }
+
+    public void setWorldY(double y){
+        worldY = y;
+    }
+    public int getLightLvl() {
+        return light;
     }
 }
