@@ -68,6 +68,7 @@ public class HitBox extends Rectangle{
         
         updateCoords();
         if (hitbox == this){return false;}
+
         return intersects(hitbox)||contains( hitbox);
     }
 

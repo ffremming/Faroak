@@ -35,8 +35,14 @@ public class Camera extends primitiveEntity{
     public long splitTime = 1000000000/FPS;
     public long nextDrawTime = System.nanoTime()+splitTime;
     ArrayList<String> backEndData = new ArrayList<>();
+    
 
     public boolean testData = false;
+
+    BufferedImage baseImage = null;
+    int frameCounter = 0;
+    double baseX = 0;
+    double baseY = 0;
 
 
     public int setWidth;
@@ -73,17 +79,9 @@ public class Camera extends primitiveEntity{
         //TODO
         this.followed = entity;
     }
-    
-    public void draw(Graphics g){
-        long startDraw = System.nanoTime();
-        
-        if (followed == null){
-            centerAtPosition(new Point(0,0));
-        }else{
-            centerAtPosition(followed.getPoint());
-        }
-        
-        
+
+    //draw background image without moveable entities
+    private void setBaseImage(Graphics g){
         GraphicsConfiguration gc = ((Graphics2D) g).getDeviceConfiguration();
         int width = panel.getWidth(); // Assuming getWidth() returns the width of your drawing area
         int height = panel.getHeight(); // Assuming getHeight() returns the height of your drawing area
@@ -92,19 +90,8 @@ public class Camera extends primitiveEntity{
         
         // Draw on the compatible image
         Graphics2D g2 = image2.createGraphics();
-
-        
-        //Graphics2D g2 = (Graphics2D)g;
-        g2.setFont(new Font("Arial", Font.PLAIN, 7));
-        
-       
         ArrayList<BaseEntity> withinCam = panel.world.getvisibleEntities();
-        
-        addbackendPrintData("amount entities visible: "+String.valueOf(withinCam.size()));
-        //panel.chunkSystem.workingMemory.writeInfo();
-        //this only works if chunkysstem updates entites frequently
-       
-        //draw tiles first - not yet implemented
+
         for (BaseEntity baseE :panel.world.getVisibleTiles()){
             drawRelative(g2,baseE);
             if (testData){
@@ -113,24 +100,83 @@ public class Camera extends primitiveEntity{
             } 
         }
 
-        //draw entities later..
         for (BaseEntity baseE :withinCam){
-            if (baseE instanceof Entity){
+            if (!(baseE instanceof Tile)){
+                if (!(baseE instanceof Moveable)){
+
+                    drawRelative(g2,baseE);
+                    if (testData){
+                        drawHitBox(g2,baseE);
+                        drawCoords(g2,baseE);
+                    } 
+                }
+            }
+        }
+
+        baseImage = image2;
+        baseX = worldX;
+        baseY = worldY;
+    }
+
+    void drawMoveablentities(Graphics2D g2){
+        ArrayList<BaseEntity> withinCam = panel.world.getvisibleEntities();
+        for (BaseEntity baseE :withinCam){
+
+            if (baseE instanceof Moveable){
                 drawRelative(g2,baseE);
                 if (testData){
-                   
                     drawHitBox(g2,baseE);
                     drawCoords(g2,baseE);
-                }   
-            } 
+                } 
+            }
         }
+    }
+    
+    public void setupImage(Graphics g){
+        frameCounter ++;
+        if (frameCounter>=20){
+            setBaseImage(g);
+            frameCounter = 0;
+        }
+        g.setFont(new Font("Arial", Font.PLAIN, 7));
+       
+        if (followed == null){
+            centerAtPosition(new Point(0,0));
+        }else{
+            centerAtPosition(followed.getPoint());
+        }
+    }
+
+    public void draw(Graphics g){
+       
+        setupImage(g);
+        
+        //setup image tech
+        int width = panel.getWidth(); // Assuming getWidth() returns the width of your drawing area
+        int height = panel.getHeight(); // Assuming getHeight() returns the height of your drawing area
+        BufferedImage image2 = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2 = image2.createGraphics();
+        
+       
+        long startDraw = System.nanoTime();
+       
+        ArrayList<BaseEntity> withinCam = panel.world.getvisibleEntities();
+        
+        addbackendPrintData("amount entities visible: "+String.valueOf(withinCam.size()));
+        
+       
+       
+        //draws background before all moveable entities:
+        g2.drawImage(baseImage,(int)(baseX-worldX),(int)(baseY-worldY),width,height,null);  
+        drawMoveablentities(g2);
 
         //drawing chunks
         if (testData){
             drawChunks(g2);
         }
 
-        g2.drawImage(createDarkImage(withinCam),0,0,null);
+        //natt shit
+        //g2.drawImage(createDarkImage(withinCam),0,0,null);
         
         drawObjectData(g2);
         long endDraw = System.nanoTime();
@@ -141,7 +187,7 @@ public class Camera extends primitiveEntity{
        
         drawBackEndData(g2);
 
-        //panel.UI.draw(g2);
+       
         panel.userInterface.draw(g2);
         
         
@@ -151,9 +197,6 @@ public class Camera extends primitiveEntity{
     }
 
     public void drawRelative(Graphics2D g2,BaseEntity entity){
-        //TODO write functions in baseEntity and hitbox that makes it so you dont need to "draw relative" - could do it inside those functions.
-       
-
         
         if (getHitBox().intersects(entity.getWorldX(),entity.getWorldY(),entity.getWidth(),+entity.getHeight()) ){
 
@@ -178,12 +221,8 @@ public class Camera extends primitiveEntity{
             ArrayList<BufferedImage> imagesCopy = new ArrayList<>(entity.getImages());
             for (BufferedImage img:imagesCopy){
                 g2.drawImage(img,x,y,entity.getWidth(),entity.getHeight(),null);  
-                
-                
             }
         }
-
-        
     }
 
     private void drawChunks(Graphics2D g2){
@@ -205,13 +244,13 @@ public class Camera extends primitiveEntity{
 
         int width = (int)entity.getHitBox().getWidth();
         int height = (int)entity.getHitBox().getHeight();
-        g2.setColor(Color.green);
+        g2.setColor(Color.white);
         float lineWidth = 0.5f;
         BasicStroke stroke = new BasicStroke(lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
         g2.setStroke(stroke);
        
         g2.drawRect(x,y,width,height);
-        g2.drawString("Hitbox: x=" + entity.getHitBox().x + ", y=" + entity.getHitBox().y + ", width=" + width + ", height=" + height, x, y - 10);
+        //g2.drawString("HB: x=" + entity.getHitBox().x + ",HB y=" + entity.getHitBox().y + ", HBwidth=" + width + ", HBheight=" + height, x, y - 10);
         if (entity instanceof Moveable){
             Rectangle rect = ((Moveable) entity).getHitboxInfront();
             g2.drawRect((int)(rect.x-worldX),(int)(rect.y-worldY),rect.width,rect.height);

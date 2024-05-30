@@ -195,6 +195,7 @@ public class Chunk extends TreeNode{
        generateEntities();
        //generated = true;
        amtGenerated ++;
+       WRITETOFILE
 
     }
     /*generate tiles, should be used every time a chunk is loaded */
@@ -229,6 +230,7 @@ public class Chunk extends TreeNode{
             }
             else{
                 initialLoad();
+                READ FROM FILE
             }
             
         }

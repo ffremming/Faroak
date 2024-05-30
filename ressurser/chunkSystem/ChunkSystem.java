@@ -26,9 +26,6 @@ public class ChunkSystem {
 
     //file reading prototype:
     
-
-
-    
     GamePanel panel;
     public WorkingMemory workingMemory;
     //renderdistance is the distance from the player to the border of where entities is rendered.
@@ -100,14 +97,11 @@ public class ChunkSystem {
         //this should be lower. but not sure yet.
         renderDistance = 14*panel.tileSize;
         
-    
-        
         if (SizePow<1){
             SizePow = SIZEPOW;
         }
        
         parent = new TreeNode(this,-(int)Math.pow(2,SizePow)*panel.tileSize*8,-(int)Math.pow(2,SizePow)*panel.tileSize*8,(int)Math.pow(2,SizePow)*panel.tileSize*16,(int)Math.pow(2,SizePow)*panel.tileSize*16);
-       
     }
 
     private void setUpTest(){
