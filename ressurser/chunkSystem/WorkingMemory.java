@@ -24,12 +24,36 @@ public class WorkingMemory {
     ArrayList<BaseEntity> sortedEntities = new ArrayList<>();
     ArrayList<BaseEntity> removalQueue = new ArrayList<>();
     ChunkSystem chunkSystem;
+    ChunkSystem chunkSystemOverWorld;
+    ChunkSystem chunkSystemCaves;
+    ChunkSystem chunkSystemNether;
     public BaseEntity hoveredEntity = null;
     GamePanel panel;
+    int type;
+    static final int OVERWORLD = 0;
+    static final int CAVE = 1;
+    static final int NETHER = 2;
+
     
     
     public WorkingMemory(GamePanel panel){
-        this.chunkSystem = new ChunkSystem(panel,8);
+        
+        this.chunkSystem = new ChunkSystem(panel,8,type);
+    }
+
+    public void setType(int type){
+        if (type == OVERWORLD){
+            chunkSystem = chunkSystemOverWorld;
+        } else if ((type == CAVE)){
+            chunkSystem = chunkSystemCaves;
+        } else {
+            chunkSystem = chunkSystemNether;
+        }
+
+        //needs to reset workingentities, chunks etc
+        //needs to make sure correct chunks are loaded
+        //maybe need to genereate new area
+        //
     }
 
     /**starts the system up. connect tiles toghetet after all tiles are made. */
@@ -49,8 +73,11 @@ public class WorkingMemory {
      * add all new chunks
      */
     public void setWorkingChunks(ArrayList<Chunk> chunks){
+        
+        //chunkSystem.unload(chunks,workingChunks);
         workingChunks.clear();
         workingChunks.addAll(chunks);
+       
     }
 
     /**
@@ -113,7 +140,7 @@ public class WorkingMemory {
 
     /**unloades chunks, flushes out moveables, reloades chunk and connect tiles */
     private void updateChunks(Point p){
-
+        
          // chekcs if needed unloading of old chunks as well as updating new chunks
         ArrayList<Chunk> oldChunks = new ArrayList<>(workingChunks);
         setWorkingChunks(chunkSystem.getAllChunksInRenderDistance(p));
@@ -145,7 +172,7 @@ public class WorkingMemory {
     private void compareAndSelectUnloadedChunks(ArrayList<Chunk> oldChunks, ArrayList<Chunk> newChunks) {
         for(Chunk oldChunk:oldChunks){
             
-            if (!newChunks.contains(oldChunk)){ //if new chunkList doestn contain old chunks - 
+            if (!(newChunks.contains(oldChunk))){ //if new chunkList doestn contain old chunks - 
             
             oldChunk.unLoad();
             }
@@ -229,6 +256,20 @@ public class WorkingMemory {
         return visible;
     }
 
+     /**takes all loaded baseEntities, and checks what entities that collides with a larger camera hitBox.
+     * @return all entities that should be drawn
+     */
+    public  ArrayList<BaseEntity> getVisibleEntitiesenlarged(){
+        ArrayList<BaseEntity> visible = new ArrayList<>();
+
+        for (BaseEntity ent:sortedEntities){
+            if (chunkSystem.panel.camera.getHitBox().getEnlargedCameraHitbox().collision(new HitBox((ent.getWorldX()),ent.getWorldY(),ent.getWidth(),ent.getHeight()))){
+                visible.add(ent);
+            }
+        }
+        return visible;
+    }
+
     public  ArrayList<BaseEntity> getVisibleTiles(){
         ArrayList<BaseEntity> visible = new ArrayList<>();
 
@@ -239,6 +280,19 @@ public class WorkingMemory {
         }
         return visible;
     }
+
+    public  ArrayList<BaseEntity> getVisibleTilesEnlarged(){
+        ArrayList<BaseEntity> visible = new ArrayList<>();
+
+        for (BaseEntity ent:getTiles()){
+            if (chunkSystem.panel.camera.enlargedCollision(ent)){
+                visible.add(ent);
+            }
+        }
+        return visible;
+    }
+
+    
 
     public Tile getTile(Point p){
         //try to get tile from active memory

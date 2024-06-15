@@ -3,6 +3,9 @@ package ressurser.chunkSystem;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -15,7 +18,7 @@ import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.playable.Moveable;
 import ressurser.baseEntity.tile.CliffTile;
 import ressurser.baseEntity.tile.Tile;
-import ressurser.chunkSystem.terrainGeneration.EntityFactory;
+import ressurser.chunkSystem.terrainGeneration.entityGeneration.EntityFactory;
 import ressurser.chunkSystem.terrainGeneration.ProceduralGeneration;
 import ressurser.main.GamePanel;
 import ressurser.main.GUIMenu.MenuPanel;
@@ -38,17 +41,24 @@ public class ChunkSystem {
     //the size of treeNode is defined by the SIZEPOW - which is the value x that results in 2^x, which is the width of the entire chunkSystem(in the beginning.)
         
     final int SIZEPOW = 8;// 5072 chunks.
-    protected boolean generate = false;
+    protected boolean generate = true;
     //the size 1 results in 16 chunks
     //the size 2 results in 64 chunks
     //etc 256 ...
 
     HashMap <String,Tile> tileHashMap = new HashMap<String,Tile>();
 
+    int type;
+    final static int OVERWORLD = 0;
+    final int CAVE = 1;
+    final int NETHER = 2;
+
+    
     
     public static void main(){
+       
         GamePanel panel = new GamePanel(new JFrame(),true);
-        ChunkSystem chunky = new ChunkSystem(panel,8);
+        ChunkSystem chunky = new ChunkSystem(panel,8,ChunkSystem.OVERWORLD);
         chunky.setUpTest();
         chunky.handleOutOfBounds(new Point(-1050,-1070));
         //chunky.testExpandingSystem(0,0);
@@ -73,10 +83,7 @@ public class ChunkSystem {
             assert parent.getSquareMeter() == width*height *4: "squareMeter";
             assert parent.x !=x: "x==x";
             assert parent.y !=y: "y==y";
-            System.out.println(parent.x);
-            System.out.println(parent.y);
-            System.out.println(parent.width);
-            System.out.println(parent.height);
+           
 
         }
 
@@ -88,14 +95,24 @@ public class ChunkSystem {
      * 
      * if the chunksystem is not big enought, it should create another parent.
      */
-    public ChunkSystem(GamePanel panel,int SizePow){
+    public ChunkSystem(GamePanel panel,int SizePow,int type){
+
+        this.type = type;
+
+        try {
+            clearFile(new File("storage.txt"));
+            System.out.println("File cleared successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         this.panel = panel;
         
         proceduralGen = new ProceduralGeneration();
         entityFactory = new EntityFactory(proceduralGen, panel);
-
+        
         //this should be lower. but not sure yet.
-        renderDistance = 14*panel.tileSize;
+        renderDistance = 17*panel.tileSize;
         
         if (SizePow<1){
             SizePow = SIZEPOW;
@@ -420,10 +437,7 @@ public class ChunkSystem {
 
         else{
             System.out.println(rect +" is not contained by any parent nodes");
-            System.out.println(southEast);
-            System.out.println(southWest);
-            System.out.println(NorthEast);
-            System.out.println(NorthWest);
+          
             //this should never happen, since we are increasing the storage by 4, and 
             throw new OutOfChunkBounds("unable to create new chunks with the right constraints");
         }
@@ -464,6 +478,21 @@ public class ChunkSystem {
         }
         int percentage = 100*generated/getAllChunksInSystem().size();
         return percentage;
+    }
+
+    public void unload(ArrayList<Chunk> newWorkingchunks, ArrayList<Chunk> workingChunks) {
+        for (Chunk wc:workingChunks){
+            if (!newWorkingchunks.contains(wc)){
+                wc.loaded = false;
+            }
+        }
+    }
+
+    public static void clearFile(File file) throws IOException {
+        try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+            // Set the length of the file to zero
+            raf.setLength(0);
+        }
     }
 
     

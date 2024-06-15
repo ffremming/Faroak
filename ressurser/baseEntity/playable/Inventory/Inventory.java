@@ -25,7 +25,7 @@ public class Inventory {
     */
     public boolean addItem(Item item){
         for (Stack stack:inventory){
-            System.out.println(stack.getName());
+          
             if (stack.isEmpty()){
                 if (stack.addItem(item)){
                     return true;

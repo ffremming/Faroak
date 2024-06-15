@@ -9,6 +9,15 @@ import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.playable.Moveable;
 import ressurser.baseEntity.tile.CliffTile;
 import ressurser.baseEntity.tile.Tile;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+
 
 public class Chunk extends TreeNode{
     static int amount = 0;
@@ -41,6 +50,16 @@ public class Chunk extends TreeNode{
 
     public ArrayList<BaseEntity> getEntities(){
         return entities;
+    }
+
+    private ArrayList<BaseEntity> getEntitiesWithoutTiles(){
+        ArrayList<BaseEntity> entitiesFiltered = new ArrayList<>();
+        for (BaseEntity be:entities){
+            if (!(be instanceof Tile)){
+                entitiesFiltered.add(be);
+            }
+        }
+        return entitiesFiltered;
     }
 
 
@@ -193,11 +212,18 @@ public class Chunk extends TreeNode{
     private void initialLoad(){
        generateTiles();
        generateEntities();
-       //generated = true;
+       generated = true;
        amtGenerated ++;
-       WRITETOFILE
-
+       writeEntitiesToFile(getEntitiesWithoutTiles());
     }
+
+    private void repeatedLoad(){
+        generateTiles();
+        //read entities from file
+    }
+
+
+
     /*generate tiles, should be used every time a chunk is loaded */
     private void generateTiles(){
         addEntitiesToChunk();
@@ -225,27 +251,28 @@ public class Chunk extends TreeNode{
             
             if (!generated&chunkS.generate){
                 initialLoad();
-            //generateTiles();
-            //loadEntitiesFromFile();
+                generateTiles();
+            
             }
             else{
-                initialLoad();
-                READ FROM FILE
+               
+                repeatedLoad();
             }
             
         }
         loaded = true;
         amtLoaded++;
+    }
 
-        
-        
-        
-        
+    public void deload(){
+        loaded = false;
+        //when a chunk no longer is in the working memory, it needs to deload - write down the enitites to file...
     }
 
     /**should not be here.....!! //TODO */
     private Tile getSingelTile(int worldX,int worldY){
         
+        //FIXTHIS!
         //loader algorithm..
         //method returns biome type- which is a streubg
         String biomeType =  chunkS.proceduralGen.calculateBiomeString(worldX, worldY);
@@ -277,6 +304,7 @@ public class Chunk extends TreeNode{
         return chunkS.entityFactory.getEntity(worldX,worldY);
     }
 
+    /**needs to be changed!! has two .. */
     private void addEntitiesToChunk(){
        
         for (int x2 = 0;x2<width;x2+= chunkS.panel.tileSize){
@@ -340,9 +368,155 @@ public class Chunk extends TreeNode{
     /**not yet implemented... needs database for reading/writing */
     public void unLoad(){
         loaded = false;
+        overwritetoFile(getEntitiesWithoutTiles());
         entities.clear();
     }
     
 
     
+    //FILE TECH
+
+    public String serializeEntity(BaseEntity entity) {
+        // Example serialization. Customize based on your BaseEntity fields
+        return entity.getName() + "," + entity.getWorldX() + "," + entity.getWorldY() + "," + entity.getClass();
+    }
+    
+    public String serializeEntities(ArrayList<BaseEntity> entities) {
+        StringBuilder sb = new StringBuilder();
+        sb.append( "chunk:"+getWorldX()+","+getWorldY()+"\n");
+        for (BaseEntity entity : entities) {
+            sb.append(serializeEntity(entity)).append("\n");
+        }
+        sb.append("end\n\n\n");
+        return sb.toString();
+    }
+
+    
+
+    public void writeEntitiesToFile( ArrayList<BaseEntity> entitiesUnfiltered) {
+
+        
+        File outputFile = new File("storage.txt");
+
+        try (RandomAccessFile raf = new RandomAccessFile(outputFile, "rw")) {
+            // Move the file pointer to the end of the file to append
+            raf.seek(raf.length());
+            // Write the serialized entities to the file
+            raf.writeBytes(serializeEntities(entitiesUnfiltered));
+           
+            
+            
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            //System.out.println("funker ikke");
+        }
+    }
+
+    /**
+     * Appends text to a file.
+     * 
+     * @param text the text to be appended
+     * @param outputFile the file to which the text should be appended
+     * @throws IOException if an error occurs during writing
+     */
+    public static void appendTextToFile(String text, File outputFile) throws IOException {
+        try (RandomAccessFile raf = new RandomAccessFile(outputFile, "rw")) {
+            // Move the file pointer to the end of the file
+            raf.seek(raf.length());
+            // Write the text to the file
+            raf.writeBytes(text);
+        }
+    }
+
+
+    public void overwritetoFile(ArrayList<BaseEntity> entities) {
+        StringBuilder search = new StringBuilder();
+        search.append( "chunk:"+getWorldX()+","+getWorldY());
+
+        StringBuilder newText = new StringBuilder();
+        newText.append( "chunk:"+getWorldX()+","+getWorldY()+"\n");
+        newText.append("endret text:)");
+        for (BaseEntity entity : entities) {
+            newText.append(serializeEntity(entity)).append("\n");
+        }
+        
+        try {
+            alterTextBetweenMarkers(search.toString(),"end",newText.toString(),new File("storage.txt"));
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+
+    public static void alterTextBetweenMarkers(String searchString, String endMarker, String newText, File outputFile) throws IOException {
+        try (RandomAccessFile raf = new RandomAccessFile(outputFile, "rw")) {
+            // Variables to keep track of positions and reading
+            long fileLength = raf.length();
+            long startPointer = 0;
+            String line;
+
+            // Iterate through the file line by line to find the search string
+            while (raf.getFilePointer() < fileLength) {
+                line = raf.readLine();
+                if (line != null && line.equals((searchString))) {
+                    startPointer = raf.getFilePointer();
+                    break;
+                }
+            }
+
+            if (startPointer == 0) {
+                //System.out.println("Search string not found."+searchString+"!");
+                return;
+            } else {//System.out.println(searchString);}
+            }
+            // Move the pointer back to the start of the found line
+            raf.seek(startPointer - searchString.length() - 1);
+
+            // Read the rest of the file into a buffer
+            StringBuilder buffer = new StringBuilder();
+            while (raf.getFilePointer() < fileLength) {
+                line = raf.readLine();
+                if (line != null && line.contains(endMarker)) {
+                    break;
+                }
+                buffer.append(line).append(System.lineSeparator());
+            }
+
+            // Replace the content in the buffer with the new text
+            String contentToReplace = buffer.toString();
+            String modifiedContent = contentToReplace.replace(contentToReplace, newText);
+
+            // Move the file pointer back to the start of the found string
+            raf.seek(startPointer - searchString.length() - 1);
+
+            // Write the modified content back to the file
+            raf.writeBytes(modifiedContent);
+        }
+
+    }
+    
+    public BaseEntity deserializeEntity(String entityString) {
+        String[] parts = entityString.split(",");
+        // Adjust based on your BaseEntity constructor and fields
+        String name = parts[0];
+        int x = Integer.parseInt(parts[1]);
+        int y = Integer.parseInt(parts[2]);
+        String type = parts[3];
+        //return new BaseEntity(name, x, y, type); // Adjust constructor
+    }
+
+    public ArrayList<BaseEntity> readEntitiesFromFile(String fileName) {
+        ArrayList<BaseEntity> entities = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                entities.add(deserializeEntity(line));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return entities;
+    }
 }

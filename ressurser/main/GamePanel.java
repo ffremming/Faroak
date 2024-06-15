@@ -125,7 +125,7 @@ public class GamePanel extends JPanel implements Runnable{
         generationM.initiate();
 
 
-        camera = new Camera(this,"camera",0,0,(short)screenWidth,(short)screenHeight);
+        camera = new Camera(this,"camera",0,0,(short)(screenWidth+400),(short)(screenHeight+400));
         
     }
 

@@ -339,11 +339,7 @@ public class Tile extends BaseEntity{
         int value = 0;
         images.clear();
         images.add(getImage());
-        System.out.println(neigbors);
-        System.out.println(neigbors[0]);
-        System.out.println(neigbors[1]);
-        System.out.println(neigbors[2]);
-        System.out.println(neigbors[3]);
+       
         if (!(getNeighbors()[0].cliff ) && getNeighbors()[3] .cliff &&getNeighbors()[1] .cliff ) {
             value = 2;
             //UP
@@ -396,7 +392,7 @@ public class Tile extends BaseEntity{
             // RIGHT
             value = 6;
         }
-        System.out.println(value);
+        
         images.add(panel.imageContainer.getTileImage("protoCliff"+value));
     }
 

@@ -19,10 +19,10 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
 
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
-        System.out.println(panel.player.getInventory().getIndex());
+      
         if (e.getWheelRotation()<0){
             panel.player.getInventory().decreaseIndex();
-            System.out.println(panel.player.getInventory().getIndex());
+           
         } else if (e.getWheelRotation()>0){
             panel.player.getInventory().increseIndex();
         }

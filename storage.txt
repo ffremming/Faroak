@@ -1,0 +1,547 @@
+chunk:-1536,-1536
+oak_M,-1584.0,-1712.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1584.0,-1648.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1584.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-1536.0,-1216.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1584.0,-1328.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1584.0,-1264.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1456.0,-1648.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1456.0,-1264.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1392.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1328.0,-1392.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1264.0,-1712.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1264.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1200.0,-1392.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1136.0,-1584.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1136.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1136.0,-1264.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:-1024,-1536
+oak_M,-1008.0,-1584.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1008.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-880.0,-1328.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-816.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-624.0,-1584.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:-512,-1536
+oak_M,-560.0,-1712.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-560.0,-1392.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-496.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-496.0,-1328.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-368.0,-1712.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-368.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-304.0,-1712.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-240.0,-1648.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-240.0,-1328.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-176.0,-1712.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-176.0,-1584.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-176.0,-1392.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-112.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:-1536,-1024
+oak_M,-1584.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1584.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1456.0,-1072.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1392.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1328.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1328.0,-944.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1264.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1264.0,-816.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1200.0,-1008.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1136.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1136.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1136.0,-752.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:-1536,-512
+oak_M,-1136.0,-688.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:-1024,-1024
+oak_M,-1072.0,-944.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-1024.0,-640.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1072.0,-752.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1008.0,-944.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-944.0,-1072.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-944.0,-752.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-816.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-752.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-752.0,-816.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-688.0,-944.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-688.0,-752.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-624.0,-880.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-624.0,-752.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:-512,-1024
+oak_M,-496.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-496.0,-944.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-432.0,-944.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-368.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-368.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-368.0,-1008.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-368.0,-944.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-368.0,-880.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-368.0,-816.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-304.0,-816.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-304.0,-752.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-240.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-192.0,-832.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-176.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-176.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-176.0,-944.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:-1024,-512
+oak_M,-880.0,-688.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-752.0,-432.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-688.0,-624.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-688.0,-560.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-688.0,-496.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-688.0,-432.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:-512,-512
+oak_M,-432.0,-624.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-384.0,-128.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-368.0,-304.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-240.0,-688.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-240.0,-624.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-176.0,-432.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-112.0,-624.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-112.0,-240.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:0,-1536
+oak_M,-48.0,-1712.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-48.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,16.0,-1712.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,16.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,16.0,-1392.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,80.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,144.0,-1712.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,192.0,-1408.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,144.0,-1392.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,144.0,-1264.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,208.0,-1584.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,208.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,208.0,-1392.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,272.0,-1328.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,336.0,-1648.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,400.0,-1264.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:512,-1536
+endret text:)oak_M,464.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,464.0,-1328.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,-1328.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,640.0,-1472.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-1584.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-1328.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-1712.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-1584.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-1264.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,720.0,-1392.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,896.0,-1280.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,912.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,912.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,464.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,464.0,-1328.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,-1328.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,640.0,-1472.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-1584.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-1328.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-1712.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-1584.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-1264.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,720.0,-1392.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,896.0,-1280.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,912.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,912.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+t.GameObject
+oak_M,1296.0,-1264.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1360.0,-1584.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1360.0,-1264.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1424.0,-1712.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,1472.0,-1408.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:0,-1024
+oak_M,-48.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-48.0,-944.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,16.0,-1072.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,16.0,-944.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,144.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,144.0,-1072.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,208.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,208.0,-944.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,208.0,-880.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,208.0,-816.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,400.0,-1008.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,400.0,-752.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:512,-1024
+endret text:)oak_M,464.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-816.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-752.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,704.0,-576.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,720.0,-1072.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,720.0,-752.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,784.0,-944.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,912.0,-880.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,464.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-816.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-752.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,704.0,-576.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,720.0,-1072.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,720.0,-752.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,784.0,-944.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,912.0,-880.0,class ressurser.baseEntity.gameObject.GameObject
+
+end
+
+
+chunk:512,-512
+endret text:)oak_M,464.0,-368.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,-496.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,-432.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-496.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-368.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-304.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-240.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,720.0,-560.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,848.0,-496.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,912.0,-688.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,464.0,-368.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,-496.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,-432.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-496.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-368.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-304.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-240.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,720.0,-560.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,848.0,-496.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,912.0,-688.0,class ressurser.baseEntity.gameObject.GameObject
+ity.gameObject.GameObject
+oak_M,1296.0,-752.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1360.0,-880.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1424.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1424.0,-1008.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:1024,-512
+endret text:)oak_M,1104.0,-496.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1104.0,-240.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1168.0,-496.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1232.0,-688.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1232.0,-368.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1232.0,-240.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1296.0,-496.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1296.0,-432.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1360.0,-304.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1424.0,-688.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1104.0,-496.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1104.0,-240.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1168.0,-496.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1232.0,-688.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1232.0,-368.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1232.0,-240.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1296.0,-496.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1296.0,-432.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1360.0,-304.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1424.0,-688.0,class ressurser.baseEntity.gameObject.GameObject
+ressurser.baseEntity.gameObject.GameObject
+oak_M,336.0,144.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,400.0,-112.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,400.0,16.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,448.0,256.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,400.0,272.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:512,0
+endret text:)oak_M,464.0,272.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,80.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,144.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,272.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-112.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-48.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,80.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,784.0,-112.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,464.0,272.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,80.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,144.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,272.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-112.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-48.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,80.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,784.0,-112.0,class ressurser.baseEntity.gameObject.GameObject
+ ressurser.baseEntity.gameObject.GameObject
+oak_M,976.0,208.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1040.0,-176.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1104.0,16.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,1280.0,448.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1296.0,80.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1360.0,-48.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,1408.0,192.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1424.0,208.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:1024,512
+endret text:)oak_M,976.0,720.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1296.0,336.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1360.0,400.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1360.0,464.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1424.0,656.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,976.0,720.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1296.0,336.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1360.0,400.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1360.0,464.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,1424.0,656.0,class ressurser.baseEntity.gameObject.GameObject
+76.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:-2048,-2048
+endret text:)oak_M,-2096.0,-2160.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2096.0,-1904.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2032.0,-2224.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2032.0,-2160.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1904.0,-2224.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1904.0,-1904.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1840.0,-2032.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1776.0,-2032.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-1728.0,-1728.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1776.0,-1840.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1712.0,-2160.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-1664.0,-1856.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1712.0,-1904.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1648.0,-2096.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1648.0,-1776.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2096.0,-2160.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2096.0,-1904.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2032.0,-2224.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2032.0,-2160.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1904.0,-2224.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1904.0,-1904.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1840.0,-2032.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1776.0,-2032.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-1728.0,-1728.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1776.0,-1840.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1712.0,-2160.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-1664.0,-1856.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1712.0,-1904.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1648.0,-2096.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1648.0,-1776.0,class ressurser.baseEntity.gameObject.GameObject
+ect.GameObject
+oak_M,-1136.0,-1968.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:-2048,-1536
+endret text:)oak_M,-2096.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2032.0,-1712.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2032.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1968.0,-1584.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1904.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-1856.0,-1280.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1840.0,-1584.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1840.0,-1328.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1776.0,-1648.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1776.0,-1392.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1712.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1648.0,-1648.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1648.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1648.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2096.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2032.0,-1712.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2032.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1968.0,-1584.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1904.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-1856.0,-1280.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1840.0,-1584.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1840.0,-1328.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1776.0,-1648.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1776.0,-1392.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1712.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1648.0,-1648.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1648.0,-1520.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1648.0,-1456.0,class ressurser.baseEntity.gameObject.GameObject
+meObject.GameObject
+oak_M,-432.0,-2160.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-304.0,-2160.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-304.0,-1904.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-176.0,-1904.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-112.0,-2096.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-112.0,-1904.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-64.0,-1664.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:-2048,-1024
+endret text:)oak_M,-2096.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2032.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2032.0,-1008.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-1920.0,-896.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1904.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-1856.0,-896.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1840.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2096.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2032.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2032.0,-1008.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-1920.0,-896.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1904.0,-1200.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-1856.0,-896.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1840.0,-1136.0,class ressurser.baseEntity.gameObject.GameObject
+.GameObject
+wildGrass,448.0,-1920.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,400.0,-2032.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:-2048,0
+endret text:)2048,512
+end
+
+
+chunk:512,-2048
+oak_M,464.0,-2096.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,-2096.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-1968.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-1840.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-2224.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-2096.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,704.0,-1664.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-1776.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,896.0,-1792.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,912.0,-2224.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,912.0,-2160.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,912.0,-1840.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:-2048,-2560
+endret text:)oak_M,-2096.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1904.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1840.0,-2672.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1840.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1776.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1712.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1712.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1648.0,-2672.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-2096.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1904.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1840.0,-2672.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1840.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1776.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1712.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1712.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1648.0,-2672.0,class ressurser.baseEntity.gameObject.GameObject
+ect.GameObject
+oak_M,-1264.0,-2736.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1264.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1200.0,-2672.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1200.0,-2544.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1200.0,-2352.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1136.0,-2352.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:-1024,-2560
+endret text:)oak_M,-1072.0,-2672.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1072.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1072.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-944.0,-2480.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-880.0,-2608.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-880.0,-2352.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-816.0,-2672.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-816.0,-2608.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-816.0,-2480.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-752.0,-2544.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-752.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-752.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-688.0,-2480.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-576.0,-2240.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1072.0,-2672.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1072.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-1072.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-944.0,-2480.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-880.0,-2608.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-880.0,-2352.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-816.0,-2672.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-816.0,-2608.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-816.0,-2480.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-752.0,-2544.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-752.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-752.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,-688.0,-2480.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,-576.0,-2240.0,class ressurser.baseEntity.gameObject.GameObject
+gameObject.GameObject
+oak_M,16.0,-2608.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,16.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,16.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,128.0,-2368.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,80.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,144.0,-2672.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,144.0,-2608.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,144.0,-2544.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,208.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,272.0,-2736.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,272.0,-2608.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,272.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,336.0,-2608.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,336.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+end
+
+
+chunk:512,-2560
+endret text:)oak_M,464.0,-2608.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,-2736.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,-2480.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-2736.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,640.0,-2368.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-2352.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-2608.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,720.0,-2736.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,784.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,848.0,-2544.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,848.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,912.0,-2672.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,464.0,-2608.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,-2736.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,528.0,-2480.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-2736.0,class ressurser.baseEntity.gameObject.GameObject
+wildGrass,640.0,-2368.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-2352.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,592.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,656.0,-2608.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,720.0,-2736.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,784.0,-2416.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,848.0,-2544.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,848.0,-2288.0,class ressurser.baseEntity.gameObject.GameObject
+oak_M,912.0,-2672.0,class ressurser.baseEntity.gameObject.GameObject

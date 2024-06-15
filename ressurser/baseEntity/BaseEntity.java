@@ -131,6 +131,9 @@ public class BaseEntity {
     public boolean collision(BaseEntity be){
         return hitBox.collision(be.hitBox);
     }
+    public boolean enlargedCollision(BaseEntity be){
+        return hitBox.getEnlargedCameraHitbox().collision(be.hitBox);
+    }
 
     
     public Boolean getAnimated() {

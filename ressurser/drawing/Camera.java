@@ -48,7 +48,7 @@ public class Camera extends primitiveEntity{
     public int setWidth;
 
     public Camera(GamePanel panel, String name, int worldX, int worldY, short width, short height) {
-        super(panel, name, worldX, worldY, (short) panel.screenWidth,(short)(panel.screenHeight));
+        super(panel, name, worldX, worldY, (short) 50,(short)(50));
         //TODO Auto-generated constructor stub
         //follow(panel.spiller);
         follow(panel.player);
@@ -90,9 +90,9 @@ public class Camera extends primitiveEntity{
         
         // Draw on the compatible image
         Graphics2D g2 = image2.createGraphics();
-        ArrayList<BaseEntity> withinCam = panel.world.getvisibleEntities();
+        ArrayList<BaseEntity> withinCam = panel.world.getVisibleEntitiesenlarged();
 
-        for (BaseEntity baseE :panel.world.getVisibleTiles()){
+        for (BaseEntity baseE :panel.world.getVisibleTilesEnlarged()){
             drawRelative(g2,baseE);
             if (testData){
                 drawHitBox(g2,baseE);
@@ -137,7 +137,7 @@ public class Camera extends primitiveEntity{
         if (frameCounter>=20){
             setBaseImage(g);
             frameCounter = 0;
-        }
+        } else { setBaseImage(g);}//changed to fix
         g.setFont(new Font("Arial", Font.PLAIN, 7));
        
         if (followed == null){
@@ -146,6 +146,11 @@ public class Camera extends primitiveEntity{
             centerAtPosition(followed.getPoint());
         }
     }
+
+    private BufferedImage cropImage(BufferedImage src, Rectangle rect) {
+        BufferedImage dest = src.getSubimage(0, 0, rect.width, rect.height);
+        return dest; 
+     }
 
     public void draw(Graphics g){
        
@@ -165,9 +170,9 @@ public class Camera extends primitiveEntity{
         addbackendPrintData("amount entities visible: "+String.valueOf(withinCam.size()));
         
        
-       
+        
         //draws background before all moveable entities:
-        g2.drawImage(baseImage,(int)(baseX-worldX),(int)(baseY-worldY),width,height,null);  
+        g2.drawImage(baseImage,(int)(baseX-worldX),(int)(baseY-worldY),width,height,null); 
         drawMoveablentities(g2);
 
         //drawing chunks
@@ -198,7 +203,7 @@ public class Camera extends primitiveEntity{
 
     public void drawRelative(Graphics2D g2,BaseEntity entity){
         
-        if (getHitBox().intersects(entity.getWorldX(),entity.getWorldY(),entity.getWidth(),+entity.getHeight()) ){
+        if (getHitBox().getEnlargedCameraHitbox().intersects(entity.getWorldX(),entity.getWorldY(),entity.getWidth(),+entity.getHeight()) ){
 
             int x = (int)(entity.getWorldX()-worldX);
             int y = (int)(entity.getWorldY()-worldY);

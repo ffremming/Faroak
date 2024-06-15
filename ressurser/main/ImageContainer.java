@@ -115,7 +115,7 @@ public class ImageContainer {
             }
         }
         if (name.startsWith("grass")){
-            System.out.println(name +",,,"+image);
+           
         }
        
         images.put(name,image);
@@ -273,7 +273,7 @@ public class ImageContainer {
     }
     private BufferedImage retrieveItemImage(String name) {
         BufferedImage image = null;
-        System.out.println("mongooo");
+       
         try {
             File file = new File("ressurser/images/items/"+name+".png");
             if(file.exists()){
@@ -288,7 +288,7 @@ public class ImageContainer {
         if (image == null){
             System.out.println("itemImage is null, something went wrong.");
         }
-        System.out.println("itemImage"+image);
+       
         itemImages.put(name,image);
         return image;
     }   
@@ -396,6 +396,37 @@ public boolean checkIntersection(Entity entity1, Entity entity2) {
     }
 
     return false;
+}
+
+
+public static BufferedImage rotateImage(BufferedImage image, double degrees) {
+    // Calculate the angle in radians
+    double radians = Math.toRadians(degrees);
+    
+    // Get the width and height of the original image
+    int w = image.getWidth();
+    int h = image.getHeight();
+    
+    // Calculate the new width and height of the rotated image
+    int newW = (int) Math.round(w * Math.abs(Math.cos(radians)) + h * Math.abs(Math.sin(radians)));
+    int newH = (int) Math.round(h * Math.abs(Math.cos(radians)) + w * Math.abs(Math.sin(radians)));
+    
+    // Create a new buffered image with the new dimensions and a transparent background
+    BufferedImage rotatedImage = new BufferedImage(newW, newH, image.getType());
+    Graphics2D g2d = rotatedImage.createGraphics();
+    
+    // Set up the rotation transformation
+    AffineTransform transform = new AffineTransform();
+    transform.translate(newW / 2, newH / 2);
+    transform.rotate(radians);
+    transform.translate(-w / 2, -h / 2);
+    
+    // Draw the original image on the transformed graphics context
+    g2d.setTransform(transform);
+    g2d.drawImage(image, 0, 0, null);
+    g2d.dispose();
+    
+    return rotatedImage;
 }
 
     

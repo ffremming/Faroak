@@ -31,7 +31,7 @@ public class Playable extends Moveable{
         Item house = new Item(panel,"demoHouse");
         addItem(house);
         equipped = inventory.getStack(inventory.getIndex());
-        System.out.println(inventory);
+       
     }
 
     public void update(){

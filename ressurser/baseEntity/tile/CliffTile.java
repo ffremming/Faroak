@@ -35,11 +35,7 @@ public class CliffTile extends Tile{
         int value = 0;
         images.clear();
         images.add(getImage());
-        System.out.println(neigbors);
-        System.out.println(neigbors[0]);
-        System.out.println(neigbors[1]);
-        System.out.println(neigbors[2]);
-        System.out.println(neigbors[3]);
+       
         if (!(neigbors[0] instanceof CliffTile) && neigbors[3] instanceof CliffTile &&neigbors[1] instanceof CliffTile ) {
             value = 2;
             //UP

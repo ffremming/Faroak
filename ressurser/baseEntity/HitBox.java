@@ -129,6 +129,10 @@ public class HitBox extends Rectangle{
         return hitBox;
     }
 
+    public HitBox getEnlargedCameraHitbox(){
+        return new HitBox(getWorldX()-64,getWorldY()-64,width+128,height+128);
+    }
+
     
 
     
