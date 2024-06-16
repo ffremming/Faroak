@@ -102,14 +102,14 @@ public class Camera extends primitiveEntity{
 
         for (BaseEntity baseE :withinCam){
             if (!(baseE instanceof Tile)){
-                if (!(baseE instanceof Moveable)){
+                //if (!(baseE instanceof Moveable)){
 
                     drawRelative(g2,baseE);
                     if (testData){
                         drawHitBox(g2,baseE);
                         drawCoords(g2,baseE);
                     } 
-                }
+                //}
             }
         }
 
@@ -173,7 +173,7 @@ public class Camera extends primitiveEntity{
         
         //draws background before all moveable entities:
         g2.drawImage(baseImage,(int)(baseX-worldX),(int)(baseY-worldY),width,height,null); 
-        drawMoveablentities(g2);
+        //drawMoveablentities(g2);
 
         //drawing chunks
         if (testData){

@@ -150,10 +150,10 @@ public class GamePanel extends JPanel implements Runnable{
             
           
             repaint();
-           
+            update();
             Runnable updateThread = new Runnable() {
                 public void run() {
-                    update();
+                    
                 };
             };
             try {

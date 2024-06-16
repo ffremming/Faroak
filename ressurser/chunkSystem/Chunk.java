@@ -23,7 +23,7 @@ public class Chunk extends TreeNode{
     static int amount = 0;
    
     ArrayList<BaseEntity> entities = new ArrayList<>();
-
+    Tile[][] tiles = new Tile[8][8];
     // is the chunk loaded. When the game is started the chunk will not be loaded. When chunk is rendered/loaded, boolean value is set true. 
     // this boolean needs to be stored in harddrive. If already loaded, do not need procedural generation of entites, because these is already loaded.
     boolean generated = false;
@@ -226,12 +226,12 @@ public class Chunk extends TreeNode{
 
     /*generate tiles, should be used every time a chunk is loaded */
     private void generateTiles(){
-        addEntitiesToChunk();
+        addTilesToChunk();
         //connectEntities();
     }
     /**generates entities, should only be ran first time in the chunks */
     private void generateEntities(){
-        //TODO
+        addEntitiesToChunk();
     }   
 
     /**
@@ -251,7 +251,7 @@ public class Chunk extends TreeNode{
             
             if (!generated&chunkS.generate){
                 initialLoad();
-                generateTiles();
+                //generateTiles();
             
             }
             else{
@@ -310,9 +310,21 @@ public class Chunk extends TreeNode{
         for (int x2 = 0;x2<width;x2+= chunkS.panel.tileSize){
             for (int y2 = 0;y2<width;y2+=chunkS.panel.tileSize){
                 
-                addEntity(getSingelTile(x+x2,y+y2));
+                
 
                 addEntity(getSingelEntity(x+x2,y+y2));
+            }
+        }
+    }
+
+    private void addTilesToChunk(){
+       
+        for (int x2 = 0;x2<width;x2+= chunkS.panel.tileSize){
+            for (int y2 = 0;y2<width;y2+=chunkS.panel.tileSize){
+                
+                addEntity(getSingelTile(x+x2,y+y2));
+                tiles[x2/64][y2/64] = getSingelTile(x+x2,y+y2);
+               
             }
         }
     }

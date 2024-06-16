@@ -22,7 +22,7 @@ public class TreeNode extends HitBox{
 
     
 
-    final int CHUNKSIZE = 16;
+    final int CHUNKSIZE = 8;
 
     boolean loaded;
 

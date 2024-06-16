@@ -22,6 +22,9 @@ public class WorkingMemory {
     ArrayList<Chunk> workingChunks = new ArrayList<>();
     public ArrayList<BaseEntity> workingEntities = new ArrayList<>();
     ArrayList<BaseEntity> sortedEntities = new ArrayList<>();
+    ArrayList<Chunk> sortedChunks = new ArrayList<>();
+
+    
     ArrayList<BaseEntity> removalQueue = new ArrayList<>();
     ChunkSystem chunkSystem;
     ChunkSystem chunkSystemOverWorld;
@@ -355,7 +358,9 @@ public class WorkingMemory {
     ///END COLLISION::::::::
 
     public void setHoveredEntity(int x,int y){
+        
         int worldX =  (int)chunkSystem.panel.camera.getWorldX()+x;
+        
         int worldY =  (int)chunkSystem.panel.camera.getWorldY()+y;
         ArrayList<BaseEntity> entities = getEntitiesCollidedWith(new Point(worldX,worldY));
         chunkSystem.panel.camera.addbackendPrintData(worldX +","+worldY);
@@ -365,6 +370,8 @@ public class WorkingMemory {
                 hoveredEntity = baseE;
                 return;
             } else{
+                chunkSystem.panel.camera.addbackendPrintData(entities.get(0)+","+entities.get(1));
+        
                 if (!(baseE instanceof Tile)){
                     hoveredEntity = baseE;
                 }
@@ -383,6 +390,10 @@ public class WorkingMemory {
         Collections.swap(list, i, j);
     }
 
+    private static void swapChunk(ArrayList<Chunk> list, int i, int j) {
+        Collections.swap(list, i, j);
+    }
+
     // Partition function to partition the arraylist and return the pivot index
     private static int partition(ArrayList<BaseEntity> list, int low, int high) {
         BaseEntity pivot = list.get(high);
@@ -394,6 +405,19 @@ public class WorkingMemory {
             }
         }
         swap(list, i + 1, high);
+        return i + 1;
+    }
+
+    private static int partitionChunk(ArrayList<Chunk> list, int low, int high) {
+        Chunk pivot = list.get(high);
+        int i = low - 1;
+        for (int j = low; j < high; j++) {
+            if (list.get(j).getWorldY() < pivot.getWorldY()) {
+                i++;
+                swapChunk(list, i, j);
+            }
+        }
+        swapChunk(list, i + 1, high);
         return i + 1;
     }
 
@@ -425,10 +449,55 @@ public class WorkingMemory {
         }
     }
 
+    private static void quickChunksort(ArrayList<Chunk> list, int low, int high) {
+        if (low < high) {
+            // Optimized for small arrays: switch to insertion sort if partition size is small
+            if (high - low + 1 <= 10) {
+                insertionSortChunk(list, low, high);
+            } else {
+                int pivotIndex = partitionChunk(list, low, high);
+                quickChunksort(list, low, pivotIndex - 1);
+                quickChunksort(list, pivotIndex + 1, high);
+            }
+        }
+    }
+
+    private static void insertionSortChunk(ArrayList<Chunk> chunkList, int low, int high) {
+        for (int i = low + 1; i <= high; i++) {
+            Chunk key = chunkList.get(i);
+            int j = i - 1;
+            while (j >= low && (chunkList.get(j).getWorldY() > key.getWorldY()) ) {
+
+                chunkList.set(j + 1, chunkList.get(j));
+                j--;
+            }
+            chunkList.set(j + 1, key);
+        }
+    }
+
+    
+
     // Public method to call the quicksort function with the entire arraylist
-    public static void sort(ArrayList<BaseEntity> list) {
+    private void sort(ArrayList<BaseEntity> list) {
         
         quicksort(list, 0, list.size() - 1);
+
+        
+        chunkSort(list);
+    }
+
+    private void chunkSort(ArrayList<BaseEntity> list){
+        
+        sortedChunks = workingChunks;
+        quickChunksort(sortedChunks,0,workingChunks.size()-1);
+        
+        sortedEntities = new ArrayList<>();
+        for (Chunk chunk:sortedChunks){
+            quicksort(chunk.entities, 0, chunk.entities.size() - 1);
+            sortedEntities.addAll(chunk.entities);
+        }
+
+        
     }
 
 
