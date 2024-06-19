@@ -51,9 +51,12 @@ public class Camera extends primitiveEntity{
         super(panel, name, worldX, worldY, (short) 50,(short)(50));
         //TODO Auto-generated constructor stub
         //follow(panel.spiller);
+        
         follow(panel.player);
-       
+        
+        //center(followed);
     }
+
     public Camera(GamePanel panel,String name){
         super(panel,name);
         //follow(panel.spiller);
@@ -69,9 +72,6 @@ public class Camera extends primitiveEntity{
         testData = !testData;
     }
 
-
-
-
     /**
      * follows entitiy until given other orders
      */
@@ -82,40 +82,49 @@ public class Camera extends primitiveEntity{
 
     //draw background image without moveable entities
     private void setBaseImage(Graphics g){
-        GraphicsConfiguration gc = ((Graphics2D) g).getDeviceConfiguration();
+        //TODO
+        //baseImage = image2;
+        baseX = worldX;
+        baseY = worldY;
+    }
+    private Graphics2D getGraphics(BufferedImage image){
+        Graphics2D g2 = image.createGraphics();
+        return g2;
+    }
+
+    /**returns the image that is to be drawn on - blank canvas */
+    private BufferedImage getImage(Graphics g){
         int width = panel.getWidth(); // Assuming getWidth() returns the width of your drawing area
         int height = panel.getHeight(); // Assuming getHeight() returns the height of your drawing area
-        BufferedImage image = gc.createCompatibleImage(width, height);
-        BufferedImage image2 = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
-        
-        // Draw on the compatible image
-        Graphics2D g2 = image2.createGraphics();
-        ArrayList<BaseEntity> withinCam = panel.world.getVisibleEntitiesenlarged();
+       
+        return new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
+    }
 
-        for (BaseEntity baseE :panel.world.getVisibleTilesEnlarged()){
+    private void drawGraphics( Graphics2D g2){
+        ArrayList<BaseEntity> visibleEntities = panel.world.getVisibleEntities(this);
+        ArrayList<BaseEntity> visibleTiles = (panel.world.getVisibleTiles(this));
+
+        drawEntities(visibleTiles,g2);
+        drawEntities(visibleEntities,g2);
+        
+        addbackendPrintData("amount entities visible: "+String.valueOf(visibleEntities.size()));
+        addbackendPrintData("amount tiles visible: "+String.valueOf(visibleTiles.size()));
+
+        g2.drawImage(baseImage,(int)(baseX-worldX),(int)(baseY-worldY),width,height,null); 
+    }
+
+    /**
+     * @param visibleEntities any list of any baseEntities - have to be sorted/managed beforehand
+     * - draws all entities on the given graphics, also draws testData if wanted
+     */
+    private void drawEntities(ArrayList<BaseEntity> visibleEntities,Graphics2D g2){
+        for (BaseEntity baseE :visibleEntities){
             drawRelative(g2,baseE);
             if (testData){
                 drawHitBox(g2,baseE);
                 drawCoords(g2,baseE);
-            } 
-        }
-
-        for (BaseEntity baseE :withinCam){
-            if (!(baseE instanceof Tile)){
-                //if (!(baseE instanceof Moveable)){
-
-                    drawRelative(g2,baseE);
-                    if (testData){
-                        drawHitBox(g2,baseE);
-                        drawCoords(g2,baseE);
-                    } 
-                //}
             }
         }
-
-        baseImage = image2;
-        baseX = worldX;
-        baseY = worldY;
     }
 
     void drawMoveablentities(Graphics2D g2){
@@ -153,58 +162,52 @@ public class Camera extends primitiveEntity{
      }
 
     public void draw(Graphics g){
-       
-        setupImage(g);
+        hitBox.updateCoords();
+        center(followed);
+        //for timing
+        long startTime = System.nanoTime();
         
-        //setup image tech
-        int width = panel.getWidth(); // Assuming getWidth() returns the width of your drawing area
-        int height = panel.getHeight(); // Assuming getHeight() returns the height of your drawing area
-        BufferedImage image2 = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
-        Graphics2D g2 = image2.createGraphics();
+        BufferedImage image = getImage(g);
+        Graphics2D g2 = getGraphics(image);
+        drawGraphics(g2);
         
-       
-        long startDraw = System.nanoTime();
-       
-        ArrayList<BaseEntity> withinCam = panel.world.getvisibleEntities();
         
-        addbackendPrintData("amount entities visible: "+String.valueOf(withinCam.size()));
+        drawUserInterface(g2);
+        long endTime = System.nanoTime();
+        drawData(g2,endTime,startTime);
         
        
         
-        //draws background before all moveable entities:
-        g2.drawImage(baseImage,(int)(baseX-worldX),(int)(baseY-worldY),width,height,null); 
-        //drawMoveablentities(g2);
-
-        //drawing chunks
-        if (testData){
-            drawChunks(g2);
-        }
-
-        //natt shit
-        //g2.drawImage(createDarkImage(withinCam),0,0,null);
-        
-        drawObjectData(g2);
-        long endDraw = System.nanoTime();
-        
-        drawHighlightetHitbox(g2,panel.world.hoveredEntity);
-        addbackendPrintData("drawtime ms: "+String.valueOf((endDraw-startDraw)/1000000));
-        addbackendPrintData("remaining cap: "+String.valueOf((1000000000-(((endDraw-startDraw)*60)))));
-       
-        drawBackEndData(g2);
-
-       
-        panel.userInterface.draw(g2);
         
         
         // BufferedImage optimized  = toCompatibleImage(image2); LESS EFFECTIVE
-        g.drawImage(image2, 0, 0, null);
+        g.drawImage(image, 0, 0, null);
         g2.dispose();
     }
 
+    /**calls the userInterface to draw on given graphics */
+    private void drawUserInterface(Graphics2D g2){
+        panel.userInterface.draw(g2);
+    }
+
+    /**combination of drawing of  */
+    private void drawData(Graphics2D g2,long endTime,long startTime){
+        if (testData){
+            drawChunks(g2);
+        }
+        writeHoveredInformation(g2);
+        addDrawTimeData(startTime,endTime);
+        drawHoveredEntityOutline(g2);
+        drawBackEndData(g2);
+    }
+
+    private void addDrawTimeData(long startTime, long endTime) {
+        addbackendPrintData("drawtime ms: "+String.valueOf((endTime-startTime)/1000000));
+        addbackendPrintData("remaining cap: "+String.valueOf(1000000000-(((endTime-startTime)*60))));
+    }
     public void drawRelative(Graphics2D g2,BaseEntity entity){
         
-        if (getHitBox().getEnlargedCameraHitbox().intersects(entity.getWorldX(),entity.getWorldY(),entity.getWidth(),+entity.getHeight()) ){
-
+       
             int x = (int)(entity.getWorldX()-worldX);
             int y = (int)(entity.getWorldY()-worldY);
 
@@ -218,16 +221,21 @@ public class Camera extends primitiveEntity{
            
             
             //g2.drawImage(entity.getImage(),x,y,64,64,null);     //can remove width and height.
+            //shadow system is not good enoght by far..
             if (!(entity instanceof Tile)){
                 g2.setColor(new Color(100,100,150,60));
                 g2.fillOval(shadowX,shadowY,entity.getHitBox().width+10,entity.getHitBox().height);
             }
+
+            ArrayList<BufferedImage> imageSetToBeDrawn;
+
             
-            ArrayList<BufferedImage> imagesCopy = new ArrayList<>(entity.getImages());
-            for (BufferedImage img:imagesCopy){
+            imageSetToBeDrawn = (entity.getImages());
+           
+            
+            for (BufferedImage img:imageSetToBeDrawn){
                 g2.drawImage(img,x,y,entity.getWidth(),entity.getHeight(),null);  
             }
-        }
     }
 
     private void drawChunks(Graphics2D g2){
@@ -270,22 +278,25 @@ public class Camera extends primitiveEntity{
         
     }
 
-    private void drawHighlightetHitbox(Graphics2D g2,BaseEntity entity){
+
+    /**draws white outline around entity */
+    private void drawEntityOutline(Graphics2D g2,BaseEntity entity){
         if (entity!= null){
 
             HitBox thisHB = entity.getHitBox();
-            int x = (int) (thisHB.getWorldX()-worldX);
-            int y = (int) (thisHB.getWorldY()-worldY);
+            int x = (int) (entity.getWorldX()-worldX);
+            int y= (int) (entity.getWorldY()-worldY);
 
-            int width = (int)entity.getHitBox().getWidth();
-            int height = (int)entity.getHitBox().getHeight();
-
-
-
-            g2.drawImage(panel.imageContainer.getOutline(entity.getImages().get(0)),(int)(entity.getWorldX()-worldX),(int)(entity.getWorldY()-worldY),(int)entity.getWidth(),(int)entity.getHeight(),null);
-
+            //TODO follow up on the getImages() below
+            g2.drawImage(panel.imageContainer.getOutline(entity.getImages().get(0)),x,y,(int)entity.getWidth(),(int)entity.getHeight(),null);
         }
-    
+    }
+
+    /** draws the outline of hoveredEntity, if there is one*/
+    private void drawHoveredEntityOutline(Graphics2D g2){
+        
+        drawEntityOutline(g2,panel.world.getHoveredEntity());
+        
     }
 
     private void drawCoords(Graphics2D g2,BaseEntity entity){
@@ -313,15 +324,16 @@ public class Camera extends primitiveEntity{
         backEndData.clear();
     }
 
-    private void drawObjectData(Graphics g2){
-        if (panel.world.hoveredEntity != null){
+    /**writes infroamtion about the hovered entity, draws this on image */
+    private void writeHoveredInformation(Graphics g2){
+        if (panel.world.getHoveredEntity() != null){
             g2.setColor(Color.white);
             g2.setFont(new Font("Arial", Font.PLAIN, 16));
             int y = 20;
             ArrayList<String> printables = new ArrayList<>();
     
             
-            for (String streng:(panel.world.hoveredEntity.toString().split("\n"))){
+            for (String streng:(panel.world.getHoveredEntity().toString().split("\n"))){
                 printables.add(streng);
             }
     
@@ -344,8 +356,10 @@ public class Camera extends primitiveEntity{
 
             //get the startValues for x and y
             worldX = entityX-width/2;
-            worldY = entityY+height/2;
-        }   
+            worldY = entityY-height/2;
+        }else{
+            throw new NullPointerException("followed is null in Camera");
+        }
     }
     //can add loads of other abilities
 

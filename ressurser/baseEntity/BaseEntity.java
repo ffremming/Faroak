@@ -6,7 +6,7 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
-
+import ressurser.baseEntity.tile.Tile;
 import ressurser.main.GamePanel;
 
 public class BaseEntity {
@@ -110,6 +110,10 @@ public class BaseEntity {
         return hitBox;
     }
 
+    public HitBox getImageHitbox(){
+        return new HitBox(worldX,worldY,width,height);
+    }
+
     public void draw(Graphics2D g2){
         //panel.drawingM.draw
     }
@@ -161,7 +165,12 @@ public class BaseEntity {
     
     public ArrayList<BufferedImage> getImages() {
         ArrayList<BufferedImage> arr = new ArrayList<>();
-        arr.add(getImage());
+        if (!(this instanceof Tile)){
+            arr.add(getImage());
+        }else{
+            this.getImages();
+        }
+        
        return arr;
     }
 

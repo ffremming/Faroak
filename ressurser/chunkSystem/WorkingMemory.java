@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import ressurser.baseEntity.BaseEntity;
+import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.Vector;
 import ressurser.baseEntity.gameObject.GameObject;
 import ressurser.baseEntity.playable.Inventory.Stack;
 import ressurser.baseEntity.tile.Tile;
+import ressurser.drawing.Camera;
 import ressurser.main.GamePanel;
 import ressurser.baseEntity.playable.Inventory.Item;
 /** 
@@ -20,8 +22,8 @@ import ressurser.baseEntity.playable.Inventory.Item;
 public class WorkingMemory {
    
     ArrayList<Chunk> workingChunks = new ArrayList<>();
-    public ArrayList<BaseEntity> workingEntities = new ArrayList<>();
-    ArrayList<BaseEntity> sortedEntities = new ArrayList<>();
+    public ArrayList<Entity> workingEntities = new ArrayList<>();
+    ArrayList<Entity> sortedEntities = new ArrayList<>();
     ArrayList<Chunk> sortedChunks = new ArrayList<>();
 
     
@@ -30,7 +32,7 @@ public class WorkingMemory {
     ChunkSystem chunkSystemOverWorld;
     ChunkSystem chunkSystemCaves;
     ChunkSystem chunkSystemNether;
-    public BaseEntity hoveredEntity = null;
+    private BaseEntity hoveredEntity = null;
     GamePanel panel;
     int type;
     static final int OVERWORLD = 0;
@@ -40,7 +42,7 @@ public class WorkingMemory {
     
     
     public WorkingMemory(GamePanel panel){
-        
+        this.panel = panel;
         this.chunkSystem = new ChunkSystem(panel,8,type);
     }
 
@@ -87,7 +89,7 @@ public class WorkingMemory {
      * clears all old entities
      * add all new entities
      */
-    public void setWorkingEntities(ArrayList<BaseEntity> entities){
+    public void setWorkingEntities(ArrayList<Entity> entities){
         workingEntities.clear();
         workingEntities.addAll(entities);
     }
@@ -95,14 +97,8 @@ public class WorkingMemory {
     /**
      * filter out all Tile entities
      */
-    public ArrayList<BaseEntity> getEntities(){
-        ArrayList<BaseEntity> notTiles = new ArrayList<>();
-        for (BaseEntity entity:workingEntities){
-            if (!(entity instanceof Tile)){
-                notTiles.add(entity);
-            }
-        }
-        return notTiles;
+    public ArrayList<Entity> getEntities(){
+        return workingEntities;
     }
 
     public ArrayList<BaseEntity> getTiles(){
@@ -115,7 +111,7 @@ public class WorkingMemory {
         return notTiles;
     }
 
-    public ArrayList<BaseEntity> getBaseEntities(){
+    public ArrayList<Entity> getBaseEntities(){
         return workingEntities;
     }
 
@@ -130,10 +126,10 @@ public class WorkingMemory {
      * loads unloaded chunks
      */
     public void update(Point p){
-
+        
         //1. check if needed loading of new chunks
         chunkSystem.handleOutOfBounds(p);
-
+        
         //2. updates chunks (unloading, loading, flushing, connecting)
         updateChunks(p);
 
@@ -160,7 +156,7 @@ public class WorkingMemory {
 
     /**3. updates list of all entities - all entities within render distance*/
     private void updateEntities(Point p){
-        ArrayList<BaseEntity> allEntitiesInRenderDistance = new ArrayList<>();
+        ArrayList<Entity> allEntitiesInRenderDistance = new ArrayList<>();
         ArrayList<Chunk> chunksCopy = new ArrayList<>(workingChunks);
         for (Chunk chunk:chunksCopy){
             chunk.getEntitiesInBound(chunkSystem.getRenderRectangle(p),allEntitiesInRenderDistance);
@@ -265,7 +261,7 @@ public class WorkingMemory {
     public  ArrayList<BaseEntity> getVisibleEntitiesenlarged(){
         ArrayList<BaseEntity> visible = new ArrayList<>();
 
-        for (BaseEntity ent:sortedEntities){
+        for (Entity ent:sortedEntities){
             if (chunkSystem.panel.camera.getHitBox().getEnlargedCameraHitbox().collision(new HitBox((ent.getWorldX()),ent.getWorldY(),ent.getWidth(),ent.getHeight()))){
                 visible.add(ent);
             }
@@ -298,13 +294,10 @@ public class WorkingMemory {
     
 
     public Tile getTile(Point p){
-        //try to get tile from active memory
-        //can figure out how to do this faster, can separate tiles and other entities..
-        for (BaseEntity ent:getBaseEntities()){
-            if (ent instanceof Tile){
-                if (ent.getHitBox().contains(p)){
-                    return (Tile)ent;
-                }
+        
+        for (Chunk chunk:workingChunks){
+            if (chunk.contains(p)){
+                return chunk.getTile(p);
             }
         }
         //try to get tile from chunkSystem
@@ -336,8 +329,14 @@ public class WorkingMemory {
             if (hitBox.collision(baseE.getHitBox()) && baseE.getHitBox() != hitBox){
                 collided.add(baseE);
             }
-        
         }
+
+        for (Chunk chunk:workingChunks){
+            if (chunk.collision(hitBox)){
+                collided.addAll(chunk.getTilesCollidedWith(hitBox));
+            }
+        }
+
     return collided;
     }
 
@@ -350,7 +349,12 @@ public class WorkingMemory {
             if (baseE.getHitBox().collision(p)){
                 collided.add(baseE);
             }
-        
+        }
+
+        for (Chunk chunk:workingChunks){
+            if (chunk.collision(p)){
+                collided.add(chunk.getTile(p));
+            }
         }
     return collided;
     }
@@ -379,14 +383,14 @@ public class WorkingMemory {
         }
     }
 
-    public ArrayList<Vector> getPath(BaseEntity baseE,Point p){
+    public ArrayList<Vector> getPath(Entity baseE,Point p){
         ArrayList<Vector> path = new ArrayList<>();
         path.add(new Vector(p.x-baseE.getHitBox().getWorldX(),p.y-baseE.getHitBox().getWorldY()));
         return path;
     }
 
 
-     private static void swap(ArrayList<BaseEntity> list, int i, int j) {
+     private static void swap(ArrayList<Entity> list, int i, int j) {
         Collections.swap(list, i, j);
     }
 
@@ -395,8 +399,8 @@ public class WorkingMemory {
     }
 
     // Partition function to partition the arraylist and return the pivot index
-    private static int partition(ArrayList<BaseEntity> list, int low, int high) {
-        BaseEntity pivot = list.get(high);
+    private static int partition(ArrayList<Entity> list, int low, int high) {
+        Entity pivot = list.get(high);
         int i = low - 1;
         for (int j = low; j < high; j++) {
             if (list.get(j).getHitBox().getWorldY() < pivot.getHitBox().getWorldY()) {
@@ -422,7 +426,7 @@ public class WorkingMemory {
     }
 
     // Quicksort function to recursively sort the arraylist
-    private static void quicksort(ArrayList<BaseEntity> list, int low, int high) {
+    private static void quicksort(ArrayList<Entity> list, int low, int high) {
         if (low < high) {
             // Optimized for small arrays: switch to insertion sort if partition size is small
             if (high - low + 1 <= 10) {
@@ -436,9 +440,9 @@ public class WorkingMemory {
     }
 
     // Insertion sort function for sorting small subarrays
-    private static void insertionSort1(ArrayList<BaseEntity> list, int low, int high) {
+    private static void insertionSort1(ArrayList<Entity> list, int low, int high) {
         for (int i = low + 1; i <= high; i++) {
-            BaseEntity key = list.get(i);
+            Entity key = list.get(i);
             int j = i - 1;
             while (j >= low && (list.get(j).getHitBox().getWorldY() > key.getHitBox().getWorldY()) ) {
 
@@ -478,7 +482,7 @@ public class WorkingMemory {
     
 
     // Public method to call the quicksort function with the entire arraylist
-    private void sort(ArrayList<BaseEntity> list) {
+    private void sort(ArrayList<Entity> list) {
         
         quicksort(list, 0, list.size() - 1);
 
@@ -486,7 +490,7 @@ public class WorkingMemory {
         chunkSort(list);
     }
 
-    private void chunkSort(ArrayList<BaseEntity> list){
+    private void chunkSort(ArrayList<Entity> list){
         
         sortedChunks = workingChunks;
         quickChunksort(sortedChunks,0,workingChunks.size()-1);
@@ -570,5 +574,55 @@ public class WorkingMemory {
                 }  
             }
         }
+    }
+
+    /**returns all tiles that are going to be drawn */
+    public ArrayList<BaseEntity> getVisibleTiles(Camera camera) {
+        ArrayList<BaseEntity> visibleTiles = new ArrayList<>();
+
+        //uses cams HB many times so stored upfront.
+        HitBox camHB = camera.getHitBox();
+
+        for (Chunk chunk:workingChunks){
+            for (int i =0;i< chunk.tiles.length;i++){
+                for (int j =0;j< chunk.tiles.length;j++){
+
+                    //if Tile HB are inside Cameras hitBox, it is added to list of tiles in HB 
+                    if (chunk.tiles[i][j] != null){//SHOULD NOT HAPPENsd
+                        if (chunk.tiles[i][j].getHitBox().collision(camHB)){
+                            visibleTiles.add(chunk.tiles[i][j]);
+                        }
+                    }
+                    
+                }
+            }
+        }
+        return visibleTiles;
+    }
+
+    /**returns all entities that are going to be drawn */
+    public ArrayList<BaseEntity> getVisibleEntities(Camera camera) {
+        // TODO Auto-generated method stub
+        ArrayList<BaseEntity> visibleEntities = new ArrayList<>();
+
+        //uses cams HB many times so stored upfront.
+        HitBox camHB = camera.getImageHitbox();
+
+        for (Entity entity:sortedEntities){
+            
+            //if entitys image are inside Cameras hitBox, it is added to list of entities inHB 
+            if (entity.getImageHitbox().collision(camHB)|| entity.getHitBox().collision(camHB)){
+                visibleEntities.add(entity);
+            }
+        }
+        return visibleEntities;
+        
+    }
+
+    public BaseEntity getHoveredEntity() {
+        return hoveredEntity;
+    }
+    public void setHoveredEntity(BaseEntity hoveredEntity){
+        this.hoveredEntity = hoveredEntity;
     }
 }

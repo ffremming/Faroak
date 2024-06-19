@@ -227,14 +227,14 @@ public class Tile extends BaseEntity{
         return panel.tileM.cliffDifference(tile,this);
     }
 
+    @Override
     public ArrayList<BufferedImage> getImages(){
         if (images.size()== 0){
             
                 setImages();
                 //setCliffImages2();
-            
-            
         }
+        
         return images;
     
     }

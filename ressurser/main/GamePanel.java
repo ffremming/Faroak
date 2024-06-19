@@ -27,8 +27,6 @@ public class GamePanel extends JPanel implements Runnable{
     public final int screenHeight = tileSize *12;
     public final int screenWidth = tileSize *20;
     
-   
-    
     public Thread gameThread; 
     public Camera camera;
     
@@ -138,8 +136,8 @@ public class GamePanel extends JPanel implements Runnable{
 
    
 
-    @Override
-    public void run() {
+   // @Override
+    public void run2() {
        
        
 
@@ -150,10 +148,10 @@ public class GamePanel extends JPanel implements Runnable{
             
           
             repaint();
-            update();
+            
             Runnable updateThread = new Runnable() {
                 public void run() {
-                    
+                    update();
                 };
             };
             try {
@@ -170,11 +168,66 @@ public class GamePanel extends JPanel implements Runnable{
         }
     }
 
+    @Override
+public void run() {
+    final int TARGET_FPS = 60; // Target frames per second
+    final long OPTIMAL_TIME = 1000000000 / TARGET_FPS; // Optimal time per frame in nanoseconds
+
+    long lastLoopTime = System.nanoTime();
+    long lastFpsTime = 0;
+    int fps = 0;
+
+    while (gameThread != null) {
+        long now = System.nanoTime();
+        long updateLength = now - lastLoopTime;
+        lastLoopTime = now;
+        
+        double delta = updateLength / ((double) OPTIMAL_TIME);
+
+        lastFpsTime += updateLength;
+        fps++;
+
+        // Update the game state
+        Runnable updateThread = new Runnable() {
+            public void run() {
+                System.out.println(delta);
+                update();
+            }
+        };
+        try {
+            SwingUtilities.invokeAndWait(updateThread);
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // Repaint the game
+        repaint();
+
+        // If one second has passed, reset the FPS counter
+        if (lastFpsTime >= 1000000000) {
+            System.out.println("FPS: " + fps);
+            lastFpsTime = 0;
+            fps = 0;
+
+        }
+
+        // Sleep until the next frame
+        try {
+            Thread.sleep((lastLoopTime - System.nanoTime() + OPTIMAL_TIME) / 1000000);
+        } catch (Exception e) {
+            // Handle exception
+        }
+    }
+}
+
     public void update(){
         
         enviromentM.updateTicks();
         inputHandlingSystem.update();
         world.simulate(); 
+        
     }
     
    
@@ -184,12 +237,6 @@ public class GamePanel extends JPanel implements Runnable{
         super.paintComponent(g); 
         camera.draw(g);
     }
-
-
-    
-
-  
-   
 
     //has to be changed
    

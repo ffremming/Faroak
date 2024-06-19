@@ -15,7 +15,7 @@ public abstract class BaseComponent extends Rectangle {
     Color background ;
     Color foreground;
     boolean enabled;
-    boolean visible;
+    public boolean visible;
     boolean focus;
     boolean hover;
 

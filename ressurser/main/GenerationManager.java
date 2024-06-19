@@ -39,12 +39,13 @@ public class GenerationManager {
         panel.world.update(new Point(0,0));
 
         initiate();
-        panel.world.update(panel.player.getPoint());
+        //panel.world.update(panel.player.getPoint());
     }
 
 
     public void initiate(){
         Point p = getStartingPoint();
+        System.out.println(p);
         panel.player = (new Playable(panel, "red",p.x,p.y,(short)48,(short)96,(short)36,(short)32,(short)6,(short)64));
         panel.world.placeEntity(panel.player);
     }

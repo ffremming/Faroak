@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import javax.imageio.ImageIO;
 
 import ressurser.baseEntity.BaseEntity;
+import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.HitBox;
+import ressurser.baseEntity.tile.Tile;
 
 public class TreeNode extends HitBox{
 
@@ -135,8 +137,10 @@ public class TreeNode extends HitBox{
         return arrayList;
     }
 
-     /**recursive method of getting all kinds of entities at specified rect(hitbox) */
-    public ArrayList<BaseEntity> getEntitiesInBound (Rectangle rect,ArrayList<BaseEntity> arrayList){
+     /**recursive method of getting all kinds of entities at specified rect(hitbox) 
+      * @return only entities(not tiles)
+     */
+    public ArrayList<Entity> getEntitiesInBound (Rectangle rect,ArrayList<Entity> arrayList){
         for(int i=0; i<children.length; i++) {
             if (children[i].contains(rect)||children[i].intersects(rect)){
                 getEntitiesInBound(rect,arrayList);
@@ -194,7 +198,17 @@ public class TreeNode extends HitBox{
     public int getSquareMeter(){
         return width*height;
     }
-    
+
+    /**antar at det bare finnes en Tile på et sted. */
+    public Tile getTileInPoint(Point p) {
+        for(int i=0; i<children.length; i++) {
+            if (children[i].contains(p)){
+                
+                return children[i].getTileInPoint(p);
+            }
+        }
+        return null;
+    }
 }
 
 

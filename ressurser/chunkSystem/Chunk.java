@@ -5,6 +5,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 
 import ressurser.baseEntity.BaseEntity;
+import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.playable.Moveable;
 import ressurser.baseEntity.tile.CliffTile;
@@ -22,8 +23,8 @@ import java.util.ArrayList;
 public class Chunk extends TreeNode{
     static int amount = 0;
    
-    ArrayList<BaseEntity> entities = new ArrayList<>();
-    Tile[][] tiles = new Tile[8][8];
+    ArrayList<Entity> entities = new ArrayList<>();
+    Tile[][] tiles = new Tile[4][4];
     // is the chunk loaded. When the game is started the chunk will not be loaded. When chunk is rendered/loaded, boolean value is set true. 
     // this boolean needs to be stored in harddrive. If already loaded, do not need procedural generation of entites, because these is already loaded.
     boolean generated = false;
@@ -48,7 +49,7 @@ public class Chunk extends TreeNode{
 
     
 
-    public ArrayList<BaseEntity> getEntities(){
+    public ArrayList<Entity> getEntities(){
         return entities;
     }
 
@@ -90,8 +91,8 @@ public class Chunk extends TreeNode{
     /**
      * returns a list of all entities in the bound
      */
-    public ArrayList<BaseEntity> getEntitiesInBound (Rectangle rect,ArrayList<BaseEntity> arrayList){
-        for (BaseEntity entity:entities){
+    public ArrayList<Entity> getEntitiesInBound (Rectangle rect,ArrayList<Entity> arrayList){
+        for (Entity entity:entities){
             if (rect.contains(entity.getHitBox()) || rect.intersects(entity.getHitBox())){
                 arrayList.add(entity);
             }
@@ -113,15 +114,28 @@ public class Chunk extends TreeNode{
     }
 
     /*
-     * adds entities to entity pile
+     * adds baseEntity to entity pile/tiles
      */
     @Override
     public void addEntity(BaseEntity entity){
+        if (entity== null){throw new NullPointerException("tried adding null");}
         if (entity!= null){
-            entities.add(entity);
+            if (entity instanceof Tile){
+                addTile((Tile)entity);
+            } else {
+                entities.add((Entity)entity);
+            }
         }
-       
-        
+    }
+
+    public void addTile(Tile entity){
+        if (entity!= null){
+            //convert coords to placement in tile array
+            int arrayX = (int)(entity.getWorldX()-x)/64;
+            int arrayY = (int)(entity.getWorldY()-y)/64;
+
+            tiles[arrayY][arrayX] =entity;
+        }
     }
 
 
@@ -137,7 +151,7 @@ public class Chunk extends TreeNode{
          return (entities.size()>0);
     }
 
-    protected ArrayList<BaseEntity> getAllEntities(){
+    protected ArrayList<Entity> getAllEntities(){
         return entities;
     }   
 
@@ -145,33 +159,35 @@ public class Chunk extends TreeNode{
      * returns first Tile that hitbox contains point.
      * 
      */
-    protected BaseEntity getTile(Point point){
+    protected Tile getTile(Point point){
 
-        for (BaseEntity entity:getEntities()){
-            if (entity instanceof Tile){
-                if (entity.getHitBox().contains( point)){
-                return entity;
+        for (int i = 0;i<tiles.length;i++){
+            for (int j =0;j<tiles[i].length;j++){
+                if (tiles[i][j]!= null){
+                    if (tiles[i][j].getHitBox().contains( point)){
+                        return tiles[i][j];
+                    }
                 }
             }
         }
+        System.out.println(point);
         return null;
     }
-    /**
-     * get first entity that is not tile. entity must contain point
-     */
-    protected BaseEntity getEntity(Point point){
 
-        for (BaseEntity entity:getEntities()){
-            if (!(entity instanceof Tile)){
-                if (entity.getHitBox().contains( point)){
-                return entity;
-                }
+    /**
+     * get first entity that contains point
+     */
+    protected Entity getEntity(Point point){
+
+        for (Entity entity:getEntities()){
+            if (entity.getHitBox().contains( point)){
+            return entity;
             }
         }
         return null;
     }
     /**adds entities that contains point in list */
-    public ArrayList<BaseEntity> getEntitiesInPoint(Point point, ArrayList<BaseEntity> entitiesList){
+    public ArrayList<BaseEntity> getEntitiesatPoint(Point point, ArrayList<BaseEntity> entitiesList){
         
         for (BaseEntity entity:getEntities()){
             
@@ -312,7 +328,11 @@ public class Chunk extends TreeNode{
                 
                 
 
-                addEntity(getSingelEntity(x+x2,y+y2));
+                BaseEntity ent = getSingelEntity(x+x2,y+y2);
+                if (ent!= null){
+                    addEntity(ent);
+                }
+                
             }
         }
     }
@@ -323,7 +343,7 @@ public class Chunk extends TreeNode{
             for (int y2 = 0;y2<width;y2+=chunkS.panel.tileSize){
                 
                 addEntity(getSingelTile(x+x2,y+y2));
-                tiles[x2/64][y2/64] = getSingelTile(x+x2,y+y2);
+                //tiles[x2/64][y2/64] = getSingelTile(x+x2,y+y2);
                
             }
         }
@@ -334,21 +354,9 @@ public class Chunk extends TreeNode{
     */
     void connectTiles(){
        
-        for (BaseEntity baseEntity:entities){
-            if (baseEntity instanceof Tile ||baseEntity instanceof CliffTile){
-                
-                
-                if (baseEntity instanceof CliffTile){
-                    if (((CliffTile)baseEntity).hasCompleteNeigbors() ||true){
-                        ((CliffTile)baseEntity).setNeighBors();
-                    }
-                } else{
-
-                    if (!((Tile)baseEntity).hasCompleteNeigbors()){
-                        ((Tile)baseEntity).setNeighBors();
-                        
-                    }
-                }
+        for (int i = 0;i<tiles.length;i++){
+            for (int j =0;j<tiles[i].length;j++){
+                tiles[i][j].setNeighBors();
             }
         }
     }
@@ -530,5 +538,40 @@ public class Chunk extends TreeNode{
             e.printStackTrace();
         }
         return entities;
+    }
+
+    public ArrayList<Tile> getTilesCollidedWith(HitBox hitBox) {
+        ArrayList<Tile> tilesCollidedWith = new ArrayList<Tile>();
+        for (int i = 0;i<tiles.length;i++){
+            for (int j =0;j<tiles[i].length;j++){
+                
+                if (tiles[i][j].collision(hitBox)){
+                
+                    tilesCollidedWith.add(tiles[i][j]);
+
+                }
+            
+            }
+        }
+        return tilesCollidedWith;
+    }
+
+    /**iterates thgough Tiles, checks if any contains point.return if one matches. */
+    public Tile getTileInPoint(Point p){
+        if (!loaded){
+            load();
+        }
+        for (int i = 0;i<tiles.length;i++){
+            for (int j =0;j<tiles[i].length;j++){
+                if (tiles[i][j]!= null){
+                    if (tiles[i][j].getHitBox().contains(p)){
+                
+                        return (tiles[i][j]);
+    
+                    }
+                }
+            }
+        }
+        return null;
     }
 }

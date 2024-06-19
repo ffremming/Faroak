@@ -42,7 +42,7 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
         this.x = e.getX();
         this.y = e.getY();
         panel.UI.mouseMoved(e);
-        panel.userInterface.mouseMoved(e);
+        //panel.userInterface.mouseMoved(e);
         
     }
 

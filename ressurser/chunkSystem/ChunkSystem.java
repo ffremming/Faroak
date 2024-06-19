@@ -137,8 +137,8 @@ public class ChunkSystem {
      * @return list of all entities that collides with hitbox
      */
     
-     public ArrayList<BaseEntity> getEntitiesInBound(Rectangle rect){
-        ArrayList<BaseEntity> entitiesInBound = new ArrayList<>();
+     public ArrayList<Entity> getEntitiesInBound(Rectangle rect){
+        ArrayList<Entity> entitiesInBound = new ArrayList<>();
         return parent.getEntitiesInBound(rect,entitiesInBound);
     }
 
@@ -456,15 +456,9 @@ public class ChunkSystem {
     */
 
     public Tile getTile(Point p) {
-        ArrayList<BaseEntity> entitiesInPoint = new ArrayList<BaseEntity>();
-        for (BaseEntity entity: parent.getEntitiesInPoint(p,entitiesInPoint)){
-            if(entity instanceof CliffTile){
-                return (CliffTile) entity;
-            }else if (entity instanceof Tile){
-                return (Tile)entity;
-            } 
-        }
-        return null;
+        
+        return parent.getTileInPoint(p);
+           
     }
 
     private int getPercentagegenerated(){
