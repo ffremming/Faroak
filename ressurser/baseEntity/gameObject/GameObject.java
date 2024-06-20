@@ -28,8 +28,8 @@ public class GameObject extends Entity{
                 if(panel.imageContainer.checkIntersection(this,panel.player )){
                    
 
-                    arr.add( panel.imageContainer.reduceTransparency(images.get(animationIndex)));
-                    return arr;
+                    //arr.add( panel.imageContainer.reduceTransparency(images.get(animationIndex)));
+                    //return arr;
                 }
                
             }

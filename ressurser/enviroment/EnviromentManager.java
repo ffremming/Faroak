@@ -123,6 +123,7 @@ public class EnviromentManager {
         if (animationValue == 3){
             animationValue = 0;
         }
+        System.out.println("all animate");
         panel.world.animate(animationValue);
     }
 

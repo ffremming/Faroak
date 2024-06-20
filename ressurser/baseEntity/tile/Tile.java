@@ -65,6 +65,7 @@ public class Tile extends BaseEntity{
     @Override
     public void animate(int value){
         setAnimatedImages(value);
+        System.out.println("animate "+value);
     }
 
     /**value can be set between 0 and 2 */
@@ -112,7 +113,7 @@ public class Tile extends BaseEntity{
                             images.add(panel.imageContainer.getTileImage(neightbor.getName()+value+"B"+i));
                         }
                        
-                        
+                     
                         borders[i] = true;
                         //images.add(panel.imageContainer.getImage(neightbor.getName()+"C"+i));
                     }
@@ -274,12 +275,16 @@ public class Tile extends BaseEntity{
      */
     public void setNeighBors(){
       
+        if (isConnected()){return;}
         addNorthNeighBor(getTile(NORTH));
         addSouthNeighBor(getTile(SOUTH));
         addWestNeighBor(getTile(WEST));
         addEastNeighBor(getTile(EAST));
 
         intiateCliff();
+    }
+    private boolean isConnected(){
+        return (north!=null);
     }
 
     private void intiateCliff() {

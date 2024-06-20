@@ -140,7 +140,7 @@ public class Moveable extends Entity {
         if (path.size()== 0){
             
             //double [] xy = velocity.transferValues(5);
-            Vector movement =velocity.transfer(movementSpeed*4);
+            Vector movement =velocity.transfer(movementSpeed*10);
             double [] xy = {movement.x,movement.y};
             movementX = xy[0];
             movementY = xy[1];
@@ -212,6 +212,7 @@ public class Moveable extends Entity {
 
     public void addVelocity(Vector newVector){
         velocity.add(newVector);
+        System.out.println(newVector.x+","+newVector.y);
         
     }
 

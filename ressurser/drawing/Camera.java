@@ -32,6 +32,9 @@ public class Camera extends primitiveEntity{
 
     //for drawing right FPS in panel:
     public int FPS = 60;
+    private int observedFPS;
+    private long observedSortTime;
+    private long observedChunkUpdateTime;
     public long splitTime = 1000000000/FPS;
     public long nextDrawTime = System.nanoTime()+splitTime;
     ArrayList<String> backEndData = new ArrayList<>();
@@ -101,10 +104,10 @@ public class Camera extends primitiveEntity{
     }
 
     private void drawGraphics( Graphics2D g2){
-        ArrayList<BaseEntity> visibleEntities = panel.world.getVisibleEntities(this);
+        ArrayList<Entity> visibleEntities = panel.world.getVisibleEntities(this);
         ArrayList<BaseEntity> visibleTiles = (panel.world.getVisibleTiles(this));
 
-        drawEntities(visibleTiles,g2);
+        drawBaseEntities(visibleTiles,g2);
         drawEntities(visibleEntities,g2);
         
         addbackendPrintData("amount entities visible: "+String.valueOf(visibleEntities.size()));
@@ -117,8 +120,17 @@ public class Camera extends primitiveEntity{
      * @param visibleEntities any list of any baseEntities - have to be sorted/managed beforehand
      * - draws all entities on the given graphics, also draws testData if wanted
      */
-    private void drawEntities(ArrayList<BaseEntity> visibleEntities,Graphics2D g2){
+    private void drawBaseEntities(ArrayList<BaseEntity> visibleEntities,Graphics2D g2){
         for (BaseEntity baseE :visibleEntities){
+            drawRelative(g2,baseE);
+            if (testData){
+                drawHitBox(g2,baseE);
+                drawCoords(g2,baseE);
+            }
+        }
+    }
+    private void drawEntities(ArrayList<Entity> visibleEntities,Graphics2D g2){
+        for (Entity baseE :visibleEntities){
             drawRelative(g2,baseE);
             if (testData){
                 drawHitBox(g2,baseE);
@@ -204,6 +216,10 @@ public class Camera extends primitiveEntity{
     private void addDrawTimeData(long startTime, long endTime) {
         addbackendPrintData("drawtime ms: "+String.valueOf((endTime-startTime)/1000000));
         addbackendPrintData("remaining cap: "+String.valueOf(1000000000-(((endTime-startTime)*60))));
+        addbackendPrintData("FPS: "+observedFPS);
+        addbackendPrintData("sort time: "+(observedSortTime/1000)+" microseconds");
+        addbackendPrintData("chunk updates time: "+(observedChunkUpdateTime/1000000)+"ms");
+       
     }
     public void drawRelative(Graphics2D g2,BaseEntity entity){
         
@@ -486,4 +502,63 @@ public class Camera extends primitiveEntity{
             }   
         return darkImage;
     }
+
+    /**
+     * @return BaseEntity return the followed
+     */
+    public BaseEntity getFollowed() {
+        return followed;
+    }
+
+    /**
+     * @param followed the followed to set
+     */
+    public void setFollowed(BaseEntity followed) {
+        this.followed = followed;
+    }
+
+    /**
+     * @return int return the observedFPS
+     */
+    public int getObservedFPS() {
+        return observedFPS;
+    }
+
+    /**
+     * @param observedFPS the observedFPS to set
+     */
+    public void setObservedFPS(int observedFPS) {
+        this.observedFPS = observedFPS;
+    }
+
+
+    /**
+     * @return int return the observedSortTime
+     */
+    public long getObservedSortTime() {
+        return observedSortTime;
+    }
+
+    /**
+     * @param observedSortTime the observedSortTime to set
+     */
+    public void setObservedSortTime(long observedSortTime) {
+        this.observedSortTime = observedSortTime;
+    }
+
+
+    /**
+     * @return long return the observedChunkUpdateTime
+     */
+    public long getObservedChunkUpdateTime() {
+        return observedChunkUpdateTime;
+    }
+
+    /**
+     * @param observedChunkUpdateTime the observedChunkUpdateTime to set
+     */
+    public void setObservedChunkUpdateTime(long observedChunkUpdateTime) {
+        this.observedChunkUpdateTime = observedChunkUpdateTime;
+    }
+
 }

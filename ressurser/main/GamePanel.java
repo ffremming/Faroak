@@ -30,6 +30,7 @@ public class GamePanel extends JPanel implements Runnable{
     public Thread gameThread; 
     public Camera camera;
     
+    
 
     // object components:
     GenerationManager generationM;
@@ -151,7 +152,7 @@ public class GamePanel extends JPanel implements Runnable{
             
             Runnable updateThread = new Runnable() {
                 public void run() {
-                    update();
+                    //update();
                 };
             };
             try {
@@ -190,8 +191,10 @@ public void run() {
         // Update the game state
         Runnable updateThread = new Runnable() {
             public void run() {
-                System.out.println(delta);
-                update();
+               
+                update(delta);
+              
+              
             }
         };
         try {
@@ -205,13 +208,14 @@ public void run() {
         // Repaint the game
         repaint();
 
-        // If one second has passed, reset the FPS counter
+        // If one second has passed, reset the FPS counter, updates Printable values
         if (lastFpsTime >= 1000000000) {
-            System.out.println("FPS: " + fps);
-            lastFpsTime = 0;
-            fps = 0;
 
+            lastFpsTime = 0;
+            camera.setObservedFPS(fps);
+            fps = 0;
         }
+        
 
         // Sleep until the next frame
         try {
@@ -222,10 +226,15 @@ public void run() {
     }
 }
 
-    public void update(){
+    /**
+     * logic update.
+     *  Called every frame
+     * at 0.1 ms regularly, and spikes at 5 ms every update on workingMemory (every second)
+     */
+    public void update(double delta){
         
         enviromentM.updateTicks();
-        inputHandlingSystem.update();
+        inputHandlingSystem.update(delta);
         world.simulate(); 
         
     }

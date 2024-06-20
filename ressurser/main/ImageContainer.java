@@ -369,34 +369,60 @@ public class ImageContainer {
         return result;
     }
 
-public boolean checkIntersection(Entity entity1, Entity entity2) {
-    //BufferedImage entity1Outline = getOutline(entity1.images.get(0));
-    //BufferedImage entity2Outline = getOutline(entity2.images.get(0));
+    public boolean checkIntersection(Entity entity1, Entity entity2) {
+        // BufferedImage entity1Outline = getOutline(entity1.images.get(0));
+        // BufferedImage entity2Outline = getOutline(entity2.images.get(0));
+    
+        BufferedImage entity1Outline = entity1.images.get(0);
+        BufferedImage entity2Outline = entity2.images.get(0);
+    
+        int entity1Width = entity1.getWidth();
+        int entity1Height = entity1.getHeight();
+        int entity1ImageWidth = entity1Outline.getWidth();
+        int entity1ImageHeight = entity1Outline.getHeight();
+    
+        int entity2Width = entity2.getWidth();
+        int entity2Height = entity2.getHeight();
+        int entity2ImageWidth = entity2Outline.getWidth();
+        int entity2ImageHeight = entity2Outline.getHeight();
+    
+        double entity1ConversionRateX = (double) entity1ImageWidth / entity1Width;
+        double entity1ConversionRateY = (double) entity1ImageHeight / entity1Height;
+    
+        double entity2ConversionRateX = (double) entity2ImageWidth / entity2Width;
+        double entity2ConversionRateY = (double) entity2ImageHeight / entity2Height;
+    
+        int amountCounter = 0;
+        int neededPixelsIntersection = (entity1Width*entity1Height)/(entity1ImageWidth*entity1ImageHeight)*150;
 
-
-    BufferedImage entity1Outline = (entity1.images.get(0));
-    BufferedImage entity2Outline = (entity2.images.get(0));
-
-
-    for (int x = 0; x < entity1Outline.getWidth(); x++) {
-        for (int y = 0; y < entity1Outline.getHeight(); y++) {
-            int alpha1 = (entity1Outline.getRGB(x, y) >> 24) & 0xFF;
-            if (alpha1 > 128) { // if alpha value is high
-                int worldX = (int)(x + entity1.getWorldX()+30);
-                int worldY = (int)(y + entity1.getWorldY());
-                if (worldX >= entity2.getWorldX() && worldX < entity2.getWorldX() + entity2Outline.getWidth() &&
-                    worldY >= entity2.getWorldY() && worldY < entity2.getWorldY() + entity2Outline.getHeight()) {
-                    int alpha2 = (entity2Outline.getRGB((int)(worldX - entity2.getWorldX()),(int)( worldY - entity2.getWorldY())) >> 24) & 0xFF;
-                    if (alpha2 > 128) { // if alpha value is high
-                        return true;
+        for (int x = 0; x < entity1ImageWidth; x++) {
+            for (int y = 0; y < entity1ImageHeight; y++) {
+                int alpha1 = (entity1Outline.getRGB(x, y) >> 24) & 0xFF;
+                if (alpha1 > 128) { // if alpha value is high
+    
+                    // Coordinates of pixels
+                    int worldX = (int) (x / entity1ConversionRateX + entity1.getWorldX());
+                    int worldY = (int) (y / entity1ConversionRateY + entity1.getWorldY());
+    
+                    // Pixels of 2nd image
+                    int pixelX = (int) ((worldX - entity2.getWorldX()) * entity2ConversionRateX);
+                    int pixelY = (int) ((worldY - entity2.getWorldY()) * entity2ConversionRateY);
+                    
+                    try {
+                        if (pixelX >= 0 && pixelX < entity2ImageWidth && pixelY >= 0 && pixelY < entity2ImageHeight) {
+                            if (((entity2Outline.getRGB(pixelX, pixelY) >> 24) & 0xFF) > 128) {
+                                amountCounter++;
+                            }
+                        }
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        // Nothing
                     }
                 }
             }
         }
+        if (amountCounter >neededPixelsIntersection){return true;}
+        return false;
     }
-
-    return false;
-}
 
 
 public static BufferedImage rotateImage(BufferedImage image, double degrees) {

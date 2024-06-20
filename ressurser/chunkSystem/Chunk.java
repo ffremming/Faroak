@@ -235,7 +235,10 @@ public class Chunk extends TreeNode{
 
     private void repeatedLoad(){
         generateTiles();
-        //read entities from file
+    
+        //could read from file here, but not implemented, should mby be in chunSystem or implemented in another fashion.
+        generateEntities();
+        //read entities from file -NOT DONE
     }
 
 
@@ -264,14 +267,13 @@ public class Chunk extends TreeNode{
     public void load(){
 
         if (!loaded){
-            
+            //if not generated before (first time load)
             if (!generated&chunkS.generate){
                 initialLoad();
-                //generateTiles();
             
             }
+            //if already loaded
             else{
-               
                 repeatedLoad();
             }
             
@@ -280,10 +282,7 @@ public class Chunk extends TreeNode{
         amtLoaded++;
     }
 
-    public void deload(){
-        loaded = false;
-        //when a chunk no longer is in the working memory, it needs to deload - write down the enitites to file...
-    }
+    
 
     /**should not be here.....!! //TODO */
     private Tile getSingelTile(int worldX,int worldY){
@@ -388,7 +387,8 @@ public class Chunk extends TreeNode{
     /**not yet implemented... needs database for reading/writing */
     public void unLoad(){
         loaded = false;
-        overwritetoFile(getEntitiesWithoutTiles());
+        //if i want to write to file, do this at certain times with long intervalls - it does cost time
+        //overwritetoFile(getEntitiesWithoutTiles());
         entities.clear();
     }
     
@@ -514,7 +514,6 @@ public class Chunk extends TreeNode{
             // Write the modified content back to the file
             raf.writeBytes(modifiedContent);
         }
-
     }
     
     public BaseEntity deserializeEntity(String entityString) {
@@ -525,6 +524,7 @@ public class Chunk extends TreeNode{
         int y = Integer.parseInt(parts[2]);
         String type = parts[3];
         //return new BaseEntity(name, x, y, type); // Adjust constructor
+        return null;
     }
 
     public ArrayList<BaseEntity> readEntitiesFromFile(String fileName) {

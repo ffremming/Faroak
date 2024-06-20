@@ -3,6 +3,7 @@ package ressurser.chunkSystem;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.Entity;
@@ -23,7 +24,8 @@ public class WorkingMemory {
    
     ArrayList<Chunk> workingChunks = new ArrayList<>();
     public ArrayList<Entity> workingEntities = new ArrayList<>();
-    ArrayList<Entity> sortedEntities = new ArrayList<>();
+    private ArrayList<Tile> workingTiles = new ArrayList<>();
+    private ArrayList<Entity> sortedVisibleEntities = new ArrayList<>();
     ArrayList<Chunk> sortedChunks = new ArrayList<>();
 
     
@@ -82,7 +84,7 @@ public class WorkingMemory {
         //chunkSystem.unload(chunks,workingChunks);
         workingChunks.clear();
         workingChunks.addAll(chunks);
-       
+        
     }
 
     /**
@@ -95,20 +97,23 @@ public class WorkingMemory {
     }
 
     /**
+     * clears all old Tiles
+     * add all new Tiles
+     */
+    public void setWorkingTiles(ArrayList<Tile> tiles){
+        workingTiles.clear();
+        workingTiles.addAll(tiles);
+    }
+
+    /**
      * filter out all Tile entities
      */
     public ArrayList<Entity> getEntities(){
         return workingEntities;
     }
 
-    public ArrayList<BaseEntity> getTiles(){
-        ArrayList<BaseEntity> notTiles = new ArrayList<>();
-        for (BaseEntity entity:workingEntities){
-            if ((entity instanceof Tile)){
-                notTiles.add(entity);
-            }
-        }
-        return notTiles;
+    public ArrayList<Tile> getTiles(){
+        return workingTiles;
     }
 
     public ArrayList<Entity> getBaseEntities(){
@@ -124,9 +129,10 @@ public class WorkingMemory {
      * set working entities and chunks
      * adds storage capacity if needed
      * loads unloaded chunks
+     * takes around 5-10 ms when exploring
      */
     public void update(Point p){
-        
+        long startTime = System.nanoTime();
         //1. check if needed loading of new chunks
         chunkSystem.handleOutOfBounds(p);
         
@@ -135,26 +141,57 @@ public class WorkingMemory {
 
         //3. updates list of all entities, sorts sorted list
         updateEntities(p);
+
+        updateTiles();
+        long endTime = System.nanoTime();
+        System.out.println("update time!: "+(endTime-startTime)/1000+"microseconds\n");
+    }
+
+    private void updateTiles() {
+        setWorkingTiles(getTilesFromChunks());
     }
 
     /**unloades chunks, flushes out moveables, reloades chunk and connect tiles */
     private void updateChunks(Point p){
         
-         // chekcs if needed unloading of old chunks as well as updating new chunks
+        long startTime = System.nanoTime();
+
+
         ArrayList<Chunk> oldChunks = new ArrayList<>(workingChunks);
+        long start = System.nanoTime();
+        //Compares new and old chunks - if chunks no longer is working, unload those chunks
+        //time expensive, could be <100ms
+        
         setWorkingChunks(chunkSystem.getAllChunksInRenderDistance(p));
         compareAndSelectUnloadedChunks(oldChunks,workingChunks);
+        
+        long end = System.nanoTime();
+        //System.out.println("time taken by unloading chunks: "+(end-start)/1000+"microseconds\n");
+        
 
+        //flush all chunks and then loads chunks
+        //not time expensive - <1ms
+        long startFlushLoad = System.nanoTime();
         for (Chunk chunk:getChunks()){
             chunk.flush();
             chunk.load();
         }
+        long endFlushLoad = System.nanoTime();
+        //System.out.println("time taken by load/flush: "+(endFlushLoad-startFlushLoad)/1000+"microseconds\n");
+        
+        long startConnectingTime = System.nanoTime();
+        //when loading new chunks, takes arounnd 1 - 5ms
         for (Chunk chunk:getChunks()){
             chunk.connectTiles();
         }
+        long endConnectingTime = System.nanoTime();
+        //System.out.println("time taken by connecting tiles: "+(endConnectingTime-startConnectingTime)/1000+"microseconds\n");
+
+        setChunkUpdateTime(startTime);
     }
 
-    /**3. updates list of all entities - all entities within render distance*/
+
+    /**3. updates list of all entities - all entities within render distance. Then sorts the visibleEntities based on new workingEntities*/
     private void updateEntities(Point p){
         ArrayList<Entity> allEntitiesInRenderDistance = new ArrayList<>();
         ArrayList<Chunk> chunksCopy = new ArrayList<>(workingChunks);
@@ -163,21 +200,19 @@ public class WorkingMemory {
         }
 
         setWorkingEntities(allEntitiesInRenderDistance);
-        sortedEntities =allEntitiesInRenderDistance;
-        sort(allEntitiesInRenderDistance);
+        sortVisibleEntities();
     }
 
-    /**compares two lists if any chunks no longer are loaded, if so, forget data, and write to dataBase */
+    /**compares the old workingchunks with the new workingchunks. if a chunk no longer is in the new Chunks, it is unloaded */
     private void compareAndSelectUnloadedChunks(ArrayList<Chunk> oldChunks, ArrayList<Chunk> newChunks) {
-        for(Chunk oldChunk:oldChunks){
-            
-            if (!(newChunks.contains(oldChunk))){ //if new chunkList doestn contain old chunks - 
-            
-            oldChunk.unLoad();
-            }
-        }
     
+    // Iterate through oldChunks and check if each chunk is not in newChunksSet
+    for (Chunk oldChunk : oldChunks) {
+        if (!newChunks.contains(oldChunk)) {
+            oldChunk.unLoad();
+        }
     }
+}
 
 
     /**
@@ -215,6 +250,12 @@ public class WorkingMemory {
                 //TODO
             }
         }
+        for (Tile visibleTile:getTiles()){
+            //System.out.println("fuck");
+            if (visibleTile.animated){
+                visibleTile.animate(value);
+            }
+        }
     }
 
     //** test if objects are the same */
@@ -247,7 +288,7 @@ public class WorkingMemory {
     public  ArrayList<BaseEntity> getvisibleEntities(){
         ArrayList<BaseEntity> visible = new ArrayList<>();
 
-        for (BaseEntity ent:sortedEntities){
+        for (BaseEntity ent:sortedVisibleEntities){
             if (chunkSystem.panel.camera.getHitBox().collision(new HitBox((ent.getWorldX()),ent.getWorldY(),ent.getWidth(),ent.getHeight()))){
                 visible.add(ent);
             }
@@ -261,7 +302,7 @@ public class WorkingMemory {
     public  ArrayList<BaseEntity> getVisibleEntitiesenlarged(){
         ArrayList<BaseEntity> visible = new ArrayList<>();
 
-        for (Entity ent:sortedEntities){
+        for (Entity ent:sortedVisibleEntities){
             if (chunkSystem.panel.camera.getHitBox().getEnlargedCameraHitbox().collision(new HitBox((ent.getWorldX()),ent.getWorldY(),ent.getWidth(),ent.getHeight()))){
                 visible.add(ent);
             }
@@ -269,10 +310,10 @@ public class WorkingMemory {
         return visible;
     }
 
-    public  ArrayList<BaseEntity> getVisibleTiles(){
-        ArrayList<BaseEntity> visible = new ArrayList<>();
+    public  ArrayList<Tile> getVisibleTiles(){
+        ArrayList<Tile> visible = new ArrayList<>();
 
-        for (BaseEntity ent:getTiles()){
+        for (Tile ent:getTiles()){
             if (chunkSystem.panel.camera.collision(ent)){
                 visible.add(ent);
             }
@@ -481,13 +522,16 @@ public class WorkingMemory {
 
     
 
-    // Public method to call the quicksort function with the entire arraylist
-    private void sort(ArrayList<Entity> list) {
+    /**takes all workingEntities, filter out entities that isnt close to screen, then sort */
+    private void sortVisibleEntities() {
+        long startTime = System.nanoTime();
+        sortedVisibleEntities = getVisibleEntities(panel.camera,workingEntities);
+        quicksort(sortedVisibleEntities, 0, sortedVisibleEntities.size() - 1);
         
-        quicksort(list, 0, list.size() - 1);
-
+        if (panel.camera != null){
+            panel.camera.setObservedSortTime((long)(System.nanoTime()-startTime));
+        }
         
-        chunkSort(list);
     }
 
     private void chunkSort(ArrayList<Entity> list){
@@ -495,10 +539,10 @@ public class WorkingMemory {
         sortedChunks = workingChunks;
         quickChunksort(sortedChunks,0,workingChunks.size()-1);
         
-        sortedEntities = new ArrayList<>();
+        sortedVisibleEntities = new ArrayList<>();
         for (Chunk chunk:sortedChunks){
             quicksort(chunk.entities, 0, chunk.entities.size() - 1);
-            sortedEntities.addAll(chunk.entities);
+            sortedVisibleEntities.addAll(chunk.entities);
         }
 
         
@@ -537,7 +581,7 @@ public class WorkingMemory {
     */
     public void clearRemovalQueue() {
         for (BaseEntity ent:removalQueue){
-            sortedEntities.remove(ent);
+            sortedVisibleEntities.remove(ent);
             chunkSystem.removeEntity(ent);
         }
         removalQueue.clear();
@@ -600,15 +644,36 @@ public class WorkingMemory {
         return visibleTiles;
     }
 
-    /**returns all entities that are going to be drawn */
-    public ArrayList<BaseEntity> getVisibleEntities(Camera camera) {
-        // TODO Auto-generated method stub
-        ArrayList<BaseEntity> visibleEntities = new ArrayList<>();
+    /**returns all tiles that are going to be drawn */
+    public ArrayList<Tile> getTilesFromChunks() {
+        ArrayList<Tile> tiles = new ArrayList<>();
 
+        for (Chunk chunk:workingChunks){
+            for (int i =0;i< chunk.tiles.length;i++){
+                for (int j =0;j< chunk.tiles.length;j++){
+                    tiles.add(chunk.tiles[i][j]);
+                }
+            }
+        }
+        return tiles;
+    }
+
+    
+
+    /**returns all entities that are going to be drawn */
+    public ArrayList<Entity> getVisibleEntities(Camera camera) {
+        return getVisibleEntities(camera,sortedVisibleEntities);
+    }
+
+    private ArrayList<Entity> getVisibleEntities(Camera camera,ArrayList<Entity> entities){
+        ArrayList<Entity> visibleEntities = new ArrayList<>();
+
+        
+        if (camera== null){return visibleEntities;}
         //uses cams HB many times so stored upfront.
         HitBox camHB = camera.getImageHitbox();
 
-        for (Entity entity:sortedEntities){
+        for (Entity entity:entities){
             
             //if entitys image are inside Cameras hitBox, it is added to list of entities inHB 
             if (entity.getImageHitbox().collision(camHB)|| entity.getHitBox().collision(camHB)){
@@ -616,13 +681,37 @@ public class WorkingMemory {
             }
         }
         return visibleEntities;
-        
     }
+
+    private ArrayList<BaseEntity> getEntitiesNearCamera(Camera camera,ArrayList<Entity> entities){
+        ArrayList<BaseEntity> visibleEntities = new ArrayList<>();
+
+        //uses cams HB many times so stored upfront.
+        HitBox camHB = camera.getImageHitbox().getEnlargedCameraHitbox();
+
+        for (BaseEntity entity:entities){
+            
+            //if entitys image are inside Cameras hitBox, it is added to list of entities inHB 
+            if (entity.getImageHitbox().collision(camHB)|| entity.getHitBox().collision(camHB)){
+                visibleEntities.add(entity);
+            }
+        }
+        return visibleEntities;
+    }
+
 
     public BaseEntity getHoveredEntity() {
         return hoveredEntity;
     }
     public void setHoveredEntity(BaseEntity hoveredEntity){
         this.hoveredEntity = hoveredEntity;
+    }
+
+    private void setChunkUpdateTime(long startTime){
+        long endTime = System.nanoTime();
+
+        if (panel.camera!= null){
+            panel.camera.setObservedChunkUpdateTime(endTime-startTime);
+        }
     }
 }
