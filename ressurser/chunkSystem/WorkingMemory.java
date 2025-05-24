@@ -12,6 +12,8 @@ import ressurser.baseEntity.Vector;
 import ressurser.baseEntity.gameObject.GameObject;
 import ressurser.baseEntity.playable.Inventory.Stack;
 import ressurser.baseEntity.tile.Tile;
+import ressurser.chunkSystem.terrainGeneration.ProceduralGeneration;
+import ressurser.chunkSystem.terrainGeneration.entityGeneration.EntityFactoryOverworld;
 import ressurser.drawing.Camera;
 import ressurser.main.GamePanel;
 import ressurser.baseEntity.playable.Inventory.Item;
@@ -36,32 +38,23 @@ public class WorkingMemory {
     ChunkSystem chunkSystemNether;
     private BaseEntity hoveredEntity = null;
     GamePanel panel;
-    int type;
+    
     static final int OVERWORLD = 0;
     static final int CAVE = 1;
     static final int NETHER = 2;
+
+    ProceduralGeneration proceduralGeneration;
 
     
     
     public WorkingMemory(GamePanel panel){
         this.panel = panel;
-        this.chunkSystem = new ChunkSystem(panel,8,type);
+        this.proceduralGeneration = new ProceduralGeneration();
+        this.chunkSystemOverWorld = new ChunkSystem(panel,8,ChunkSystem.OVERWORLD,new EntityFactoryOverworld(proceduralGeneration,panel));
+        this.chunkSystem = chunkSystemOverWorld;
     }
 
-    public void setType(int type){
-        if (type == OVERWORLD){
-            chunkSystem = chunkSystemOverWorld;
-        } else if ((type == CAVE)){
-            chunkSystem = chunkSystemCaves;
-        } else {
-            chunkSystem = chunkSystemNether;
-        }
-
-        //needs to reset workingentities, chunks etc
-        //needs to make sure correct chunks are loaded
-        //maybe need to genereate new area
-        //
-    }
+    
 
     /**starts the system up. connect tiles toghetet after all tiles are made. */
     public void initial(){
@@ -144,13 +137,12 @@ public class WorkingMemory {
 
         updateTiles();
         long endTime = System.nanoTime();
-        System.out.println("update time!: "+(endTime-startTime)/1000+"microseconds\n");
     }
 
     private void updateTiles() {
         setWorkingTiles(getTilesFromChunks());
     }
-
+    
     /**unloades chunks, flushes out moveables, reloades chunk and connect tiles */
     private void updateChunks(Point p){
         
@@ -252,7 +244,8 @@ public class WorkingMemory {
         }
         for (Tile visibleTile:getTiles()){
             //System.out.println("fuck");
-            if (visibleTile.animated){
+            
+            if (visibleTile!= null && visibleTile.animated){
                 visibleTile.animate(value);
             }
         }
@@ -289,7 +282,7 @@ public class WorkingMemory {
         ArrayList<BaseEntity> visible = new ArrayList<>();
 
         for (BaseEntity ent:sortedVisibleEntities){
-            if (chunkSystem.panel.camera.getHitBox().collision(new HitBox((ent.getWorldX()),ent.getWorldY(),ent.getWidth(),ent.getHeight()))){
+            if (chunkSystem.panel.camera.visibilityArea.collision(new HitBox((ent.getWorldX()),ent.getWorldY(),ent.getWidth(),ent.getHeight()))){
                 visible.add(ent);
             }
         }
@@ -408,14 +401,14 @@ public class WorkingMemory {
         
         int worldY =  (int)chunkSystem.panel.camera.getWorldY()+y;
         ArrayList<BaseEntity> entities = getEntitiesCollidedWith(new Point(worldX,worldY));
-        chunkSystem.panel.camera.addbackendPrintData(worldX +","+worldY);
+        chunkSystem.panel.camera.addbackendPrintData("cameras pos: "+worldX +","+worldY);
         for (BaseEntity baseE:entities){
             //TODO
             if (entities.size() == 1){
                 hoveredEntity = baseE;
                 return;
             } else{
-                chunkSystem.panel.camera.addbackendPrintData(entities.get(0)+","+entities.get(1));
+                
         
                 if (!(baseE instanceof Tile)){
                     hoveredEntity = baseE;
@@ -480,6 +473,7 @@ public class WorkingMemory {
         }
     }
 
+
     // Insertion sort function for sorting small subarrays
     private static void insertionSort1(ArrayList<Entity> list, int low, int high) {
         for (int i = low + 1; i <= high; i++) {
@@ -524,28 +518,48 @@ public class WorkingMemory {
 
     /**takes all workingEntities, filter out entities that isnt close to screen, then sort */
     private void sortVisibleEntities() {
+        long startTime1 = System.nanoTime();
+        //chunkSort();
+        long now1 = System.nanoTime();
         long startTime = System.nanoTime();
+        if (panel.camera != null){
+            //TODO this is bad code
+            ArrayList<Entity> allEntitiesInRenderDistance = new ArrayList<>();
+            ArrayList<Chunk> chunksCopy = new ArrayList<>(workingChunks);
+            for (Chunk chunk:chunksCopy){
+                chunk.getEntitiesInBound(chunkSystem.getRenderRectangle(panel.camera.getHitBox().getCenter()),allEntitiesInRenderDistance);
+            }
+    
+            setWorkingEntities(allEntitiesInRenderDistance);
+        }
         sortedVisibleEntities = getVisibleEntities(panel.camera,workingEntities);
         quicksort(sortedVisibleEntities, 0, sortedVisibleEntities.size() - 1);
-        
+        long now = System.nanoTime();
         if (panel.camera != null){
-            panel.camera.setObservedSortTime((long)(System.nanoTime()-startTime));
+           System.out.println("sort time" + ((now-startTime)/1000));
+           System.out.println("chunk sort time" + ((now1-startTime1)/1000));
+            panel.camera.setObservedSortTime((now-startTime));
         }
         
     }
 
-    private void chunkSort(ArrayList<Entity> list){
+    private void chunkSort(){
         
-        sortedChunks = workingChunks;
-        quickChunksort(sortedChunks,0,workingChunks.size()-1);
+        ArrayList<Chunk > visibleChunks = getVisibleChunks(panel.camera);
         
+        for (Chunk chunk:visibleChunks){
+            chunk.sort();
+        }
+
+        quickChunksort(visibleChunks,0,visibleChunks.size()-1);
         sortedVisibleEntities = new ArrayList<>();
         for (Chunk chunk:sortedChunks){
             quicksort(chunk.entities, 0, chunk.entities.size() - 1);
             sortedVisibleEntities.addAll(chunk.entities);
         }
+        insertionSort1(sortedVisibleEntities,0,sortedVisibleEntities.size()-1);
 
-        
+       
     }
 
 
@@ -587,37 +601,57 @@ public class WorkingMemory {
         removalQueue.clear();
     }
 
-    public void placeEntity(BaseEntity ent){
-        if (!solidCollision(ent.getHitBox()))
-        chunkSystem.addEntity(ent);
+    public boolean placeEntity(BaseEntity ent){
+        if (!solidCollision(ent.getHitBox())){
+            chunkSystem.addEntity(ent);
+            return true;
+        }
+        return false;
     }
 
     public void removeEntity(BaseEntity ent){
+        if (ent== null){return;}
         chunkSystem.removeEntity(ent);
     }
 
-    public void tryPlaceEntity(Stack equipped) {
+    public boolean tryPlaceEntity(Stack equipped) {
+        
+        System.out.println("try place entity"+equipped);
         if (equipped!= null && !(equipped.isEmpty())){
 
-            BaseEntity ent = equipped.getItem(0);
-            BaseEntity go = ((Item) ent).getPhysicalRepresentation();
-            System.out.println("ent is: "+ent);
-            System.out.println("go is: "+go);
+            BaseEntity item = equipped.getItem();
+            if (item== null){ System.out.println("item is: "+item);return false;}
+            BaseEntity gameObject = ((Item) item).getPhysicalRepresentation();
+            System.out.println("item is: "+item);
+            System.out.println("go is: "+gameObject);
             
-            if (go instanceof GameObject){
-                GameObject pr = (GameObject)go;
+            if (gameObject instanceof GameObject){
+                GameObject pr = (GameObject)gameObject;
 
-                pr.setWorldX(chunkSystem.panel.camera.getWorldX()+(int)chunkSystem.panel.mouse.getX()-(pr.getWidth()/2));
-                pr.setWorldY(chunkSystem.panel.camera.getWorldY()+(int)chunkSystem.panel.mouse.getY()-(pr.getHeight()/2));
+                pr.setWorldX(panel.mouse.getMouseWorldX()-(pr.getWidth()/2));
+                pr.setWorldY(panel.mouse.getMouseWorldY()-(pr.getHeight()/2));
 
                 if (!solidCollision(pr.getHitBox())){
                     placeEntity(pr);
                     equipped.removeOneItem();
-                    System.out.println("placed entity");
-                    System.out.println(pr);
+                    return true;
                 }  
             }
-        }
+        }{System.out.println("not equipped");}
+        return false;
+    }
+
+    public void addObjectPreview(Stack equipped){
+
+        if (equipped.getItem()== null){return;}
+            GameObject gameObject = (GameObject) equipped.getItem().getPhysicalRepresentation();
+            if (gameObject != null){
+                GameObject preview = gameObject.getPreviewObject(panel);
+                panel.camera.setPreviewObject(preview);
+                placeEntity(preview);
+            }
+            
+
     }
 
     /**returns all tiles that are going to be drawn */
@@ -677,10 +711,29 @@ public class WorkingMemory {
             
             //if entitys image are inside Cameras hitBox, it is added to list of entities inHB 
             if (entity.getImageHitbox().collision(camHB)|| entity.getHitBox().collision(camHB)){
-                visibleEntities.add(entity);
+                
             }
+            visibleEntities.add(entity);
         }
         return visibleEntities;
+    }
+
+    private ArrayList<Chunk> getVisibleChunks(Camera camera){
+        ArrayList<Chunk> visibleChunks = new ArrayList<>();
+
+        
+        if (camera== null){return visibleChunks;}
+        //uses cams HB many times so stored upfront.
+        HitBox camHB = camera.getImageHitbox();
+
+        for (Chunk chunk:workingChunks){
+            
+            //if chunk are inside Cameras hitBox, it is added to list of entities inHB 
+            if (chunk.collision(camHB)){
+                visibleChunks.add(chunk);
+            }
+        }
+        return visibleChunks;
     }
 
     private ArrayList<BaseEntity> getEntitiesNearCamera(Camera camera,ArrayList<Entity> entities){

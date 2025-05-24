@@ -42,7 +42,7 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
         this.x = e.getX();
         this.y = e.getY();
         panel.UI.mouseMoved(e);
-        //panel.userInterface.mouseMoved(e);
+        panel.userInterface.mouseMoved(e);
         
     }
 
@@ -56,7 +56,7 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
         if (!panel.userInterface.isEnabled()){
             //panel.player.setPath(panel.world.getPath(panel.player,new Point(e.getX()+((int)(panel.camera.getWorldX())),e.getY()+(int)panel.camera.getWorldY())));
             panel.world.tryPlaceEntity(panel.player.getEquipped());
-            System.out.println("try place entity");
+            
         } else{
             panel.userInterface.mousePressed(e);
         }
@@ -90,6 +90,13 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
 
     public int getY() {
         return y;
+    }
+
+    public double getMouseWorldX(){
+        return panel.camera.getWorldX()+getX();
+    }
+    public double getMouseWorldY(){
+        return panel.camera.getWorldY()+getY();
     }
     
 }

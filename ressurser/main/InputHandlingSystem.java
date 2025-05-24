@@ -31,9 +31,6 @@ public class InputHandlingSystem {
 
         //setting the hovered entities from mouse input
         panel.world.setHoveredEntity(panel.mouse.x,panel.mouse.y);
-        
-        
-
     }
 
     public void setDown(boolean val){

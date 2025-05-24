@@ -65,7 +65,6 @@ public class Tile extends BaseEntity{
     @Override
     public void animate(int value){
         setAnimatedImages(value);
-        System.out.println("animate "+value);
     }
 
     /**value can be set between 0 and 2 */
@@ -103,7 +102,7 @@ public class Tile extends BaseEntity{
             boolean[] borders = {false,false,false,false};
             for (int i = 0;i<4;i++){
                 Tile neightbor = getNeighbors()[i];
-                if (neightbor != null){
+                if (neightbor != null && this != null){
                     if (neightbor.isHigherthan(this)){
     
                         

@@ -133,6 +133,15 @@ public class HitBox extends Rectangle{
         return new HitBox(getWorldX()-64,getWorldY()-64,width+128,height+128);
     }
 
+
+    public void centerAtPosition(Point point) {
+        int newX = point.x - width / 2;
+        int newY = point.y - height / 2;
+        
+        this.x = newX;
+        this.y = newY;
+    }
+
     
 
     

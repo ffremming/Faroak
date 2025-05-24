@@ -513,7 +513,7 @@ public class TerrainGenSimplex
 		return "0 ";
 	}
 
-		public static void main(String[] args) throws IOException {
+		public void main(String[] args) throws IOException {
 			TerrainGenSimplex gen = new TerrainGenSimplex(2000,2000,true);
 
 		

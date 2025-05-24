@@ -3,6 +3,7 @@ package ressurser.chunkSystem;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.Entity;
@@ -24,13 +25,14 @@ public class Chunk extends TreeNode{
     static int amount = 0;
    
     ArrayList<Entity> entities = new ArrayList<>();
-    Tile[][] tiles = new Tile[4][4];
+    Tile[][] tiles = new Tile[CHUNKSIZE][CHUNKSIZE];
     // is the chunk loaded. When the game is started the chunk will not be loaded. When chunk is rendered/loaded, boolean value is set true. 
     // this boolean needs to be stored in harddrive. If already loaded, do not need procedural generation of entites, because these is already loaded.
-    boolean generated = false;
+   
     boolean loaded = false;
     static int amtLoaded = 0;
     static int amtGenerated = 0;
+    boolean sorted = false;
 
     //i want all chunks to always forget the tile contents, but always remember entities(not tiles)
 
@@ -230,7 +232,7 @@ public class Chunk extends TreeNode{
        generateEntities();
        generated = true;
        amtGenerated ++;
-       writeEntitiesToFile(getEntitiesWithoutTiles());
+       //writeEntitiesToFile(getEntitiesWithoutTiles());
     }
 
     private void repeatedLoad(){
@@ -276,40 +278,19 @@ public class Chunk extends TreeNode{
             else{
                 repeatedLoad();
             }
+        
+            loaded = true;
+            amtLoaded++;
             
         }
-        loaded = true;
-        amtLoaded++;
+        
     }
 
     
 
-    /**should not be here.....!! //TODO */
+   
     private Tile getSingelTile(int worldX,int worldY){
-        
-        //FIXTHIS!
-        //loader algorithm..
-        //method returns biome type- which is a streubg
-        String biomeType =  chunkS.proceduralGen.calculateBiomeString(worldX, worldY);
-        int height = (int)(chunkS.proceduralGen.getHeightValue(worldX,worldY)*1000);
-
-        //if (height>100){return new Tile(chunkS.panel,biomeType,worldX,worldY,height, false);}
-
-        if(biomeType.equals("grass")){
-            double value = (Math.abs(chunkS.proceduralGen.getVegetationMidFreq(worldX,worldY)));
-            double intervals = 6/1;
-            
-            int number = (int)(value*intervals);
-            number ++;
-            
-            if (number>7){number = 7;}
-
-            String streng = "grass"+number;
-            if (number <2){streng = "grass";}
-
-            return new Tile(chunkS.panel,streng,worldX,worldY,height);
-        }
-        return new Tile(chunkS.panel,biomeType,worldX,worldY,height);
+        return chunkS.entityFactory.getTile(worldX,worldY);
     }
 
    
@@ -321,7 +302,8 @@ public class Chunk extends TreeNode{
 
     /**needs to be changed!! has two .. */
     private void addEntitiesToChunk(){
-       
+        long startTime = System.currentTimeMillis();
+
         for (int x2 = 0;x2<width;x2+= chunkS.panel.tileSize){
             for (int y2 = 0;y2<width;y2+=chunkS.panel.tileSize){
                 
@@ -334,6 +316,8 @@ public class Chunk extends TreeNode{
                 
             }
         }
+        long endTime = System.currentTimeMillis();
+        System.out.println("chunk generation time" + (endTime-startTime));  
     }
 
     private void addTilesToChunk(){
@@ -355,7 +339,9 @@ public class Chunk extends TreeNode{
        
         for (int i = 0;i<tiles.length;i++){
             for (int j =0;j<tiles[i].length;j++){
-                tiles[i][j].setNeighBors();
+                if (tiles[i][j] != null){
+                    tiles[i][j].setNeighBors();
+                }
             }
         }
     }
@@ -386,10 +372,10 @@ public class Chunk extends TreeNode{
 
     /**not yet implemented... needs database for reading/writing */
     public void unLoad(){
-        loaded = false;
+        //loaded = false;
         //if i want to write to file, do this at certain times with long intervalls - it does cost time
         //overwritetoFile(getEntitiesWithoutTiles());
-        entities.clear();
+        //entities.clear();
     }
     
 
@@ -544,13 +530,12 @@ public class Chunk extends TreeNode{
         ArrayList<Tile> tilesCollidedWith = new ArrayList<Tile>();
         for (int i = 0;i<tiles.length;i++){
             for (int j =0;j<tiles[i].length;j++){
+                if (tiles[i][j]!= null){
+                    if (tiles[i][j].collision(hitBox)){
                 
-                if (tiles[i][j].collision(hitBox)){
-                
-                    tilesCollidedWith.add(tiles[i][j]);
-
+                        tilesCollidedWith.add(tiles[i][j]);
+                    }
                 }
-            
             }
         }
         return tilesCollidedWith;
@@ -573,5 +558,63 @@ public class Chunk extends TreeNode{
             }
         }
         return null;
+    }
+
+
+    //SORTING
+    void sort(){
+        if (!sorted){
+            sorted = true;
+            quicksort(entities,0,entities.size()-1);
+        } else{
+            insertionSort1(entities, 0, entities.size()-1);
+        }
+
+        
+    }
+
+    private static void quicksort(ArrayList<Entity> list, int low, int high) {
+        if (low < high) {
+            // Optimized for small arrays: switch to insertion sort if partition size is small
+            if (high - low + 1 <= 10) {
+                insertionSort1(list, low, high);
+            } else {
+                int pivotIndex = partition(list, low, high);
+                quicksort(list, low, pivotIndex - 1);
+                quicksort(list, pivotIndex + 1, high);
+            }
+        }
+    }
+
+    // Insertion sort function for sorting small subarrays
+    private static void insertionSort1(ArrayList<Entity> list, int low, int high) {
+        for (int i = low + 1; i <= high; i++) {
+            Entity key = list.get(i);
+            int j = i - 1;
+            while (j >= low && (list.get(j).getHitBox().getWorldY() > key.getHitBox().getWorldY()) ) {
+
+                list.set(j + 1, list.get(j));
+                j--;
+            }
+            list.set(j + 1, key);
+        }
+    }
+
+    // Partition function to partition the arraylist and return the pivot index
+    private static int partition(ArrayList<Entity> list, int low, int high) {
+        Entity pivot = list.get(high);
+        int i = low - 1;
+        for (int j = low; j < high; j++) {
+            if (list.get(j).getHitBox().getWorldY() < pivot.getHitBox().getWorldY()) {
+                i++;
+                swap(list, i, j);
+            }
+        }
+        swap(list, i + 1, high);
+        return i + 1;
+    }
+
+    private static void swap(ArrayList<Entity> list, int i, int j) {
+        Collections.swap(list, i, j);
     }
 }

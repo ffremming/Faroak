@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 import ressurser.baseEntity.Entity;
+import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.playable.Playable;
 import ressurser.main.GamePanel;
 
@@ -15,7 +16,17 @@ public class GameObject extends Entity{
             int hitBoxHeight, int i, int j,boolean solid) {
         super(panel, name, worldX, worldY, width, height, hitBoxWidth, hitBoxHeight, i, j);
         this.solid = solid;
+        if (this.panel== null){System.out.println(name);}
         getImage();
+    }
+
+    public GameObject(GamePanel panel, String name, double worldX, double worldY, int width, int height, HitBox hitBox,
+            boolean solid) {
+                super(panel, name, worldX, worldY, width, height, hitBox);
+                this.solid = solid;
+                this.panel = panel;
+                if (this.panel== null){System.out.println(name+","+2);}
+                getImage();
     }
 
     /**used for drawing */
@@ -45,11 +56,8 @@ public class GameObject extends Entity{
     public BufferedImage getImage(){
         
         BufferedImage image = null;
-
-        
-        
         try {
-
+            
             images = panel.imageContainer.getObjectImages(name);
         } catch (Exception e) {
   
@@ -62,5 +70,10 @@ public class GameObject extends Entity{
        
     }
 
+
+    public GameObject getPreviewObject(GamePanel panel2){
+       
+        return new GameObject(panel2,name+",preview",worldX,worldX,width,height,getHitBox(),solid);
+    }
     
 }

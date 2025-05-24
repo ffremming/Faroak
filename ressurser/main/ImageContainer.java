@@ -26,6 +26,7 @@ public class ImageContainer {
     }
 
     public BufferedImage getTileImage(String name){
+        
         if (images.containsKey(name)){
             return (images.get(name));
         }
@@ -77,6 +78,7 @@ public class ImageContainer {
         } catch (IOException e) {
             
             System.out.println("problem with base load of images");
+            System.out.println(e);
         }
     }
 
@@ -198,8 +200,22 @@ public class ImageContainer {
             return objectImages.get(name);
         }
         else{
+            if (name.contains(",")){
+                return getObjectPreview(name);
+            }
+
             return getObjectImagesFromFile(name);
         }
+    }
+
+    private ArrayList<BufferedImage> getObjectPreview(String name) {
+        String original = name.split(",")[0];
+        ArrayList<BufferedImage> originalImages = getObjectImages(original);
+        ArrayList<BufferedImage> previewImages = new ArrayList<>();
+        for (BufferedImage img:originalImages){
+            previewImages.add(reduceTransparency(img));
+        }
+        return previewImages;
     }
 
 
@@ -281,6 +297,10 @@ public class ImageContainer {
                 System.out.println("#loaded item image");
             } else {
                 System.out.println("File does not exist: " + file.getAbsolutePath());
+                ArrayList<BufferedImage> potentionImage = getObjectImages(name);
+                if (potentionImage.size()>0){image = potentionImage.get(0);}
+                
+
             }
         } catch (IOException e) {
             System.out.println("Error while reading the file: " + e.getMessage());
@@ -296,7 +316,7 @@ public class ImageContainer {
 
 
     /** returns outline image */
-    public BufferedImage getOutline(BufferedImage originalImage){
+    public BufferedImage getOutline(BufferedImage originalImage)throws NullPointerException { 
         
         // Create a new buffered image for the outline
         BufferedImage outlineImage = new BufferedImage(originalImage.getWidth(), originalImage.getHeight(), BufferedImage.TYPE_INT_ARGB);

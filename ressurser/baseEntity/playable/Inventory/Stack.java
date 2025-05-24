@@ -9,11 +9,19 @@ public class Stack extends BaseEntity{
 
    
     int stackLimit = 99;
-    ArrayList<Item> items = new ArrayList<>();
+    int amount = 0;
+    Item thisItem;
 
 
     public Stack(GamePanel panel, String name) {
         super(panel, name);
+        thisItem = new Item(panel,name);
+    }
+
+    public Stack(GamePanel panel, Item item, int amount2) {
+        super(panel,item.getName());
+        this.amount = amount2;
+        thisItem = item;
     }
 
     /** 
@@ -22,15 +30,26 @@ public class Stack extends BaseEntity{
      */
     public boolean addItem(Item item){
         if (isEmpty()){
-            //stack name is set to the first item put.
             setName(item.getName());
-        }
-
-        if (!isFull()){
-            items.add(item);
-            return true;
+            setItem(item);
+            if (!isFull()){
+                amount++;
+                return true;
+            }
+        } else{
+            if (thisItem == null ||thisItem.getName().equals(item.getName())){
+                if (!isFull()){
+                    amount++;
+                    return true;
+                }
+            }
         }
         return false;
+        
+    }
+
+    private void setItem(Item item) {
+       thisItem = item;
     }
 
     /** 
@@ -51,9 +70,7 @@ public class Stack extends BaseEntity{
         return newStack;
     }
 
-    private  ArrayList<Item> getItems() {
-       return items;
-    }
+    
 
     /** if not empty, return last item, removes the item*/
     public Item getOneItem() {
@@ -62,30 +79,26 @@ public class Stack extends BaseEntity{
 
         //if not empty, return last item
         if (!isEmpty()){
-            item =  items.get(-1);
-            items.remove(-1);
+            item =  thisItem;
+            amount--;
         }
 
         //at the end, check if empty
         if (isEmpty()){
             //stack name is set to the first item put.
             setName("empty");
+            thisItem = null;
+            System.out.println("emptyyyyyyy");
+            
         }
         return item;
     }
 
 
-    public Item getItem(int index){
-        if (!isEmpty()){
-            return items.get(index);
-        } else {
-            return null;
-        }
-        
-    }
+    
 
     public int getAmount() {
-        return items.size();
+        return amount;
     }
     public int getStackLimit() {
         return stackLimit;
@@ -95,11 +108,11 @@ public class Stack extends BaseEntity{
 
 
     protected boolean isFull(){
-        return getAmount() >= stackLimit;
+        return amount >= stackLimit;
     }
 
     public boolean isEmpty(){
-        return items.size() <= 0;
+        return amount <= 0;
     }
 
     @Override
@@ -115,9 +128,11 @@ public class Stack extends BaseEntity{
     }
 
     public void removeOneItem() {
-        if (!isEmpty()){
-            items.remove(items.size()-1);
-        }
+        getOneItem();
+    }
+
+    public Item getItem() {
+        return thisItem;
     }
     
 }

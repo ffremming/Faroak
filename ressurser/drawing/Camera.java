@@ -17,6 +17,7 @@ import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.HitBox;
 import ressurser.baseEntity.primitiveEntity;
+import ressurser.baseEntity.gameObject.GameObject;
 import ressurser.baseEntity.playable.Moveable;
 import ressurser.baseEntity.tile.Tile;
 import ressurser.chunkSystem.Chunk;
@@ -47,8 +48,13 @@ public class Camera extends primitiveEntity{
     double baseX = 0;
     double baseY = 0;
 
+    public HitBox visibilityArea = new HitBox(0,0,width+500,height+500);
+
 
     public int setWidth;
+
+
+    private GameObject previewObject = null;
 
     public Camera(GamePanel panel, String name, int worldX, int worldY, short width, short height) {
         super(panel, name, worldX, worldY, (short) 50,(short)(50));
@@ -164,6 +170,7 @@ public class Camera extends primitiveEntity{
         if (followed == null){
             centerAtPosition(new Point(0,0));
         }else{
+            visibilityArea.centerAtPosition(followed.getPoint());
             centerAtPosition(followed.getPoint());
         }
     }
@@ -174,6 +181,7 @@ public class Camera extends primitiveEntity{
      }
 
     public void draw(Graphics g){
+        
         hitBox.updateCoords();
         center(followed);
         //for timing
@@ -211,13 +219,17 @@ public class Camera extends primitiveEntity{
         addDrawTimeData(startTime,endTime);
         drawHoveredEntityOutline(g2);
         drawBackEndData(g2);
+
+        //removes previewimage
+       
+        panel.world.removeEntity(previewObject);
     }
 
     private void addDrawTimeData(long startTime, long endTime) {
         addbackendPrintData("drawtime ms: "+String.valueOf((endTime-startTime)/1000000));
         addbackendPrintData("remaining cap: "+String.valueOf(1000000000-(((endTime-startTime)*60))));
         addbackendPrintData("FPS: "+observedFPS);
-        addbackendPrintData("sort time: "+(observedSortTime/1000)+" microseconds");
+        addbackendPrintData("sort time: "+(getObservedSortTime()/1000)+" microseconds");
         addbackendPrintData("chunk updates time: "+(observedChunkUpdateTime/1000000)+"ms");
        
     }
@@ -559,6 +571,10 @@ public class Camera extends primitiveEntity{
      */
     public void setObservedChunkUpdateTime(long observedChunkUpdateTime) {
         this.observedChunkUpdateTime = observedChunkUpdateTime;
+    }
+
+    public void setPreviewObject(GameObject gameObject) {
+        previewObject = gameObject;
     }
 
 }

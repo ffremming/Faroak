@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 import javax.swing.JFrame;
 
@@ -15,13 +16,12 @@ import javax.swing.JFrame;
 import ressurser.baseEntity.BaseEntity;
 import ressurser.baseEntity.Entity;
 import ressurser.baseEntity.HitBox;
-import ressurser.baseEntity.playable.Moveable;
-import ressurser.baseEntity.tile.CliffTile;
+
 import ressurser.baseEntity.tile.Tile;
 import ressurser.chunkSystem.terrainGeneration.entityGeneration.EntityFactory;
-import ressurser.chunkSystem.terrainGeneration.ProceduralGeneration;
+
 import ressurser.main.GamePanel;
-import ressurser.main.GUIMenu.MenuPanel;
+
 
 
 
@@ -34,7 +34,8 @@ public class ChunkSystem {
     //renderdistance is the distance from the player to the border of where entities is rendered.
     int renderDistance ;
     TreeNode parent;
-    ProceduralGeneration proceduralGen;
+    String ID;
+    
     EntityFactory entityFactory;
     
     //
@@ -49,23 +50,13 @@ public class ChunkSystem {
     HashMap <String,Tile> tileHashMap = new HashMap<String,Tile>();
 
     int type;
-    final static int OVERWORLD = 0;
-    final int CAVE = 1;
-    final int NETHER = 2;
+    final static int OVERWORLD = 1;
+    final int CAVE = 2;
+    final int NETHER = 3;
 
     
     
-    public static void main(){
-       
-        GamePanel panel = new GamePanel(new JFrame(),true);
-        ChunkSystem chunky = new ChunkSystem(panel,8,ChunkSystem.OVERWORLD);
-        chunky.setUpTest();
-        chunky.handleOutOfBounds(new Point(-1050,-1070));
-        //chunky.testExpandingSystem(0,0);
-        //chunky.testExpandingSystem(1,0);
-        chunky.testExpandingSystem(0,1);
-        //chunky.testExpandingSystem(1,1);
-    }
+    
 
     private void testExpandingSystem(int xOff,int yOff){
         
@@ -95,10 +86,16 @@ public class ChunkSystem {
      * 
      * if the chunksystem is not big enought, it should create another parent.
      */
-    public ChunkSystem(GamePanel panel,int SizePow,int type){
+    public ChunkSystem(GamePanel panel,int SizePow,int type,EntityFactory entFact){
 
         this.type = type;
+        this.panel = panel;
 
+        setID();
+        
+        
+
+        //needs cleanup
         try {
             clearFile(new File("storage.txt"));
             System.out.println("File cleared successfully.");
@@ -106,20 +103,17 @@ public class ChunkSystem {
             e.printStackTrace();
         }
 
-        this.panel = panel;
-        
-        proceduralGen = new ProceduralGeneration();
-        entityFactory = new EntityFactory(proceduralGen, panel);
-        
+        entityFactory = entFact;
         //this should be lower. but not sure yet.
-        renderDistance = 17*panel.tileSize;
-        
-        if (SizePow<1){
-            SizePow = SIZEPOW;
-        }
-       
+        renderDistance = 20*panel.tileSize;
+
         parent = new TreeNode(this,-(int)Math.pow(2,SizePow)*panel.tileSize*8,-(int)Math.pow(2,SizePow)*panel.tileSize*8,(int)Math.pow(2,SizePow)*panel.tileSize*16,(int)Math.pow(2,SizePow)*panel.tileSize*16);
+       
     }
+
+    
+
+   
 
     private void setUpTest(){
         
@@ -293,17 +287,6 @@ public class ChunkSystem {
     }
     
 
-    
-    /**
-     * i have to figure out what kind of coords this is - worldX or row
-     * this is moved down to chunk. 
-     */
-    
-
-    
-    private void isLoaded(int worldX,int worldY){
-        //TODO
-    }
 
     public void writeALlInfo(){
         for (Chunk chunk:getAllChunksInSystem()){
@@ -489,7 +472,20 @@ public class ChunkSystem {
         }
     }
 
-    
+    private String generateNewID() {
+        //TODO
+        return ""+( new Random().nextInt());
+    }
 
-    
+    public String getID() {
+       return ID;
+    }
+
+    private void setID() {
+        if (type==0 ){
+            this.ID = generateNewID();
+        }else{
+            this.ID = ""+type;
+        }
+    }
 }

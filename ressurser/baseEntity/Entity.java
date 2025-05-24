@@ -14,6 +14,10 @@ public class Entity extends BaseEntity{
         super(panel, name, worldX, worldY, width, height, hitBoxWidth, hitBoxHeight, relativeXPLus, relativeYPlus);
     }
 
+    public Entity(GamePanel panel, String name, double worldX, double worldY, int width, int height, HitBox hitBox) {
+        super(panel, name, worldX, worldY, width, height, hitBox);
+    }
+
     public Rectangle getRectangle() {
         return new Rectangle((int)worldX,(int) worldY, width, height);
        

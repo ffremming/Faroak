@@ -26,7 +26,7 @@ public class TreeNode extends HitBox{
 
     final int CHUNKSIZE = 8;
 
-    boolean loaded;
+    boolean generated= false;
 
     private TreeNode [] children = new TreeNode[4];
 
@@ -165,8 +165,9 @@ public class TreeNode extends HitBox{
     }
     
 
-    private BufferedImage getImageOfEntities(){
-        return chunkS.proceduralGen.getImage(x,y,width,height);
+  
+    private BufferedImage getImageOfEntities() {
+        return chunkS.entityFactory.proceduralGen.getImage(x,y,width,height);
     }
 
     

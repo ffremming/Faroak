@@ -20,24 +20,28 @@ public class Playable extends Moveable{
             short hitBoxHeight, short relativeXPLus, short relativeYPlus) {
         super(panel, name, worldX, worldY, width, height, hitBoxWidth, hitBoxHeight, relativeXPLus, relativeYPlus);
 
-        inventory = new Inventory(null);
+        inventory = new Inventory(this);
         panel.userInterface.clear();
-        panel.userInterface.addContainer(inventory);
+        panel.userInterface.addInventory(inventory);
 
 
         Item hammer = new Item(panel,"hammer");
-        
+        Item block = new Item(panel,"block");
+        Item axe = new Item(panel,"axe");
         addItem(hammer);
         Item house = new Item(panel,"demoHouse");
         addItem(house);
+        addItem(block,300);
+        addItem(axe);
         equipped = inventory.getStack(inventory.getIndex());
        
     }
 
     public void update(){
         super.update();
-
+        panel.world.addObjectPreview(equipped);
         //updates for playable
+        //eSystem.out.println(inventory);
         
     }
 
@@ -66,12 +70,16 @@ public class Playable extends Moveable{
     public void addItem(Item item){
         inventory.addItem(item);
     }
+    public void addItem(Item item,int amount){
+        inventory.addStack(new Stack(panel,item,amount));
+    }
+
     public void addStack(Stack stack){
         inventory.addStack(stack);
     }
 
     public Item getItem(){
-        return equipped.getItem(0);
+        return equipped.getItem();
     }
 
 
@@ -95,7 +103,7 @@ public class Playable extends Moveable{
 
 
     public Stack getEquipped() {
-        return inventory.getStack(inventory.getIndex());
+        return inventory.getStack(27+inventory.getIndex());
     }
 
 

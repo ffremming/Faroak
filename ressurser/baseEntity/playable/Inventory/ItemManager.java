@@ -23,7 +23,9 @@ public class ItemManager {
 
     private void setupPR(){
         physicalRepresentations.put("hammer",new PlaceAble(panel, "demoHouse", 0, 0, 5*64, 5*64, 5*64, 64, 0, 4*64, true));
-   
+        physicalRepresentations.put("demoHouse",new PlaceAble(panel, "demoHouse", 0, 0, 3*64, 2*64, 64, 64, 0, 64, true));
+        physicalRepresentations.put("block",new PlaceAble(panel, "block", 0, 0, 64, 64, 64, 64, 0, 64, true));
+        
     }
 
     public BaseEntity getPhysicalRepresentation(String name) {

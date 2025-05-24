@@ -10,8 +10,8 @@ import ressurser.main.GamePanel;
 
 public class UserInferface extends Container{
 
-    PlayerInventory inventoryUI;
-    Container menu;
+    private PlayerInventory inventoryUI;
+    private Container menu;
 
 
     public UserInferface(GamePanel panel, int x, int y) {
@@ -21,11 +21,10 @@ public class UserInferface extends Container{
 
         
 
+        
 
-        System.out.println(width+height);
-
-        setBackground(new Color(0,0,0,0));
-        setForeGround(new Color(0,0,0,0));
+        setBackground(new Color(100,0,0,50));
+        setForeGround(new Color(0,0,0,100));
 
         
         
@@ -44,14 +43,22 @@ public class UserInferface extends Container{
         add(menu);
         menu.padding = 20;
         
-        
-        menu.visible = false;
+        menu.width = 200;
+        menu.height = 300;
+        menu.visible = true;
         menu.setBackground(Color.LIGHT_GRAY);
         menu.setForeGround(Color.DARK_GRAY);
+        menu.center(getCenter());
+
+        Container sideBar = new Container(panel,200,200);
+        menu.width = 200;
+        menu.height = 500;
+        sideBar.enabled = true;
+        sideBar.visible = true;
+        add(sideBar);
     }
 
-    public void addContainer(Inventory inventory){
-
+    public void addInventory(Inventory inventory){
 
         int rows = inventory.getSize()/9;
         int cols = 9;
@@ -61,7 +68,7 @@ public class UserInferface extends Container{
         inventoryUI.setPadding(20);
         add(inventoryUI);
         
-       
+        
         
         inventoryUI.center(getCenter());
         
@@ -145,7 +152,7 @@ public class UserInferface extends Container{
 
     public boolean isEnabled(){
         for (Component comp:content){
-            if(comp.enabled ||comp.visible){
+            if(comp.enabled){
                 return true;
             }
         }

@@ -212,8 +212,6 @@ public class Moveable extends Entity {
 
     public void addVelocity(Vector newVector){
         velocity.add(newVector);
-        System.out.println(newVector.x+","+newVector.y);
-        
     }
 
     public void setVelocity(Vector newVector){

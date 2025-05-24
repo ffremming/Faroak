@@ -16,8 +16,10 @@ public class Item extends BaseEntity {
     }
 
     public BaseEntity getPhysicalRepresentation() {
-        return physicalRepresentation;
+        return panel.itemM.getPhysicalRepresentation(name);
     }
+
+    
     
     
 }

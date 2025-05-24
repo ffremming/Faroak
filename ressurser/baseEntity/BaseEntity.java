@@ -70,6 +70,16 @@ public class BaseEntity {
         hitBoxHeight = 0;
     }
 
+    public BaseEntity(GamePanel panel2, String name, double worldX, double worldY, int width, int height,
+            HitBox hitBox) {
+            this.worldX = worldX;
+            this.worldY = worldY;
+            this.width = width;
+            this.height = height;
+            this.name = name;
+            this.hitBox = hitBox;
+        
+    }
     public BufferedImage getImage(){
         
         BufferedImage image = null;
@@ -154,6 +164,7 @@ public class BaseEntity {
         worldX = p.x-width/2;
         worldY = p.y-height/2;
         hitBox.updateCoords();
+
     }
     /**position with the absolute values at given point */
     public void position(Point p){
@@ -190,7 +201,7 @@ public class BaseEntity {
 
     @Override
     public String toString(){
-        return name+"\nsolid: " + solid+"\nanimated: "+animated + "\nlightSource: " + lightSource +
+        return "name: "+name+"\nsolid: " + solid+"\nanimated: "+animated + "\nlightSource: " + lightSource +
         "\ncoords: "+worldX+", "+worldY;
 
     }

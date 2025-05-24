@@ -12,12 +12,12 @@ public class Inventory {
 
 
     public Inventory(Playable player){
-        setUp();
+        setUp(player);
     }
 
-    private void setUp(){
+    private void setUp(Playable player){
         for (int i = 0;i<SIZE;i++)
-        inventory.add(new Stack(null, "empty"));
+        inventory.add(new Stack(player.panel, "empty"));
     }
 
     /** adds one item of given item , only takes in one item
@@ -26,14 +26,27 @@ public class Inventory {
     public boolean addItem(Item item){
         for (Stack stack:inventory){
           
-            if (stack.isEmpty()){
+            
                 if (stack.addItem(item)){
                     return true;
-                }
-            }
+                
+            } 
         }
         
         return false;
+    }
+
+    /** adds given amount of item , only takes in one item
+     * @returns amount left.
+    */
+    public int addItem(Item item,int amount){
+
+        for (int i = 0;i<amount;i++){
+            if (!(addItem(item))){
+                return amount -i;
+            } 
+        }
+        return 0;
     }
 
     /**adds one stack of given stack. Should be sorted and placed correctly
@@ -52,8 +65,8 @@ public class Inventory {
     }
 
     /**@returns one item of given item in given slot*/
-    public Item getItem(int index){
-        return inventory.get(index).getOneItem();
+    public Item getItem(){
+        return inventory.get(0).getOneItem();
     }
 
     public int getSize() {
@@ -72,7 +85,10 @@ public class Inventory {
     public String toString() {
         String s = "";
         for (Stack stack:inventory){
-            s+=stack.getName()+"\n";
+            if (stack != null){
+                s+=stack.getName()+"\n";
+            }
+            
         }
         return s;
     }

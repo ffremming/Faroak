@@ -106,14 +106,16 @@ public class GamePanel extends JPanel implements Runnable{
         mouse = new Mouse(this);
 
         UI = new Container(this,100,100);
+        /* 
+        UI.setBackground(Color.red);
         UI.padding = 50;
         UI.border = 30;
-        //UI.setVisible(true);
+        UI.setVisible(true);
         UI.add(new Button(this,"knapp"));
        
         UI.add(new Button(this,"knapp"));
         UI.add(new Button(this,"knapp"));
-
+        */
        
         userInterface = new UserInferface(this,0,0);
         userInterface.setVisible(true);
@@ -191,8 +193,10 @@ public void run() {
         // Update the game state
         Runnable updateThread = new Runnable() {
             public void run() {
-               
+                long before = System.nanoTime();
                 update(delta);
+                long after = System.nanoTime();
+                camera.addbackendPrintData("update time "+ ((after-before)/1000) +"microseconds");
               
               
             }
@@ -206,8 +210,10 @@ public void run() {
         }
 
         // Repaint the game
+        long before = System.nanoTime();
         repaint();
-
+        long after = System.nanoTime();
+        camera.addbackendPrintData("repaint time "+ ((after-before)/1000) +"microseconds");
         // If one second has passed, reset the FPS counter, updates Printable values
         if (lastFpsTime >= 1000000000) {
 
@@ -232,6 +238,7 @@ public void run() {
      * at 0.1 ms regularly, and spikes at 5 ms every update on workingMemory (every second)
      */
     public void update(double delta){
+        
         
         enviromentM.updateTicks();
         inputHandlingSystem.update(delta);
