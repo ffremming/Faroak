@@ -41,10 +41,8 @@ public final class EntityVisibility {
         HitBox camHB = camera.getImageHitbox();
         for (Entity e : candidates) {
             if (e.getImageHitbox().collision(camHB) || e.getHitBox().collision(camHB)) {
-                // Currently keeps every candidate — empty body retained so future
-                // culling can be added inside the test without changing call sites.
+                out.add(e);
             }
-            out.add(e);
         }
         return out;
     }
@@ -59,8 +57,9 @@ public final class EntityVisibility {
     }
 
     private void collectVisibleTiles(Chunk chunk, HitBox camHB, ArrayList<BaseEntity> sink) {
+        if (!chunk.collision(camHB)) return;
         for (int i = 0; i < chunk.tiles.length; i++) {
-            for (int j = 0; j < chunk.tiles.length; j++) {
+            for (int j = 0; j < chunk.tiles[i].length; j++) {
                 if (chunk.tiles[i][j] != null
                     && chunk.tiles[i][j].getHitBox().collision(camHB)) {
                     sink.add(chunk.tiles[i][j]);

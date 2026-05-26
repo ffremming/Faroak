@@ -16,6 +16,7 @@ import resources.presentation.camera.Camera;
 import resources.presentation.image.ImageContainer;
 import resources.presentation.lighting.LightField;
 import resources.presentation.ui.UserInterface;
+import resources.world.DimensionService;
 import resources.world.MapHandler;
 import resources.world.WorldRuntime;
 
@@ -40,6 +41,7 @@ public interface GameContext {
     ItemManager items();
     EnvironmentManager environment();
     MapHandler mapHandler();
+    DimensionService dimensions();
 
     // Player + actors
     Playable player();

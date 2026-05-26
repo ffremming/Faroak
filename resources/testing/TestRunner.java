@@ -3,9 +3,17 @@ package resources.testing;
 import java.util.ArrayList;
 import java.util.List;
 
+import resources.testing.probes.AIProbe;
 import resources.testing.probes.AnimationFrameProbe;
+import resources.testing.probes.DimensionProbe;
+import resources.testing.probes.GrowableProbe;
+import resources.testing.probes.HarvestableProbe;
+import resources.testing.probes.LightingProbe;
 import resources.testing.probes.MovementPerfProbe;
+import resources.testing.probes.PersistenceProbe;
+import resources.testing.probes.RenderPerfProbe;
 import resources.testing.probes.SimulatePerfProbe;
+import resources.testing.probes.TerrainSpeedProbe;
 import resources.testing.probes.TileBorderProbe;
 
 /**
@@ -32,8 +40,17 @@ public final class TestRunner {
         List<Probe> probes = new ArrayList<>();
         probes.add(new TileBorderProbe());
         probes.add(new AnimationFrameProbe());
+        probes.add(new LightingProbe());
+        probes.add(new HarvestableProbe());
+        probes.add(new GrowableProbe());
+        probes.add(new AIProbe());
+        probes.add(new TerrainSpeedProbe());
+        probes.add(new PersistenceProbe());
         probes.add(new SimulatePerfProbe());
         probes.add(new MovementPerfProbe());
+        probes.add(new RenderPerfProbe());
+        // Run last — swaps chunk systems and perturbs world state.
+        probes.add(new DimensionProbe());
 
         int failures = 0;
         try (TestHarness harness = new TestHarness()) {

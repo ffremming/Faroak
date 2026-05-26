@@ -44,7 +44,11 @@ public class Keys implements KeyListener{
         
         if (code == KeyEvent.VK_SPACE){
             panel.player.interact();
-            
+
+        }
+
+        if (code == KeyEvent.VK_F){
+            panel.player.attack();
         }
 
         if (code == KeyEvent.VK_T){

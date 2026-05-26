@@ -1,6 +1,8 @@
 package resources.generation.factory;
 
 import resources.domain.entity.BaseEntity;
+import resources.domain.entity.component.HarvestableComponent;
+import resources.domain.inventory.HarvestRegistry;
 import resources.domain.object.GameObject;
 import resources.domain.tile.Tile;
 import resources.app.GamePanel;
@@ -55,12 +57,16 @@ public class EntityFactory implements resources.generation.WorldGenerator {
         int x = worldX + jitter(worldX, worldY, SALT_JITTER_X, panel.tileSize - rule.width);
         int y = worldY + jitter(worldX, worldY, SALT_JITTER_Y, panel.tileSize - rule.height);
 
-        return new GameObject(panel, rule.objectName,
+        GameObject obj = new GameObject(panel, rule.objectName,
             x, y,
             rule.width, rule.height,
             rule.hitBoxWidth, rule.hitBoxHeight,
             0, 0,
             rule.solid);
+
+        HarvestableComponent harvest = HarvestRegistry.componentFor(rule.objectName);
+        if (harvest != null) obj.components().add(harvest);
+        return obj;
     }
 
     /**

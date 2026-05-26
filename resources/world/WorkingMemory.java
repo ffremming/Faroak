@@ -27,9 +27,9 @@ public class WorkingMemory implements WorldRuntime {
 
     private final GamePanel panel;
     private final EntityIndex       index       = new EntityIndex();
-    private final ChunkSystem       chunkSystem;
+    private ChunkSystem             chunkSystem;
     private final EntityVisibility  visibility;
-    private final WorldInteraction  interaction;
+    private WorldInteraction        interaction;
 
     public WorkingMemory(GamePanel panel) {
         this.panel = panel;
@@ -39,6 +39,22 @@ public class WorkingMemory implements WorldRuntime {
         this.visibility  = new EntityVisibility(index);
         this.interaction = new WorldInteraction(index, chunkSystem, panel);
     }
+
+    /**
+     * Swap the active chunk system. Used by the dimension switcher when the
+     * player steps through a portal — flushes the index so old-dimension
+     * entities/tiles are dropped, then re-runs the initial chunk load.
+     */
+    public void setChunkSystem(ChunkSystem newSystem) {
+        this.chunkSystem  = newSystem;
+        this.interaction  = new WorldInteraction(index, chunkSystem, panel);
+        index.setEntities(new ArrayList<>());
+        index.setTiles(new ArrayList<>());
+        index.setChunks(new ArrayList<>());
+        initial();
+    }
+
+    public ChunkSystem chunkSystem() { return chunkSystem; }
 
     // ---- lifecycle ----
 

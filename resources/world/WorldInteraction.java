@@ -23,6 +23,8 @@ public final class WorldInteraction {
     private final GamePanel panel;
 
     private BaseEntity hoveredEntity;
+    private GameObject previewObject;
+    private String previewSourceName;
 
     public WorldInteraction(EntityIndex index, ChunkSystem chunkSystem, GamePanel panel) {
         this.index = index;
@@ -85,22 +87,46 @@ public final class WorldInteraction {
         if (item == null) return false;
         BaseEntity gameObject = ((Item) item).getPhysicalRepresentation();
         if (!(gameObject instanceof GameObject)) return false;
-        GameObject pr = (GameObject) gameObject;
-        pr.setWorldX(panel.mouse.getMouseWorldX() - pr.getWidth()  / 2);
-        pr.setWorldY(panel.mouse.getMouseWorldY() - pr.getHeight() / 2);
-        if (solidCollision(pr.getHitBox())) return false;
-        placeEntity(pr);
+        GameObject source = (GameObject) gameObject;
+        GameObject placed = source.placementCandidate(panel);
+        placed.setWorldX(panel.mouse.getMouseWorldX() - placed.getWidth()  / 2);
+        placed.setWorldY(panel.mouse.getMouseWorldY() - placed.getHeight() / 2);
+        if (solidCollision(placed.getHitBox())) return false;
+        placeEntity(placed);
         equipped.removeOneItem();
         return true;
     }
 
     public void addObjectPreview(Stack equipped) {
-        if (equipped.getItem() == null) return;
-        GameObject source = (GameObject) equipped.getItem().getPhysicalRepresentation();
-        if (source == null) return;
-        GameObject preview = source.getPreviewObject(panel);
-        panel.camera.setPreviewObject(preview);
-        placeEntity(preview);
+        if (equipped == null || equipped.getItem() == null) {
+            clearPreviewObject();
+            return;
+        }
+        BaseEntity representation = equipped.getItem().getPhysicalRepresentation();
+        if (!(representation instanceof GameObject)) {
+            clearPreviewObject();
+            return;
+        }
+        GameObject source = (GameObject) representation;
+        refreshPreviewObject(source);
+
+        previewObject.setWorldX(panel.mouse.getMouseWorldX() - previewObject.getWidth() / 2);
+        previewObject.setWorldY(panel.mouse.getMouseWorldY() - previewObject.getHeight() / 2);
+        if (panel.camera != null) panel.camera.setPreviewObject(previewObject);
+    }
+
+    private void refreshPreviewObject(GameObject source) {
+        String sourceName = source.getName();
+        if (previewObject != null && sourceName.equals(previewSourceName)) return;
+        clearPreviewObject();
+        previewObject = source.getPreviewObject(panel);
+        previewSourceName = sourceName;
+    }
+
+    private void clearPreviewObject() {
+        previewObject = null;
+        previewSourceName = null;
+        if (panel.camera != null) panel.camera.setPreviewObject(null);
     }
 
     public void setHoveredEntity(int screenX, int screenY) {

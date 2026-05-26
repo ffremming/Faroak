@@ -22,6 +22,7 @@ import resources.presentation.image.ImageContainer;
 import resources.presentation.lighting.LightField;
 import resources.presentation.ui.Container;
 import resources.presentation.ui.UserInterface;
+import resources.world.DimensionService;
 import resources.world.MapHandler;
 import resources.world.WorkingMemory;
 import resources.world.WorldRuntime;
@@ -60,9 +61,11 @@ public class GamePanel extends JPanel implements GameContext {
 
     // Cross-cutting kernel
     private final EventBus         eventBus  = new EventBus();
-    private final GameClock        clock     = new GameClock();
+    private final GameClock        clock     = new GameClock(
+        GameClock.DEFAULT_TICKS_PER_DAY, GameClock.NOON_TICK_OF_DAY);
     private final AnimationLibrary animations = new AnimationLibrary();
     private final LightField       lighting   = new LightField();
+    private DimensionService       dimensions;
 
     public final JFrame frame;
     final boolean newGame;
@@ -154,6 +157,8 @@ public class GamePanel extends JPanel implements GameContext {
     @Override public ItemManager         items()         { return itemM; }
     @Override public EnvironmentManager  environment()   { return environmentM; }
     @Override public MapHandler          mapHandler()    { return mapH; }
+    @Override public DimensionService    dimensions()    { return dimensions; }
+    public void setDimensions(DimensionService d)        { this.dimensions = d; }
     @Override public Playable            player()        { return player; }
     @Override public Camera              camera()        { return camera; }
     @Override public ImageContainer      images()        { return imageContainer; }

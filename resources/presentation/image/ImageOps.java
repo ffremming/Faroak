@@ -62,17 +62,17 @@ public final class ImageOps {
 
     /** Knock alpha down to 30% — used for translucent placement previews. */
     public static BufferedImage reduceTransparency(BufferedImage src) {
-        BufferedImage out = new BufferedImage(src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = out.createGraphics();
-        g.drawImage(src, 0, 0, null);
-        g.dispose();
-        for (int i = 0; i < out.getWidth(); i++) {
-            for (int j = 0; j < out.getHeight(); j++) {
-                int argb = out.getRGB(i, j);
-                int reducedAlpha = (int) (((argb >> 24) & 0xFF) * 0.3);
-                out.setRGB(i, j, (reducedAlpha << 24) | (argb & 0x00FFFFFF));
-            }
+        int width = src.getWidth();
+        int height = src.getHeight();
+        int[] pixels = src.getRGB(0, 0, width, height, null, 0, width);
+        for (int i = 0; i < pixels.length; i++) {
+            int argb = pixels[i];
+            int alpha = (argb >>> 24) & 0xFF;
+            int reducedAlpha = (alpha * 30) / 100;
+            pixels[i] = (reducedAlpha << 24) | (argb & 0x00FFFFFF);
         }
+        BufferedImage out = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        out.setRGB(0, 0, width, height, pixels, 0, width);
         return out;
     }
 

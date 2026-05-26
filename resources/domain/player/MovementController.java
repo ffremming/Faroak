@@ -1,5 +1,7 @@
 package resources.domain.player;
 
+import resources.domain.entity.component.TerrainSpeedComponent;
+import resources.domain.tile.Tile;
 import resources.geometry.HitBox;
 import resources.geometry.Vector;
 
@@ -34,11 +36,18 @@ public final class MovementController {
     }
 
     private Vector nextStep() {
-        double speed = owner.getMovementSpeed();
+        double speed = owner.getMovementSpeed() * terrainMultiplier();
         if (owner.path.isEmpty()) {
             return owner.getVelocity().transfer(speed * 10);
         }
         return owner.path.get(0).transfer(speed * 2);
+    }
+
+    private double terrainMultiplier() {
+        TerrainSpeedComponent comp = owner.getComponent(TerrainSpeedComponent.class);
+        if (comp == null) return 1.0;
+        Tile tile = owner.panel.world.getTile(owner.getPoint());
+        return comp.multiplierFor(tile == null ? null : tile.getName());
     }
 
     private void consumeReachedWaypoint() {

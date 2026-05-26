@@ -4,7 +4,6 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 import resources.app.GamePanel;
@@ -12,6 +11,7 @@ import resources.domain.entity.BaseEntity;
 import resources.domain.entity.PrimitiveEntity;
 import resources.domain.object.GameObject;
 import resources.geometry.HitBox;
+import resources.presentation.lighting.LightingPass;
 
 /**
  * Viewport + follow target. Owns nothing about how the scene is painted —
@@ -23,6 +23,8 @@ import resources.geometry.HitBox;
  * rendering lives in the renderers.
  */
 public class Camera extends PrimitiveEntity {
+
+    private static final Font OVERLAY_FONT = new Font("Arial", Font.PLAIN, 7);
 
     public  int  FPS = 60;
     public  long splitTime    = 1000000000L / FPS;
@@ -42,6 +44,7 @@ public class Camera extends PrimitiveEntity {
 
     private final CameraSceneRenderer renderer;
     private final CameraDebugOverlay  debug;
+    private final LightingPass        lighting;
 
     public Camera(GamePanel panel, String name, int worldX, int worldY, short width, short height) {
         super(panel, name, worldX, worldY, (short) 50, (short) 50);
@@ -50,6 +53,7 @@ public class Camera extends PrimitiveEntity {
         this.visibilityArea = new HitBox(0, 0, width + 500, height + 500);
         this.renderer = new CameraSceneRenderer(panel, this);
         this.debug    = new CameraDebugOverlay(panel, this);
+        this.lighting = new LightingPass(panel.lighting(), panel.clock());
         follow(panel.player);
     }
 
@@ -63,6 +67,7 @@ public class Camera extends PrimitiveEntity {
         this.visibilityArea = new HitBox(0, 0, width + 500, height + 500);
         this.renderer = new CameraSceneRenderer(panel, this);
         this.debug    = new CameraDebugOverlay(panel, this);
+        this.lighting = new LightingPass(panel.lighting(), panel.clock());
     }
 
     // ---- entry point ----
@@ -73,28 +78,28 @@ public class Camera extends PrimitiveEntity {
 
         long startTime = System.nanoTime();
 
-        BufferedImage frame = new BufferedImage(panel.getWidth(), panel.getHeight(), BufferedImage.TYPE_INT_RGB);
-        Graphics2D g2 = frame.createGraphics();
-        g2.setFont(new Font("Arial", Font.PLAIN, 7));
+        Graphics2D g2 = (Graphics2D) g;
+        g2.setFont(OVERLAY_FONT);
 
         renderer.drawScene(g2);
+        if (previewObject != null) renderer.drawRelative(g2, previewObject);
+        lighting.apply(g2, this, panel.getWidth(), panel.getHeight());
         panel.userInterface.draw(g2);
 
         long endTime = System.nanoTime();
         drawDebug(g2, startTime, endTime);
-
-        g.drawImage(frame, 0, 0, null);
-        g2.dispose();
-
-        panel.world.removeEntity(previewObject);
     }
 
     private void drawDebug(Graphics2D g2, long startTime, long endTime) {
-        if (testData) debug.drawChunks(g2);
-        debug.writeHoveredInformation(g2);
-        recordFrameStats(startTime, endTime);
+        if (testData) {
+            debug.drawChunks(g2);
+            debug.writeHoveredInformation(g2);
+            recordFrameStats(startTime, endTime);
+            debug.drawBackEndData(g2, backEndData);
+        } else {
+            backEndData.clear();
+        }
         debug.drawHoveredEntityOutline(g2);
-        debug.drawBackEndData(g2, backEndData);
     }
 
     private void recordFrameStats(long startTime, long endTime) {

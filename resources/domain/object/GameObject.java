@@ -1,88 +1,66 @@
 package resources.domain.object;
 
-import resources.app.GamePanel;
-import resources.domain.entity.BaseEntity;
-import resources.domain.entity.Entity;
-import resources.geometry.HitBox;
-import resources.geometry.Vector;
-import resources.domain.player.Playable;
-import resources.domain.inventory.Item;
-import resources.domain.inventory.Stack;
-
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
-import resources.domain.entity.Entity;
-import resources.geometry.HitBox;
-import resources.domain.player.Playable;
 import resources.app.GamePanel;
+import resources.domain.entity.Entity;
+import resources.domain.player.Playable;
+import resources.geometry.HitBox;
 
-public class GameObject extends Entity{
+public class GameObject extends Entity {
 
-    
+    private static final String PREVIEW_SUFFIX = ",preview";
 
-    public GameObject(GamePanel panel, String name, int worldX, int worldY, int width, int height, int hitBoxWidth,
-            int hitBoxHeight, int i, int j,boolean solid) {
-        super(panel, name, worldX, worldY, width, height, hitBoxWidth, hitBoxHeight, i, j);
+    public GameObject(GamePanel panel, String name, int worldX, int worldY, int width, int height,
+                      int hitBoxWidth, int hitBoxHeight, int relativeXPlus, int relativeYPlus, boolean solid) {
+        super(panel, name, worldX, worldY, width, height, hitBoxWidth, hitBoxHeight, relativeXPlus, relativeYPlus);
         this.solid = solid;
-        if (this.panel== null){System.out.println(name);}
         getImage();
     }
 
-    public GameObject(GamePanel panel, String name, double worldX, double worldY, int width, int height, HitBox hitBox,
-            boolean solid) {
-                super(panel, name, worldX, worldY, width, height, hitBox);
-                this.solid = solid;
-                this.panel = panel;
-                if (this.panel== null){System.out.println(name+","+2);}
-                getImage();
-    }
-
-    /**used for drawing */
-    @Override 
-    public ArrayList<BufferedImage> getImages(){
-        ArrayList<BufferedImage> arr = new ArrayList<>();
-
-        if (panel.player != null){
-            if (panel.player.getRectangle().intersects(getRectangle()) && images.size() > 0){
-                if(panel.imageContainer.checkIntersection(this,panel.player )){
-                   
-
-                    //arr.add( panel.imageContainer.reduceTransparency(images.get(animationIndex)));
-                    //return arr;
-                }
-               
-            }
-            
-        }
-        
-        arr.add(images.get(animationIndex));
-        return arr;
+    public GameObject(GamePanel panel, String name, double worldX, double worldY, int width, int height,
+                      HitBox hitBox, boolean solid) {
+        super(panel, name, worldX, worldY, width, height, hitBox);
+        this.solid = solid;
+        getImage();
     }
 
     @Override
-    /**used for getting the images from image container */
-    public BufferedImage getImage(){
-        
-        BufferedImage image = null;
+    public ArrayList<BufferedImage> getImages() {
+        ArrayList<BufferedImage> out = new ArrayList<>(1);
+        if (!images.isEmpty()) out.add(images.get(animationIndex));
+        return out;
+    }
+
+    @Override
+    public BufferedImage getImage() {
         try {
-            
             images = panel.imageContainer.getObjectImages(name);
-        } catch (Exception e) {
-  
-            e.printStackTrace();
+        } catch (RuntimeException ex) {
+            ex.printStackTrace();
         }
-        return image;
+        return images.isEmpty() ? null : images.get(0);
     }
 
-    public void interact(Playable playable) {
-       
+    public void interact(Playable playable) {}
+
+    /** Lightweight clone used when placing an item into the world. */
+    public GameObject placementCandidate(GamePanel targetPanel) {
+        return cloneWithName(targetPanel, name);
     }
 
-
-    public GameObject getPreviewObject(GamePanel panel2){
-       
-        return new GameObject(panel2,name+",preview",worldX,worldX,width,height,getHitBox(),solid);
+    /** Lightweight clone with preview sprites. */
+    public GameObject getPreviewObject(GamePanel targetPanel) {
+        return cloneWithName(targetPanel, name + PREVIEW_SUFFIX);
     }
-    
+
+    private GameObject cloneWithName(GamePanel targetPanel, String objectName) {
+        int hitW = getHitBox().width;
+        int hitH = getHitBox().height;
+        int relX = getHitBox().getWorldX() - (int) getWorldX();
+        int relY = getHitBox().getWorldY() - (int) getWorldY();
+        return new GameObject(targetPanel, objectName, (int) getWorldX(), (int) getWorldY(),
+            getWidth(), getHeight(), hitW, hitH, relX, relY, solid);
+    }
 }

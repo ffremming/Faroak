@@ -15,12 +15,24 @@ package resources.core.time;
 public final class GameClock {
 
     public static final long DEFAULT_TICKS_PER_DAY = 36_000L;
+    public static final long NOON_TICK_OF_DAY      = DEFAULT_TICKS_PER_DAY / 4L;
 
     private final long ticksPerDay;
     private long ticks;
 
-    public GameClock()                    { this(DEFAULT_TICKS_PER_DAY); }
-    public GameClock(long ticksPerDay)    { this.ticksPerDay = ticksPerDay; }
+    public GameClock() {
+        this(DEFAULT_TICKS_PER_DAY, 0L);
+    }
+
+    public GameClock(long ticksPerDay) {
+        this(ticksPerDay, 0L);
+    }
+
+    public GameClock(long ticksPerDay, long initialTicks) {
+        if (ticksPerDay <= 0) throw new IllegalArgumentException("ticksPerDay must be > 0");
+        this.ticksPerDay = ticksPerDay;
+        this.ticks = Math.max(0L, initialTicks);
+    }
 
     /** Advance one logical tick. Called once per simulation step. */
     public void tick() { ticks++; }

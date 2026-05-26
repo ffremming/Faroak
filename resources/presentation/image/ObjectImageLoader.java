@@ -21,6 +21,7 @@ public final class ObjectImageLoader {
     private static final String OBJECTS_DIR  = "resources/images/objects/";
     private static final String ITEMS_DIR    = "resources/images/items/";
     private static final String PLAYABLE_DIR = "resources/images/playable/";
+    private static final String PREVIEW_SUFFIX = ",preview";
 
     private final Map<String, ArrayList<BufferedImage>> objectCache;
     private final Map<String, BufferedImage>            itemCache;
@@ -36,16 +37,25 @@ public final class ObjectImageLoader {
     public ArrayList<BufferedImage> objectImages(String name) {
         ArrayList<BufferedImage> cached = objectCache.get(name);
         if (cached != null) return cached;
-        if (name.contains(",")) return previewFor(name);
+        if (isPreviewVariant(name)) return previewFor(name);
         return loadObjectFolder(name);
     }
 
-    private ArrayList<BufferedImage> previewFor(String name) {
-        String original = name.split(",")[0];
+    private ArrayList<BufferedImage> previewFor(String previewName) {
+        String original = previewSourceName(previewName);
         ArrayList<BufferedImage> source = objectImages(original);
-        ArrayList<BufferedImage> faded = new ArrayList<>();
+        ArrayList<BufferedImage> faded = new ArrayList<>(source.size());
         for (BufferedImage img : source) faded.add(ImageOps.reduceTransparency(img));
+        objectCache.put(previewName, faded);
         return faded;
+    }
+
+    private static boolean isPreviewVariant(String name) {
+        return name.endsWith(PREVIEW_SUFFIX);
+    }
+
+    private static String previewSourceName(String previewName) {
+        return previewName.substring(0, previewName.length() - PREVIEW_SUFFIX.length());
     }
 
     private ArrayList<BufferedImage> loadObjectFolder(String name) {
