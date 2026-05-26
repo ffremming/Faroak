@@ -71,6 +71,9 @@ public class Tile extends BaseEntity {
     public boolean isCliff() { return cliff; }
     public void setAnimated(boolean v) { animated = v; }
 
+    /** Toggle blocking. Used by generators that build solid wall tiles. */
+    public void setSolid(boolean v) { this.solid = v; }
+
     // ---- animation ----
 
     @Override

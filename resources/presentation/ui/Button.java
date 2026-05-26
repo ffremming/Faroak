@@ -16,8 +16,9 @@ import resources.app.GamePanel;
 public class Button extends Component{
     String text;
     int pressValue = 0;
-    
-    
+    private Runnable action;
+
+
     public Button(GamePanel panel,String text) {
         super(panel);
         this.text = text;
@@ -28,13 +29,19 @@ public class Button extends Component{
         foreground = Color.white;
         background = Color.red;
     }
-   
+
     // need image - 2 or three versions per
 
     //neds to have interaction
 
+    /** Set the action to run when the button is clicked. */
+    public void onClick(Runnable action) {
+        this.action = action;
+    }
+
     public void press(){
         pressValue = 10;
+        if (action != null) action.run();
     }
 
     public void hover(){

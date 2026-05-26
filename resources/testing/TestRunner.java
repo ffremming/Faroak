@@ -5,16 +5,36 @@ import java.util.List;
 
 import resources.testing.probes.AIProbe;
 import resources.testing.probes.AnimationFrameProbe;
+import resources.testing.probes.BeachWaterTransitionProbe;
+import resources.testing.probes.BoatProbe;
+import resources.testing.probes.CaveEntryProbe;
+import resources.testing.probes.CaveProbe;
+import resources.testing.probes.CaveWallSpriteProbe;
+import resources.testing.probes.CaveWallVariantProbe;
+import resources.testing.probes.PlayerVisibleAfterPortalProbe;
+import resources.testing.probes.ChunkPersistenceProbe;
 import resources.testing.probes.DimensionProbe;
+import resources.testing.probes.FarmingProbe;
 import resources.testing.probes.GrowableProbe;
 import resources.testing.probes.HarvestableProbe;
+import resources.testing.probes.HealthProbe;
+import resources.testing.probes.InteriorProbe;
 import resources.testing.probes.LightingProbe;
+import resources.testing.probes.MobSpawnProbe;
 import resources.testing.probes.MovementPerfProbe;
+import resources.testing.probes.MultiplayerAuthorityProbe;
+import resources.testing.probes.MultiplayerPersistenceProbe;
+import resources.testing.probes.MultiplayerTenClientProbe;
+import resources.testing.probes.MultiplayerWorldReplicationProbe;
 import resources.testing.probes.PersistenceProbe;
+import resources.testing.probes.PlacementPreviewProbe;
 import resources.testing.probes.RenderPerfProbe;
 import resources.testing.probes.SimulatePerfProbe;
 import resources.testing.probes.TerrainSpeedProbe;
 import resources.testing.probes.TileBorderProbe;
+import resources.testing.probes.ProtocolCodecProbe;
+import resources.testing.probes.WebSocketGatewayProbe;
+import resources.testing.probes.WebSocketTwoClientMovementProbe;
 
 /**
  * Entry point for the test harness. Boots a {@link TestHarness}, runs each
@@ -39,6 +59,7 @@ public final class TestRunner {
 
         List<Probe> probes = new ArrayList<>();
         probes.add(new TileBorderProbe());
+        probes.add(new BeachWaterTransitionProbe());
         probes.add(new AnimationFrameProbe());
         probes.add(new LightingProbe());
         probes.add(new HarvestableProbe());
@@ -49,6 +70,25 @@ public final class TestRunner {
         probes.add(new SimulatePerfProbe());
         probes.add(new MovementPerfProbe());
         probes.add(new RenderPerfProbe());
+        probes.add(new ProtocolCodecProbe());
+        probes.add(new MultiplayerAuthorityProbe());
+        probes.add(new MultiplayerTenClientProbe());
+        probes.add(new MultiplayerPersistenceProbe());
+        probes.add(new MultiplayerWorldReplicationProbe());
+        probes.add(new WebSocketGatewayProbe());
+        probes.add(new WebSocketTwoClientMovementProbe());
+        probes.add(new ChunkPersistenceProbe());
+        probes.add(new HealthProbe());
+        probes.add(new FarmingProbe());
+        probes.add(new MobSpawnProbe());
+        probes.add(new PlacementPreviewProbe());
+        probes.add(new BoatProbe());
+        probes.add(new CaveEntryProbe());
+        probes.add(new CaveProbe());
+        probes.add(new CaveWallVariantProbe());
+        probes.add(new CaveWallSpriteProbe());
+        probes.add(new PlayerVisibleAfterPortalProbe());
+        probes.add(new InteriorProbe());
         // Run last — swaps chunk systems and perturbs world state.
         probes.add(new DimensionProbe());
 

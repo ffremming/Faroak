@@ -47,11 +47,22 @@ public final class EntitySorter {
         }
     }
 
+    /**
+     * Sort key is hitbox BOTTOM (y + height). Painter's algorithm wants the
+     * lower-on-screen entity drawn last so it correctly overlaps anything
+     * standing behind it. Sorting by top-y caused moving entities (whose
+     * hitboxes are typically smaller than the sprite) to render behind objects
+     * they were visually in front of.
+     */
+    private static double sortKey(Entity e) {
+        return e.getHitBox().getWorldY() + e.getHitBox().height;
+    }
+
     private static int partition(ArrayList<Entity> list, int low, int high) {
-        double pivotY = list.get(high).getHitBox().getWorldY();
+        double pivotY = sortKey(list.get(high));
         int i = low - 1;
         for (int j = low; j < high; j++) {
-            if (list.get(j).getHitBox().getWorldY() < pivotY) {
+            if (sortKey(list.get(j)) < pivotY) {
                 i++;
                 Collections.swap(list, i, j);
             }
@@ -63,9 +74,9 @@ public final class EntitySorter {
     private static void insertionSort(ArrayList<Entity> list, int low, int high) {
         for (int i = low + 1; i <= high; i++) {
             Entity key = list.get(i);
-            double keyY = key.getHitBox().getWorldY();
+            double keyY = sortKey(key);
             int j = i - 1;
-            while (j >= low && list.get(j).getHitBox().getWorldY() > keyY) {
+            while (j >= low && sortKey(list.get(j)) > keyY) {
                 list.set(j + 1, list.get(j));
                 j--;
             }

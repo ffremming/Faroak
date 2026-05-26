@@ -5,10 +5,13 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
+import java.awt.FontMetrics;
+
 import resources.app.GamePanel;
 import resources.domain.entity.BaseEntity;
 import resources.domain.entity.Entity;
 import resources.domain.entity.component.AnimationComponent;
+import resources.domain.entity.component.LabelComponent;
 import resources.domain.tile.Tile;
 
 /**
@@ -55,7 +58,7 @@ public final class CameraSceneRenderer {
 
         AnimationComponent anim = entity.getComponent(AnimationComponent.class);
         BufferedImage animFrame = anim != null ? anim.currentImage() : null;
-        if (animFrame != null) {
+        if (animFrame != null && !(entity instanceof Tile)) {
             g2.drawImage(animFrame, x, y, entity.getWidth(), entity.getHeight(), null);
             return;
         }
@@ -63,7 +66,50 @@ public final class CameraSceneRenderer {
         for (BufferedImage img : entity.getImages()) {
             g2.drawImage(img, x, y, entity.getWidth(), entity.getHeight(), null);
         }
+
+        LabelComponent label = entity.getComponent(LabelComponent.class);
+        if (label != null && label.text() != null && !label.text().isEmpty()) {
+            drawLabel(g2, label, x, y, entity.getWidth());
+        }
     }
+
+    /** Pill-shaped text label sitting just above the entity's top edge. */
+    private void drawLabel(Graphics2D g2, LabelComponent label, int x, int y, int entityW) {
+        FontMetrics fm = g2.getFontMetrics();
+        String text = label.text();
+        int textW = fm.stringWidth(text);
+        int textH = fm.getHeight();
+        int padX  = 4;
+        int padY  = 2;
+        int boxW  = textW + padX * 2;
+        int boxH  = textH + padY;
+        int boxX  = x + (entityW - boxW) / 2;
+        int boxY  = y - boxH - 2;
+        g2.setColor(label.background());
+        g2.fillRoundRect(boxX, boxY, boxW, boxH, 6, 6);
+        g2.setColor(label.foreground());
+        g2.drawString(text, boxX + padX, boxY + textH - padY);
+    }
+
+    /**
+     * Tint the bounding rectangle of a placement-preview entity red to signal
+     * an invalid placement. Drawn over the existing translucent preview sprite,
+     * so the player still sees what they're trying to place but knows it can't
+     * land there.
+     */
+    public void drawInvalidPreviewOverlay(Graphics2D g2, BaseEntity entity) {
+        int camX = (int) camera.getWorldX();
+        int camY = (int) camera.getWorldY();
+        int x = (int) (entity.getWorldX() - camX);
+        int y = (int) (entity.getWorldY() - camY);
+        g2.setColor(INVALID_TINT);
+        g2.fillRect(x, y, entity.getWidth(), entity.getHeight());
+        g2.setColor(INVALID_BORDER);
+        g2.drawRect(x, y, entity.getWidth(), entity.getHeight());
+    }
+
+    private static final Color INVALID_TINT   = new Color(255, 60, 60, 90);
+    private static final Color INVALID_BORDER = new Color(255, 30, 30, 200);
 
     private void drawShadow(Graphics2D g2, BaseEntity entity, int camX, int camY) {
         int shadowX = entity.getHitBox().x - camX - 5;

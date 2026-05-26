@@ -30,7 +30,13 @@ public class Moveable extends Entity {
     final ArrayList<Vector> path   = new ArrayList<>();
 
     private double movementSpeed = 1;
-    private int    directionIndex = 0;
+    // Direction index conventions (see ANIM_FRAME_* constants above):
+    //   0 = facing up, 1 = right, 2 = down, 3 = left.
+    // Default to "down" so a freshly-spawned, never-moved player has their
+    // interaction box centered on the area in front of them rather than
+    // pointing skyward — case 0 in computeInteractionHitBox pushes the box
+    // 50 px upward, which surprised users on the first SPACE press.
+    private int    directionIndex = 2;
     private HitBox interactionHitBox;
 
     private final MovementController movement = new MovementController(this);

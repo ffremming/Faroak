@@ -12,6 +12,8 @@ import resources.app.GamePanel;
 import resources.domain.entity.BaseEntity;
 import resources.domain.tile.Tile;
 import resources.generation.factory.EntityFactory;
+import resources.world.persistence.ChunkSerializer;
+import resources.world.persistence.InMemoryChunkSerializer;
 
 /**
  * Root of one dimension's chunk quadtree. Owns the entity factory and the
@@ -37,6 +39,7 @@ public class ChunkSystem {
     protected boolean generate = true;
 
     private final ChunkExpander expander = new ChunkExpander(this);
+    private ChunkSerializer serializer = new InMemoryChunkSerializer();
 
     public ChunkSystem(GamePanel panel, int sizePow, int type, EntityFactory entFact) {
         this.panel         = panel;
@@ -81,12 +84,19 @@ public class ChunkSystem {
 
     // ---- entity mutation ----
 
-    public void addEntity(BaseEntity entity) {
+    /**
+     * Insert {@code entity} into the chunk tree. Returns {@code true} on
+     * success; {@code false} if the target tile is outside the currently
+     * loaded chunk bounds (caller is responsible for retrying after the
+     * world expands, or rolling back any item consumption that anticipated
+     * placement).
+     */
+    public boolean addEntity(BaseEntity entity) {
         try {
             parent.addEntity(entity);
+            return true;
         } catch (OutOfChunkBounds ignored) {
-            // Out-of-bounds entities are silently dropped; expansion should
-            // catch this before we get here.
+            return false;
         }
     }
 
@@ -106,6 +116,12 @@ public class ChunkSystem {
             e.printStackTrace();
         }
     }
+
+    // ---- persistence ----
+
+    public ChunkSerializer serializer() { return serializer; }
+
+    public void setSerializer(ChunkSerializer serializer) { this.serializer = serializer; }
 
     // ---- identity ----
 

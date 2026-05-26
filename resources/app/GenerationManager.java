@@ -10,9 +10,14 @@ import resources.presentation.ui.UserInterface;
 import resources.input.Keys;
 import resources.input.Mouse;
 import resources.input.InputHandlingSystem;
+import resources.generation.cave.CaveBootstrap;
 import resources.generation.dimension.Dimension;
 import resources.generation.dimension.DimensionRegistry;
+import resources.generation.interior.InteriorBootstrap;
 import resources.generation.noise.ProceduralGen;
+import resources.domain.farming.FarmingRegistry;
+import resources.domain.object.Portal;
+import resources.domain.spawn.BoatSpawner;
 import resources.world.DimensionService;
 import resources.world.MapHandler;
 import resources.world.ChunkSystem;
@@ -67,17 +72,42 @@ public class GenerationManager {
                 new resources.generation.factory.EntityFactory(panel, gen),
                 true, 0.0));
         DimensionRegistry.instance().register(DimensionRegistry.CAVE,
-            new Dimension(DimensionRegistry.CAVE,
-                new resources.generation.factory.EntityFactory(panel, gen),
-                false, 0.0));
+            CaveBootstrap.register(panel));
+        DimensionRegistry.instance().register(DimensionRegistry.INTERIOR,
+            InteriorBootstrap.register(panel));
 
         DimensionService dimensions = new DimensionService(panel, panel.world);
         dimensions.subscribe(panel.events());
         panel.setDimensions(dimensions);
 
+        // Wire harvest profiles for mature crops (idempotent).
+        FarmingRegistry.init();
+
         panel.world.initial();
         panel.world.update(new Point(0,0));
 
+    }
+
+    /**
+     * Spawn world entities that aren't part of per-tile generation: a portal
+     * pair to the cave/interior, and a handful of boats on nearby water.
+     * Called after the player exists so we can target spawn-relative positions.
+     */
+    public void seedWorldEntities() {
+        if (panel.player == null) return;
+        Point p = new Point((int) panel.player.getWorldX(), (int) panel.player.getWorldY());
+        Portal toCave = new Portal(panel, "cave_portal",
+            p.x + 128, p.y,
+            DimensionRegistry.OVERWORLD, DimensionRegistry.CAVE, new Point(0, 0));
+        toCave.addComponent(new resources.domain.entity.component.LabelComponent("Cave"));
+        panel.world.placeEntity(toCave);
+        Portal toInterior = new Portal(panel, "door",
+            p.x + 128, p.y + 128,
+            DimensionRegistry.OVERWORLD, DimensionRegistry.INTERIOR, new Point(0, 0));
+        toInterior.addComponent(new resources.domain.entity.component.LabelComponent("House"));
+        panel.world.placeEntity(toInterior);
+        // Scatter a handful of boats on the nearest patch of water.
+        BoatSpawner.spawnBoatsNear(panel, p, 3);
     }
 
     public void newSeed(){
@@ -92,21 +122,43 @@ public class GenerationManager {
 
     public void initiate(){
         Point p = getStartingPoint();
-        System.out.println(p);
         panel.player = (new Playable(panel, "red",p.x,p.y,(short)48,(short)96,(short)36,(short)32,(short)6,(short)64));
         panel.world.placeEntity(panel.player);
         panel.player.components().add(new LightSourceComponent(200, 1.0f, new Color(255, 220, 160)));
     }
 
 
+    /**
+     * Find a 2x2 land patch within ±10 tiles of the origin. Land here means
+     * the tile is neither water (ocean/river) nor solid (no rocks/walls);
+     * beach is allowed because it's walkable shore. Falls back to (0,0) if
+     * the search radius doesn't find one — which only happens on seeds where
+     * the player would spawn in deep ocean, in which case the player will
+     * see they need to move; ocean spawn is still better than null/crash.
+     */
     private Point getStartingPoint(){
-        for (int x = -panel.tileSize*10;x<=panel.tileSize*10;x+=panel.tileSize){
-            for (int y = -panel.tileSize*10;y<=panel.tileSize*10;y+=panel.tileSize){
-                if (!(panel.world.solidCollision(new HitBox(x,y,panel.tileSize*2,panel.tileSize*2)))){
-                    return new Point(x,y);
-                }
+        int ts = panel.tileSize;
+        for (int x = -ts*10; x <= ts*10; x += ts){
+            for (int y = -ts*10; y <= ts*10; y += ts){
+                if (isLandPatch(x, y, ts)) return new Point(x, y);
             }
         }
-        return null;
+        return new Point(0, 0);
+    }
+
+    private boolean isLandPatch(int x, int y, int ts){
+        if (panel.world.solidCollision(new HitBox(x, y, ts*2, ts*2))) return false;
+        // Sample every corner of the 2x2 footprint; all must be on dry land.
+        int[] xs = { x, x + ts*2 - 1 };
+        int[] ys = { y, y + ts*2 - 1 };
+        for (int sx : xs) {
+            for (int sy : ys) {
+                resources.domain.tile.Tile t = panel.world.getTile(new java.awt.Point(sx, sy));
+                if (t == null) return false;
+                String n = t.getName();
+                if ("ocean".equals(n) || "river".equals(n)) return false;
+            }
+        }
+        return true;
     }
 }

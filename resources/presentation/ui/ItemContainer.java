@@ -72,46 +72,22 @@ public class ItemContainer extends Container {
     public void mouseDragged(){
         //items might be spreaded
     }
-    public  void draw(Graphics2D g2){
-        
-
-        if (visible){
-            drawRect(g2);
-           
-          
-           int count = 0;
-            for (Component comp:content){
-                
-                if (comp instanceof ItemContainerSlot){
-                    ((ItemContainerSlot)comp).draw(g2);
-                    if (inventory!= null){
-                      
-                        Stack stack =  inventory.getStack(count);
-                        
-
-                        Item item = stack.getItem();
-                        if (item != null){
-                            System.out.println("drawing item");
-                            g2.drawImage(item.images.get(0),comp.x+padding,comp.y+padding,comp.width-padding*2,comp.height-padding*2,null);
-                        }
-                       
-                    }
-                   
-                   
-
-                } else{
-                    
-                    
-                }
-                count++;
-                
+    /**
+     * Container draw. Slots paint themselves (cell + item + count overlay) via
+     * {@link ItemContainerSlot#draw}. We do NOT also draw the item icon here —
+     * doing so used to double-render every cell and bypass the cached icon
+     * lookup that ItemContainerSlot.drawStackAt uses.
+     */
+    public void draw(Graphics2D g2){
+        if (!visible) return;
+        drawRect(g2);
+        int count = 0;
+        for (Component comp : content){
+            if (comp instanceof ItemContainerSlot){
+                ((ItemContainerSlot) comp).draw(g2, count, inventory);
             }
+            count++;
         }
-       
-
-       
-
-        
     }
 
     private void drawIndexSlot(Graphics2D g2){

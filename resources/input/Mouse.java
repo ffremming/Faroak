@@ -1,7 +1,10 @@
 package resources.input;
 
 import resources.app.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.domain.object.Boat;
 
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -11,9 +14,19 @@ import java.awt.event.MouseWheelListener;
 
 public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListener  {
 
+    /** Minimum wall-clock gap between two placement actions (ms). Prevents
+     *  rapid-fire clicks (and any AWT double-press quirks) from dropping
+     *  multiple entities at the cursor. */
+    private static final long PLACE_COOLDOWN_MS        = 150L;
+    /** Shorter throttle in multiplayer: the local click is optimistic and the
+     *  server may reject it, so we don't want to lock the player out of
+     *  legitimate retries. */
+    private static final long PLACE_COOLDOWN_MS_ONLINE = 60L;
+
     int x = 0;
     int y = 0;
     GamePanel panel;
+    private long lastPlaceMs;
 
     public Mouse(GamePanel panel){
         this.panel = panel;
@@ -21,16 +34,19 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
 
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
-      
-        if (e.getWheelRotation()<0){
+        // Wheel cycles the hotbar — but only when no modal UI is taking focus.
+        // Cycling through the hotbar while the player is browsing the full
+        // inventory grid was visually confusing and the UI also wanted the
+        // wheel event for its own scrolling.
+        if (panel.userInterface != null && panel.userInterface.isEnabled()) {
+            panel.userInterface.mouseWheelMoved(e);
+            return;
+        }
+        if (e.getWheelRotation() < 0) {
             panel.player.getInventory().decreaseIndex();
-           
-        } else if (e.getWheelRotation()>0){
+        } else if (e.getWheelRotation() > 0) {
             panel.player.getInventory().increseIndex();
         }
-       
-        panel.userInterface.mouseWheelMoved(e);
-        
     }
 
     @Override
@@ -55,16 +71,73 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (!panel.userInterface.isEnabled()){
-            //panel.player.setPath(panel.world.getPath(panel.player,new Point(e.getX()+((int)(panel.camera.getWorldX())),e.getY()+(int)panel.camera.getWorldY())));
-            panel.world.tryPlaceEntity(panel.player.getEquipped());
-            
-        } else{
+        // UI takes precedence: if any modal UI is open (inventory, menu), the
+        // click belongs to the UI and never reaches the world.
+        if (panel.userInterface.isEnabled()) {
             panel.userInterface.mousePressed(e);
+            return;
         }
-        
-        
-        
+        // Left button = interact with the world. Other buttons currently
+        // do nothing on the world layer.
+        if (e.getButton() != MouseEvent.BUTTON1) return;
+
+        // Boat-first: if the click landed on a Boat that we're standing next
+        // to, board it. Skipped automatically when the player is holding a
+        // boat item — placement wins in that case (handled inside the helper).
+        if (tryBoardClickedBoat(e)) return;
+
+        boolean offline = panel.multiplayer() == null || !panel.multiplayer().isOnline();
+        long cooldown = offline ? PLACE_COOLDOWN_MS : PLACE_COOLDOWN_MS_ONLINE;
+        long now = System.currentTimeMillis();
+        if (now - lastPlaceMs < cooldown) return;
+
+        // Only route to the local placement path when we are the authority
+        // (single-player or offline). In online mode the server applies the
+        // intent. The local cooldown stamp is set regardless so a rejected
+        // server intent doesn't open the door to rapid-fire retries that
+        // would saturate the link.
+        if (offline) {
+            if (panel.world.tryPlaceEntity(panel.player.getEquipped())) {
+                lastPlaceMs = now;
+            }
+        } else {
+            panel.inputHandlingSystem.enqueueAction(InputAction.PLACE);
+            lastPlaceMs = now;
+        }
+    }
+
+    /**
+     * Return true if the click landed on an existing boat's hitbox AND the
+     * player is close enough to board. Skipped when the player is currently
+     * holding a boat item — placing wins over boarding in that case, since
+     * "place" needs to be doable on open water near other boats. Iterating
+     * the world index here would have been enough for the click-hits-boat
+     * check, but {@link resources.world.WorldInteraction#getEntitiesCollidedWith(Point)}
+     * also returns Tile hits at that point — we filter for Boat explicitly.
+     */
+    private boolean tryBoardClickedBoat(MouseEvent e) {
+        if (panel.player == null) return false;
+        if (heldItemIsBoat()) return false;
+        int worldX = (int) panel.camera.getWorldX() + e.getX();
+        int worldY = (int) panel.camera.getWorldY() + e.getY();
+        Point at = new Point(worldX, worldY);
+        for (BaseEntity ent : panel.world.getEntitiesCollidedWith(at)) {
+            if (!(ent instanceof Boat)) continue;
+            Boat boat = (Boat) ent;
+            // getEntitiesCollidedWith already vetted the hitbox hit, but be
+            // defensive: re-check to make sure the click landed on the boat
+            // itself rather than a tile underneath the same point.
+            if (!boat.getHitBox().collision(at)) continue;
+            return boat.tryBoardFromClick(panel.player);
+        }
+        return false;
+    }
+
+    private boolean heldItemIsBoat() {
+        if (panel.player == null) return false;
+        var equipped = panel.player.getEquipped();
+        if (equipped == null || equipped.isEmpty()) return false;
+        return "boat".equals(equipped.getName());
     }
 
     @Override

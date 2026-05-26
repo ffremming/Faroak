@@ -47,8 +47,14 @@ public class Chunk extends TreeNode {
         amtLoaded++;
     }
 
-    /** Currently a no-op: kept as the lifecycle hook persistence will plug into. */
-    public void unLoad() { /* persistence layer attaches here later */ }
+    /** Snapshot entities into the chunk system's serializer, then drop them. */
+    public void unLoad() {
+        if (chunkS.serializer() != null && !entities.isEmpty()) {
+            chunkS.serializer().snapshot(this);
+        }
+        entities.clear();
+        loaded = false;
+    }
 
     /** Called by {@link ChunkLoader} when first-time generation completes. */
     void markGenerated() {

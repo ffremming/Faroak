@@ -14,7 +14,7 @@ package resources.core.time;
  */
 public final class GameClock {
 
-    public static final long DEFAULT_TICKS_PER_DAY = 36_000L;
+    public static final long DEFAULT_TICKS_PER_DAY = 720_000L;
     public static final long NOON_TICK_OF_DAY      = DEFAULT_TICKS_PER_DAY / 4L;
 
     private final long ticksPerDay;

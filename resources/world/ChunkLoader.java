@@ -2,6 +2,8 @@ package resources.world;
 
 import resources.domain.entity.BaseEntity;
 import resources.domain.tile.Tile;
+import resources.world.persistence.ChunkSerializer;
+import resources.world.persistence.ChunkSnapshot;
 
 /**
  * Generates tiles + entities for a {@link Chunk} the first time it loads,
@@ -26,10 +28,17 @@ public final class ChunkLoader {
         chunk.markGenerated();
     }
 
-    /** Re-load (tile regen only — entities are persisted across loads). */
+    /**
+     * Re-load: tiles regenerate deterministically; entities are restored from
+     * the chunk system's serializer if a snapshot exists, otherwise left empty
+     * (persisted state wins over re-generation on a previously-loaded chunk).
+     */
     public void repeatedLoad() {
         generateTiles();
-        generateEntities();
+        ChunkSerializer serializer = chunk.chunkS.serializer();
+        if (serializer == null) return;
+        ChunkSnapshot snapshot = serializer.get(chunk.x, chunk.y);
+        if (snapshot != null) serializer.restore(chunk, snapshot);
     }
 
     private void generateTiles() {

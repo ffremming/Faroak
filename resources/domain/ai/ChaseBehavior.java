@@ -2,6 +2,7 @@ package resources.domain.ai;
 
 import resources.app.GameContext;
 import resources.domain.entity.BaseEntity;
+import resources.domain.player.Playable;
 
 /**
  * Steps the host toward the target entity at {@code stepPixels} per tick.
@@ -14,9 +15,13 @@ import resources.domain.entity.BaseEntity;
  */
 public final class ChaseBehavior implements AIBehavior {
 
+    private static final int CONTACT_DAMAGE  = 1;
+    private static final int ATTACK_COOLDOWN = 30;
+
     private final BaseEntity target;
     private final int        stepPixels;
     private final int        engageDistance;
+    private int              attackCooldown;
 
     public ChaseBehavior(BaseEntity target, int stepPixels, int engageDistance) {
         this.target         = target;
@@ -30,9 +35,24 @@ public final class ChaseBehavior implements AIBehavior {
         double dx = target.getWorldX() - host.getWorldX();
         double dy = target.getWorldY() - host.getWorldY();
         double dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist <= engageDistance || dist == 0) return;
+        if (attackCooldown > 0) attackCooldown--;
+        if (dist <= engageDistance) {
+            tryContactDamage();
+            return;
+        }
+        if (dist == 0) return;
         host.setWorldX(host.getWorldX() + (dx / dist) * stepPixels);
         host.setWorldY(host.getWorldY() + (dy / dist) * stepPixels);
+    }
+
+    /** Deal CONTACT_DAMAGE to the target if it's a Playable and cooldown allows. */
+    private void tryContactDamage() {
+        if (attackCooldown > 0) return;
+        if (!(target instanceof Playable)) return;
+        Playable p = (Playable) target;
+        if (p.lifecycle() == null || p.lifecycle().isDead()) return;
+        p.lifecycle().damage(CONTACT_DAMAGE);
+        attackCooldown = ATTACK_COOLDOWN;
     }
 
     public BaseEntity target()         { return target; }

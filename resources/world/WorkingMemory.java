@@ -46,21 +46,37 @@ public class WorkingMemory implements WorldRuntime {
      * entities/tiles are dropped, then re-runs the initial chunk load.
      */
     public void setChunkSystem(ChunkSystem newSystem) {
+        setChunkSystem(newSystem, new Point(0, 0));
+    }
+
+    /**
+     * Same as {@link #setChunkSystem(ChunkSystem)} but seeds the initial chunk
+     * load around {@code arrival} instead of the world origin. Needed when a
+     * portal drops the player far from (0,0): loading around the origin would
+     * leave the player standing in a void until the per-second world.update
+     * catches up.
+     */
+    public void setChunkSystem(ChunkSystem newSystem, Point arrival) {
         this.chunkSystem  = newSystem;
         this.interaction  = new WorldInteraction(index, chunkSystem, panel);
         index.setEntities(new ArrayList<>());
         index.setTiles(new ArrayList<>());
         index.setChunks(new ArrayList<>());
-        initial();
+        initial(arrival);
     }
 
     public ChunkSystem chunkSystem() { return chunkSystem; }
 
     // ---- lifecycle ----
 
-    /** First-time chunk load: bring the spawn region online and link tile neighbors. */
+    /** First-time chunk load around world origin. */
     public void initial() {
-        index.setChunks(chunkSystem.getAllChunksInRenderDistance(new Point(0, 0)));
+        initial(new Point(0, 0));
+    }
+
+    /** First-time chunk load around an arbitrary world point. */
+    public void initial(Point origin) {
+        index.setChunks(chunkSystem.getAllChunksInRenderDistance(origin));
         for (Chunk c : index.chunks()) c.load();
         for (Chunk c : index.chunks()) c.connectTiles();
     }

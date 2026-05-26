@@ -33,44 +33,55 @@ public class Stack extends BaseEntity{
      * @returns true if successfull, false if failure
      */
     public boolean addItem(Item item){
-        if (isEmpty()){
+        if (item == null) return false;
+        if (isFull()) return false;
+        if (isEmpty()) {
+            // First item into an empty slot: claim it.
             setName(item.getName());
             setItem(item);
-            if (!isFull()){
-                amount++;
-                return true;
-            }
-        } else{
-            if (thisItem == null ||thisItem.getName().equals(item.getName())){
-                if (!isFull()){
-                    amount++;
-                    return true;
-                }
-            }
+            amount++;
+            return true;
         }
-        return false;
-        
+        if (thisItem != null && !thisItem.getName().equals(item.getName())) {
+            return false;
+        }
+        amount++;
+        return true;
     }
 
     private void setItem(Item item) {
        thisItem = item;
     }
 
-    /** 
-     * adds as much of a stack as possible if the type(name) is the same as given stack
-     * @returns stack-if succesfull this is empty.
+    /**
+     * Pour as many items as fit from {@code newStack} into this stack. Only
+     * compatible if this stack is empty or carries the same item name —
+     * otherwise we return immediately without removing anything from
+     * {@code newStack}. Returns the (possibly emptied) source stack.
+     *
+     * Previously this looped {@code getOneItem} unconditionally; on a name
+     * mismatch the items were drained from the source but rejected by
+     * {@link #addItem}, which silently destroyed them. The guard below
+     * eliminates that path.
      */
     public Stack addStack(Stack newStack){
-        if (isEmpty()){
-            //stack name is set to the first item put.
+        if (newStack == null || newStack.isEmpty()) return newStack;
+        if (!isEmpty() && !getName().equals(newStack.getName())) return newStack;
+        if (isEmpty()) {
             setName(newStack.getName());
+            setItem(newStack.thisItem);
         }
-
-        
         while (!isFull() && !newStack.isEmpty()){
-            addItem(newStack.getOneItem());
+            Item taken = newStack.getOneItem();
+            if (taken == null) break;
+            if (!addItem(taken)) {
+                // Stack rejected the item (shouldn't happen now we name-guarded,
+                // but be defensive): push it back into the source so we never
+                // destroy items in transit.
+                newStack.addItem(taken);
+                break;
+            }
         }
-
         return newStack;
     }
 
@@ -92,8 +103,6 @@ public class Stack extends BaseEntity{
             //stack name is set to the first item put.
             setName("empty");
             thisItem = null;
-            System.out.println("emptyyyyyyy");
-            
         }
         return item;
     }
@@ -119,17 +128,8 @@ public class Stack extends BaseEntity{
         return amount <= 0;
     }
 
-    @Override
-    public boolean equals(Object o){
-        if (!(o instanceof Item)){
-            return false;
-        }
-        Item itm = (Item) o;
-
-       return (itm.getName().equals(getName()));
-
-        
-    }
+    // (No equals/hashCode override on Stack — identity equality is correct;
+    // a previous override compared Stack to Item, which was broken.)
 
     public void removeOneItem() {
         getOneItem();

@@ -19,6 +19,9 @@ import resources.presentation.ui.UserInterface;
 import resources.world.DimensionService;
 import resources.world.MapHandler;
 import resources.world.WorldRuntime;
+import resources.net.multiplayer.MultiplayerRuntime;
+import resources.net.NetworkChannel;
+import resources.net.ServerAuthority;
 
 /**
  * Service Locator for the runtime. Defines the contract of game-wide services
@@ -34,6 +37,9 @@ public interface GameContext {
     // Cross-cutting kernel
     EventBus  events();
     GameClock clock();
+    NetworkChannel network();
+    ServerAuthority authority();
+    MultiplayerRuntime multiplayer();
 
     // World + simulation
     WorldRuntime world();

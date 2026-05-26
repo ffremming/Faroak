@@ -22,6 +22,11 @@ import resources.presentation.image.ImageContainer;
 import resources.presentation.lighting.LightField;
 import resources.presentation.ui.Container;
 import resources.presentation.ui.UserInterface;
+import resources.net.AllowAllServerAuthority;
+import resources.net.LoopbackNetworkChannel;
+import resources.net.NetworkChannel;
+import resources.net.ServerAuthority;
+import resources.net.multiplayer.MultiplayerRuntime;
 import resources.world.DimensionService;
 import resources.world.MapHandler;
 import resources.world.WorkingMemory;
@@ -63,9 +68,12 @@ public class GamePanel extends JPanel implements GameContext {
     private final EventBus         eventBus  = new EventBus();
     private final GameClock        clock     = new GameClock(
         GameClock.DEFAULT_TICKS_PER_DAY, GameClock.NOON_TICK_OF_DAY);
+    private final NetworkChannel   network   = new LoopbackNetworkChannel();
+    private final ServerAuthority  authority = new AllowAllServerAuthority();
     private final AnimationLibrary animations = new AnimationLibrary();
     private final LightField       lighting   = new LightField();
     private DimensionService       dimensions;
+    private MultiplayerRuntime     multiplayer;
 
     public final JFrame frame;
     final boolean newGame;
@@ -102,8 +110,10 @@ public class GamePanel extends JPanel implements GameContext {
         userInterface.setVisible(true);
         userInterface.enable();
         generationM.initiate();
+        generationM.seedWorldEntities();
         camera = new Camera(this, "camera", 0, 0,
             (short) (screenWidth + 400), (short) (screenHeight + 400));
+        multiplayer = MultiplayerRuntime.createDefault(this);
     }
 
     private void wireInput() {
@@ -121,12 +131,14 @@ public class GamePanel extends JPanel implements GameContext {
 
     public void stopGameThread() {
         if (loop != null) loop.stop();
+        if (multiplayer != null) multiplayer.close();
     }
 
     /** One simulation step. Called by {@link GameLoop} from the EDT. */
     public void update(double delta) {
         environmentM.updateTicks();
         inputHandlingSystem.update(delta);
+        if (multiplayer != null) multiplayer.update(delta);
         world.simulate();
         clock.tick();
     }
@@ -152,6 +164,9 @@ public class GamePanel extends JPanel implements GameContext {
 
     @Override public EventBus            events()        { return eventBus; }
     @Override public GameClock           clock()         { return clock; }
+    @Override public NetworkChannel      network()       { return network; }
+    @Override public ServerAuthority     authority()     { return authority; }
+    @Override public MultiplayerRuntime  multiplayer()   { return multiplayer; }
     @Override public WorldRuntime        world()         { return world; }
     @Override public TileManager         tiles()         { return tileM; }
     @Override public ItemManager         items()         { return itemM; }

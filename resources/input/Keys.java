@@ -1,6 +1,7 @@
 package resources.input;
 
 import resources.app.GamePanel;
+import resources.domain.object.BoatRideComponent;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -43,12 +44,28 @@ public class Keys implements KeyListener{
 
         
         if (code == KeyEvent.VK_SPACE){
-            panel.player.interact();
+            if (panel.multiplayer() == null || !panel.multiplayer().isOnline()) {
+                BoatRideComponent ride = panel.player.getComponent(BoatRideComponent.class);
+                if (ride != null && ride.boat() != null) {
+                    // SPACE while riding = dismount; otherwise the usual interact.
+                    if (!ride.boat().dismount() && panel.userInterface != null) {
+                        panel.userInterface.showToast("Steer to land to disembark", 1500);
+                    }
+                } else {
+                    panel.player.interact();
+                }
+            } else {
+                panel.inputHandlingSystem.enqueueAction(InputAction.INTERACT);
+            }
 
         }
 
         if (code == KeyEvent.VK_F){
-            panel.player.attack();
+            if (panel.multiplayer() == null || !panel.multiplayer().isOnline()) {
+                panel.player.attack();
+            } else {
+                panel.inputHandlingSystem.enqueueAction(InputAction.ATTACK);
+            }
         }
 
         if (code == KeyEvent.VK_T){

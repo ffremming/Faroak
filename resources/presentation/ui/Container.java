@@ -95,7 +95,6 @@ public class Container extends Component{
                             comp.y = y + comp.height/(content.size());
                         }
                         
-                        System.out.println("draw container4");
                         comp.draw(g2);
                         count ++;
                     } else {

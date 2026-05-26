@@ -53,8 +53,7 @@ public class ScreenState extends BaseComponent{
     public void mousePressed(MouseEvent e){
         int xEvent = e.getX();
         int yEvent = e.getY();
-        System.out.println(e.getX()+","+e.getY()+"Screen pressed");
-        
+
         for (Container con:containers){
             
             //if in the containter
@@ -97,8 +96,6 @@ public class ScreenState extends BaseComponent{
 
             }
         }
-        System.out.println("screenstate wheel moved");
-
     }
     
 

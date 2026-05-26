@@ -12,8 +12,11 @@ import java.util.Collections;
  */
 public final class BiomeRegistry {
 
-    public static final double OCEAN_LVL       = -0.30;
-    public static final double BEACH_LVL       = -0.22;
+    // OCEAN_LVL pulled toward 0 to give the seed more open water (large oceans),
+    // and the gap between OCEAN_LVL and BEACH_LVL widened so islands have broad
+    // sandy belts instead of a one-tile rim.
+    public static final double OCEAN_LVL       = -0.10;
+    public static final double BEACH_LVL       =  0.05;
     public static final double MOUNTAIN_LVL    =  0.55;
     public static final double RIVER_THRESHOLD =  0.04;
     public static final double RIVERBANK_THRESHOLD = 0.07;

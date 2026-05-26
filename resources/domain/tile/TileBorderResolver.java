@@ -33,8 +33,7 @@ public final class TileBorderResolver {
 
     private static Map<String, String> buildOverlayFamilyMap() {
         Map<String, String> m = new HashMap<>();
-        m.put("beach",     "wetBeach");
-        m.put("riverbank", "wetBeach");
+        m.put("riverbank", "beach");
         return m;
     }
 

@@ -19,4 +19,7 @@ public interface ChunkSerializer {
 
     /** Replace the chunk's state with the snapshot's contents. */
     void restore(Chunk chunk, ChunkSnapshot snapshot);
+
+    /** Look up a previously captured snapshot by chunk coords, or null. */
+    ChunkSnapshot get(int x, int y);
 }

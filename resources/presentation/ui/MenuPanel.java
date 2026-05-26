@@ -53,7 +53,6 @@ public class MenuPanel extends JPanel {
         }
 
         public void actionPerformed(ActionEvent e) {
-            System.out.println("new game");
             JLabel headLine = new JLabel("Loader spill...");
         
             //headLine.setBounds(0,50,50,50);
@@ -89,7 +88,6 @@ public class MenuPanel extends JPanel {
 
     public class LoadGameActionListener implements  ActionListener{
         public void actionPerformed(ActionEvent e) {
-           System.out.println("load game");
            JLabel headLine = new JLabel("Loader spill...");
            add(headLine);
            repaint();

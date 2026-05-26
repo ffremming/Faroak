@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import resources.app.GamePanel;
 import resources.domain.entity.BaseEntity;
 import resources.domain.entity.PrimitiveEntity;
-import resources.domain.object.GameObject;
 import resources.geometry.HitBox;
 import resources.presentation.lighting.LightingPass;
 
@@ -35,7 +34,10 @@ public class Camera extends PrimitiveEntity {
     public HitBox visibilityArea;
 
     private BaseEntity followed;
-    private GameObject previewObject;
+    // BaseEntity (not GameObject) so non-GameObject placeables — boats — can
+    // also show a ghost preview while being aimed.
+    private BaseEntity previewObject;
+    private boolean previewValid = true;
 
     private final ArrayList<String> backEndData = new ArrayList<>();
     private int  observedFPS;
@@ -72,6 +74,19 @@ public class Camera extends PrimitiveEntity {
 
     // ---- entry point ----
 
+    /**
+     * Graphics2D overload — overrides BaseEntity.draw(Graphics2D), which is a
+     * no-op stub. Without this, callers that pass a Graphics2D directly (e.g.
+     * the headless test probes via BufferedImage.createGraphics()) would
+     * dispatch to the empty parent method and render nothing — a footgun
+     * that masked render-output bugs for months. Delegates to the canonical
+     * Graphics path.
+     */
+    @Override
+    public void draw(Graphics2D g2) {
+        draw((Graphics) g2);
+    }
+
     public void draw(Graphics g) {
         hitBox.updateCoords();
         center(followed);
@@ -82,7 +97,10 @@ public class Camera extends PrimitiveEntity {
         g2.setFont(OVERLAY_FONT);
 
         renderer.drawScene(g2);
-        if (previewObject != null) renderer.drawRelative(g2, previewObject);
+        if (previewObject != null) {
+            renderer.drawRelative(g2, previewObject);
+            if (!previewValid) renderer.drawInvalidPreviewOverlay(g2, previewObject);
+        }
         lighting.apply(g2, this, panel.getWidth(), panel.getHeight());
         panel.userInterface.draw(g2);
 
@@ -143,7 +161,9 @@ public class Camera extends PrimitiveEntity {
     public long getObservedChunkUpdateTime() { return observedChunkUpdateTime; }
     public void setObservedChunkUpdateTime(long v) { this.observedChunkUpdateTime = v; }
 
-    public void setPreviewObject(GameObject o) { previewObject = o; }
+    public void setPreviewObject(BaseEntity o) { previewObject = o; }
+    public void setPreviewValid(boolean v)     { this.previewValid = v; }
+    public boolean isPreviewValid()            { return previewValid; }
 
     /** Bridge so other renderers (e.g. UI) can paint an entity in camera-space. */
     public void drawRelative(Graphics2D g2, BaseEntity entity) {

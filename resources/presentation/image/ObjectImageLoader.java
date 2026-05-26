@@ -1,5 +1,7 @@
 package resources.presentation.image;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -69,8 +71,39 @@ public final class ObjectImageLoader {
                 }
             }
         }
+        if (images.isEmpty()) images.add(fallbackSwatch(name));
         objectCache.put(name, images);
         return images;
+    }
+
+    /**
+     * Single shared neutral placeholder for any asset name with no PNG on
+     * disk. Previously we hashed the name into RGB; that produced rainbow
+     * swatches (often blueish) scattered across the inventory and the world
+     * for every missing asset. A single dark-grey "?" tile is visually
+     * unobtrusive and immediately recognisable as "art pending".
+     *
+     * Cached: the same BufferedImage is returned for every miss so we don't
+     * re-allocate on each call.
+     */
+    private static BufferedImage fallbackSwatch(String name) {
+        return PLACEHOLDER;
+    }
+
+    private static final BufferedImage PLACEHOLDER = buildPlaceholder();
+
+    private static BufferedImage buildPlaceholder() {
+        BufferedImage img = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        g.setColor(new Color(60, 60, 60, 200));
+        g.fillRect(2, 2, 60, 60);
+        g.setColor(new Color(120, 120, 120));
+        g.drawRect(2, 2, 60, 60);
+        g.setFont(g.getFont().deriveFont(java.awt.Font.BOLD, 32f));
+        g.setColor(new Color(170, 170, 170));
+        g.drawString("?", 24, 42);
+        g.dispose();
+        return img;
     }
 
     private void tryAdd(ArrayList<BufferedImage> sink, File f) {
@@ -98,6 +131,7 @@ public final class ObjectImageLoader {
             ArrayList<BufferedImage> potential = objectImages(name);
             if (!potential.isEmpty()) image = potential.get(0);
         }
+        if (image == null) image = fallbackSwatch(name);
         itemCache.put(name, image);
         return image;
     }

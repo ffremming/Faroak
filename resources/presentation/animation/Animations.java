@@ -22,11 +22,11 @@ public final class Animations {
         library.register(OCEAN_WAVES, oceanWaves(images));
     }
 
-    /** 3-frame wave loop. 60 sim-ticks/frame ≈ 1 second/frame, matching the legacy cadence. */
+    /** 3-frame wave loop. 30 sim-ticks/frame ≈ 0.5 second/frame. */
     private static AnimationClip oceanWaves(ImageContainer images) {
         return new AnimationClip(OCEAN_WAVES, true,
-            new AnimationFrame(images.getTileImage("ocean0"), 60),
-            new AnimationFrame(images.getTileImage("ocean1"), 60),
-            new AnimationFrame(images.getTileImage("ocean2"), 60));
+            new AnimationFrame(images.getTileImage("ocean0"), 30),
+            new AnimationFrame(images.getTileImage("ocean1"), 30),
+            new AnimationFrame(images.getTileImage("ocean2"), 30));
     }
 }

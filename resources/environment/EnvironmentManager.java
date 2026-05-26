@@ -1,6 +1,10 @@
 package resources.environment;
 
+import java.awt.Point;
+
 import resources.domain.entity.BaseEntity;
+import resources.domain.spawn.MobSpawnService;
+import resources.domain.spawn.SpawnRules;
 import resources.app.GamePanel;
 
 public class EnvironmentManager {
@@ -11,6 +15,8 @@ public class EnvironmentManager {
     int days = 0;
     int lightLevel;
     int animationValue = 0;
+
+    private final MobSpawnService mobSpawner = new MobSpawnService();
 
     //different types of envoriement.
     public int normalEnvironment = 0;
@@ -29,16 +35,19 @@ public class EnvironmentManager {
       
         ms++;
         if (ms%panel.camera.FPS == 0){
-            
+
             //based on camera, but should be something that is followed.
             panel.world.update(panel.camera.getHitBox().getCenter());
             second++;
             updatePanelDimensions();
-            
+
 
             //ageAllObjects();
             updateAnimation();
             //panel.objM.updatePlants();
+            // Mob population pulse: once every 10 in-game seconds. The spawn
+            // service is rate-limited by its own per-rule density rolls.
+            if (second % 10 == 0) tryPopulateMobs();
             if (second%60 == 0){
                 minutes ++;
                 ageAll();
@@ -49,8 +58,14 @@ public class EnvironmentManager {
                     minutes = 0;
                     ms = 0;
                 }
-            } 
+            }
         }
+    }
+
+    private void tryPopulateMobs() {
+        if (panel.player == null) return;
+        Point center = new Point((int) panel.player.getWorldX(), (int) panel.player.getWorldY());
+        mobSpawner.tryPopulateChunk(panel, center, SpawnRules.defaults(panel));
     }
 
     private void ageAll() {
