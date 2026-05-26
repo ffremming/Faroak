@@ -1,9 +1,13 @@
-package ressurser.baseEntity.playable.Inventory;
+package resources.domain.inventory;
+
+import resources.app.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.geometry.HitBox;
 
 import java.util.ArrayList;
 
-import ressurser.baseEntity.BaseEntity;
-import ressurser.main.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.app.GamePanel;
 
 public class Stack extends BaseEntity{
 

@@ -1,9 +1,9 @@
-package ressurser.enviroment;
+package resources.environment;
 
-import ressurser.baseEntity.BaseEntity;
-import ressurser.main.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.app.GamePanel;
 
-public class EnviromentManager {
+public class EnvironmentManager {
     GamePanel panel;
     int ms = 0;
     int second = 0;
@@ -13,14 +13,14 @@ public class EnviromentManager {
     int animationValue = 0;
 
     //different types of envoriement.
-    public int normalEnviroment = 0;
-    public int caveEnviroment = 1;
+    public int normalEnvironment = 0;
+    public int caveEnvironment = 1;
     public int dungeonEnvoirment = 2;
 
-    public int activeEnviroment = normalEnviroment;
+    public int activeEnvironment = normalEnvironment;
 
 
-    public EnviromentManager(GamePanel panel){
+    public EnvironmentManager(GamePanel panel){
         this.panel = panel;
     }
 
@@ -72,7 +72,7 @@ public class EnviromentManager {
 
     public int lightLevel(){
         //if noamrl envirmoent, implement normal light rules.
-        if (activeEnviroment==normalEnviroment){
+        if (activeEnvironment==normalEnvironment){
 
             if (minutes>4 && minutes<12){
                 lightLevel = 0;
@@ -96,7 +96,7 @@ public class EnviromentManager {
                     }
                 } 
             }
-        } else if (activeEnviroment==caveEnviroment){
+        } else if (activeEnvironment==caveEnvironment){
          //if cave envirmoent, implement normal light rules.
             return 255;
             
@@ -107,15 +107,15 @@ public class EnviromentManager {
     
 
     public void setCaveEnvoirment(){
-        activeEnviroment = caveEnviroment;
+        activeEnvironment = caveEnvironment;
     }
 
     public void setDungeonEnvoirment(){
-        activeEnviroment = dungeonEnvoirment;
+        activeEnvironment = dungeonEnvoirment;
     }
 
     public void setNormalEnvoirment(){
-        activeEnviroment = normalEnviroment;
+        activeEnvironment = normalEnvironment;
     }
 
     private void updateAnimation() {

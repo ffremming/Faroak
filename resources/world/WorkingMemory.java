@@ -1,36 +1,45 @@
-package ressurser.chunkSystem;
+package resources.world;
+
+import resources.app.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.domain.entity.Entity;
+import resources.domain.tile.Tile;
+import resources.domain.tile.CliffTile;
+import resources.geometry.HitBox;
+import resources.geometry.Vector;
+import resources.generation.factory.EntityFactory;
+import resources.domain.object.GameObject;
+import resources.domain.player.Moveable;
+import resources.domain.inventory.Item;
+import resources.domain.inventory.Stack;
+import resources.presentation.camera.Camera;
 
 import java.awt.Point;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 
-import ressurser.baseEntity.BaseEntity;
-import ressurser.baseEntity.Entity;
-import ressurser.baseEntity.HitBox;
-import ressurser.baseEntity.Vector;
-import ressurser.baseEntity.gameObject.GameObject;
-import ressurser.baseEntity.playable.Inventory.Stack;
-import ressurser.baseEntity.tile.Tile;
-import ressurser.chunkSystem.terrainGeneration.ProceduralGeneration;
-import ressurser.chunkSystem.terrainGeneration.entityGeneration.EntityFactoryOverworld;
-import ressurser.drawing.Camera;
-import ressurser.main.GamePanel;
-import ressurser.baseEntity.playable.Inventory.Item;
+import resources.domain.entity.BaseEntity;
+import resources.domain.entity.Entity;
+import resources.geometry.HitBox;
+import resources.geometry.Vector;
+import resources.domain.object.GameObject;
+import resources.domain.inventory.Stack;
+import resources.domain.tile.Tile;
+import resources.generation.factory.EntityFactory;
+import resources.presentation.camera.Camera;
+import resources.app.GamePanel;
+import resources.generation.noise.ProceduralGen;
+import resources.domain.inventory.Item;
 /** 
  * This class should work as the interface for chunkSystem. it has information about relevant entities,
  *  without having the complexity of the chunkSystem.
  * is not done. NOTE - many functions in chunkSystem should be changed or removed for cleaner and more readable code.
  */
-public class WorkingMemory {
+public class WorkingMemory implements WorldRuntime {
    
     ArrayList<Chunk> workingChunks = new ArrayList<>();
     public ArrayList<Entity> workingEntities = new ArrayList<>();
     private ArrayList<Tile> workingTiles = new ArrayList<>();
     private ArrayList<Entity> sortedVisibleEntities = new ArrayList<>();
-    ArrayList<Chunk> sortedChunks = new ArrayList<>();
-
-    
     ArrayList<BaseEntity> removalQueue = new ArrayList<>();
     ChunkSystem chunkSystem;
     ChunkSystem chunkSystemOverWorld;
@@ -43,20 +52,16 @@ public class WorkingMemory {
     static final int CAVE = 1;
     static final int NETHER = 2;
 
-    ProceduralGeneration proceduralGeneration;
-
-    
-    
     public WorkingMemory(GamePanel panel){
         this.panel = panel;
-        this.proceduralGeneration = new ProceduralGeneration();
-        this.chunkSystemOverWorld = new ChunkSystem(panel,8,ChunkSystem.OVERWORLD,new EntityFactoryOverworld(proceduralGeneration,panel));
+        ProceduralGen overworldGen = new ProceduralGen();
+        this.chunkSystemOverWorld = new ChunkSystem(panel,8,ChunkSystem.OVERWORLD,new EntityFactory(panel, overworldGen));
         this.chunkSystem = chunkSystemOverWorld;
     }
 
     
 
-    /**starts the system up. connect tiles toghetet after all tiles are made. */
+    /**starts the system up. connect tiles together after all tiles are made. */
     public void initial(){
         setWorkingChunks(chunkSystem.getAllChunksInRenderDistance(new Point(0,0)));
 
@@ -251,20 +256,6 @@ public class WorkingMemory {
         }
     }
 
-    //** test if objects are the same */
-    private void testIfObjectsAreTheSame(){
-        int amount = 0;
-        for (BaseEntity ent:getBaseEntities()){
-            for (BaseEntity ent2:getBaseEntities()){
-                if (ent ==(ent2)){
-                    amount ++;
-                }
-        }
-        }
-        System.out.println("amount is:"+amount+" ,but amount should be: "+getBaseEntities().size());
-    }
-
-
     public void writeInfo(){
 
         for (Chunk c:workingChunks){
@@ -424,103 +415,9 @@ public class WorkingMemory {
     }
 
 
-     private static void swap(ArrayList<Entity> list, int i, int j) {
-        Collections.swap(list, i, j);
-    }
-
-    private static void swapChunk(ArrayList<Chunk> list, int i, int j) {
-        Collections.swap(list, i, j);
-    }
-
-    // Partition function to partition the arraylist and return the pivot index
-    private static int partition(ArrayList<Entity> list, int low, int high) {
-        Entity pivot = list.get(high);
-        int i = low - 1;
-        for (int j = low; j < high; j++) {
-            if (list.get(j).getHitBox().getWorldY() < pivot.getHitBox().getWorldY()) {
-                i++;
-                swap(list, i, j);
-            }
-        }
-        swap(list, i + 1, high);
-        return i + 1;
-    }
-
-    private static int partitionChunk(ArrayList<Chunk> list, int low, int high) {
-        Chunk pivot = list.get(high);
-        int i = low - 1;
-        for (int j = low; j < high; j++) {
-            if (list.get(j).getWorldY() < pivot.getWorldY()) {
-                i++;
-                swapChunk(list, i, j);
-            }
-        }
-        swapChunk(list, i + 1, high);
-        return i + 1;
-    }
-
-    // Quicksort function to recursively sort the arraylist
-    private static void quicksort(ArrayList<Entity> list, int low, int high) {
-        if (low < high) {
-            // Optimized for small arrays: switch to insertion sort if partition size is small
-            if (high - low + 1 <= 10) {
-                insertionSort1(list, low, high);
-            } else {
-                int pivotIndex = partition(list, low, high);
-                quicksort(list, low, pivotIndex - 1);
-                quicksort(list, pivotIndex + 1, high);
-            }
-        }
-    }
-
-
-    // Insertion sort function for sorting small subarrays
-    private static void insertionSort1(ArrayList<Entity> list, int low, int high) {
-        for (int i = low + 1; i <= high; i++) {
-            Entity key = list.get(i);
-            int j = i - 1;
-            while (j >= low && (list.get(j).getHitBox().getWorldY() > key.getHitBox().getWorldY()) ) {
-
-                list.set(j + 1, list.get(j));
-                j--;
-            }
-            list.set(j + 1, key);
-        }
-    }
-
-    private static void quickChunksort(ArrayList<Chunk> list, int low, int high) {
-        if (low < high) {
-            // Optimized for small arrays: switch to insertion sort if partition size is small
-            if (high - low + 1 <= 10) {
-                insertionSortChunk(list, low, high);
-            } else {
-                int pivotIndex = partitionChunk(list, low, high);
-                quickChunksort(list, low, pivotIndex - 1);
-                quickChunksort(list, pivotIndex + 1, high);
-            }
-        }
-    }
-
-    private static void insertionSortChunk(ArrayList<Chunk> chunkList, int low, int high) {
-        for (int i = low + 1; i <= high; i++) {
-            Chunk key = chunkList.get(i);
-            int j = i - 1;
-            while (j >= low && (chunkList.get(j).getWorldY() > key.getWorldY()) ) {
-
-                chunkList.set(j + 1, chunkList.get(j));
-                j--;
-            }
-            chunkList.set(j + 1, key);
-        }
-    }
-
-    
 
     /**takes all workingEntities, filter out entities that isnt close to screen, then sort */
     private void sortVisibleEntities() {
-        long startTime1 = System.nanoTime();
-        //chunkSort();
-        long now1 = System.nanoTime();
         long startTime = System.nanoTime();
         if (panel.camera != null){
             //TODO this is bad code
@@ -533,56 +430,11 @@ public class WorkingMemory {
             setWorkingEntities(allEntitiesInRenderDistance);
         }
         sortedVisibleEntities = getVisibleEntities(panel.camera,workingEntities);
-        quicksort(sortedVisibleEntities, 0, sortedVisibleEntities.size() - 1);
+        EntitySorter.sortByWorldY(sortedVisibleEntities);
         long now = System.nanoTime();
         if (panel.camera != null){
-           System.out.println("sort time" + ((now-startTime)/1000));
-           System.out.println("chunk sort time" + ((now1-startTime1)/1000));
             panel.camera.setObservedSortTime((now-startTime));
         }
-        
-    }
-
-    private void chunkSort(){
-        
-        ArrayList<Chunk > visibleChunks = getVisibleChunks(panel.camera);
-        
-        for (Chunk chunk:visibleChunks){
-            chunk.sort();
-        }
-
-        quickChunksort(visibleChunks,0,visibleChunks.size()-1);
-        sortedVisibleEntities = new ArrayList<>();
-        for (Chunk chunk:sortedChunks){
-            quicksort(chunk.entities, 0, chunk.entities.size() - 1);
-            sortedVisibleEntities.addAll(chunk.entities);
-        }
-        insertionSort1(sortedVisibleEntities,0,sortedVisibleEntities.size()-1);
-
-       
-    }
-
-
-    
-
-    // Insertion sort function for sorting small subarrays based on BaseEntity's getWorldY() and getWorldX() methods
-    private static void insertionSort(ArrayList<BaseEntity> list, int low, int high) {
-        for (int i = low + 1; i <= high; i++) {
-            BaseEntity key = list.get(i);
-            int j = i - 1;
-            // Compare based on worldY
-            while (j >= low && (list.get(j).getWorldY() > key.getWorldY() ||
-                    (list.get(j).getWorldY()+list.get(j).getHeight() == key.getWorldY()+key.getWorldY()+key.getHeight() && list.get(j).getWorldX()+list.get(j).getHeight() > key.getWorldX()+key.getHeight()))) {
-                list.set(j + 1, list.get(j));
-                j--;
-            }
-            list.set(j + 1, key);
-        }
-    }
-
-    // Public method to call the insertion sort function with the entire arraylist
-    public static void insertionSort(ArrayList<BaseEntity> list) {
-        insertionSort(list, 0, list.size() - 1);
     }
 
     /**firstly remove from sorted */
@@ -735,23 +587,6 @@ public class WorkingMemory {
         }
         return visibleChunks;
     }
-
-    private ArrayList<BaseEntity> getEntitiesNearCamera(Camera camera,ArrayList<Entity> entities){
-        ArrayList<BaseEntity> visibleEntities = new ArrayList<>();
-
-        //uses cams HB many times so stored upfront.
-        HitBox camHB = camera.getImageHitbox().getEnlargedCameraHitbox();
-
-        for (BaseEntity entity:entities){
-            
-            //if entitys image are inside Cameras hitBox, it is added to list of entities inHB 
-            if (entity.getImageHitbox().collision(camHB)|| entity.getHitBox().collision(camHB)){
-                visibleEntities.add(entity);
-            }
-        }
-        return visibleEntities;
-    }
-
 
     public BaseEntity getHoveredEntity() {
         return hoveredEntity;

@@ -1,11 +1,16 @@
-package ressurser.baseEntity.tile;
+package resources.domain.tile;
+
+import resources.app.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.geometry.HitBox;
+import resources.presentation.image.ImageContainer;
 
 import java.util.ArrayList;
 import java.awt.image.BufferedImage;
 
 
 
-import ressurser.main.GamePanel;
+import resources.app.GamePanel;
 
 public class CliffTile extends Tile{
 

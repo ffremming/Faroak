@@ -1,11 +1,18 @@
-package ressurser.main.GUIMenu;
+package resources.presentation.ui;
+
+import resources.app.GamePanel;
+import resources.domain.tile.Tile;
+import resources.domain.inventory.Inventory;
+import resources.domain.inventory.Item;
+import resources.domain.inventory.Stack;
+import resources.domain.inventory.ItemManager;
 
 import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
-import ressurser.baseEntity.playable.Inventory.Item;
-import ressurser.main.GamePanel;
+import resources.domain.inventory.Item;
+import resources.app.GamePanel;
 
 import java.awt.BasicStroke;
 import java.awt.Point;

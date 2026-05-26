@@ -1,4 +1,7 @@
-package ressurser.worldGeneration;
+package resources.generation.noise;
+
+import resources.generation.biome.Biome;
+import resources.generation.biome.BiomeRegistry;
 /**
  * K.jpg's OpenSimplex 2, smooth variant ("SuperSimplex")
  *

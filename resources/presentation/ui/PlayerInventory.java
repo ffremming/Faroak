@@ -1,8 +1,15 @@
-package ressurser.main.GUIMenu;
+package resources.presentation.ui;
+
+import resources.app.GamePanel;
+import resources.domain.tile.Tile;
+import resources.domain.inventory.Inventory;
+import resources.domain.inventory.Item;
+import resources.domain.inventory.Stack;
+import resources.domain.inventory.ItemManager;
 import java.awt.Graphics2D;
 
-import ressurser.baseEntity.playable.Inventory.Inventory;
-import ressurser.main.GamePanel;
+import resources.domain.inventory.Inventory;
+import resources.app.GamePanel;
 import java.awt.Color;
 
 public class PlayerInventory  extends ItemContainer{

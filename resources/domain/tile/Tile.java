@@ -1,10 +1,15 @@
-package ressurser.baseEntity.tile;
+package resources.domain.tile;
+
+import resources.app.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.geometry.HitBox;
+import resources.presentation.image.ImageContainer;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import ressurser.baseEntity.BaseEntity;
-import ressurser.main.GamePanel;
-import ressurser.main.ImageContainer;
+import resources.domain.entity.BaseEntity;
+import resources.app.GamePanel;
+import resources.presentation.image.ImageContainer;
 
 public class Tile extends BaseEntity{
     
@@ -101,20 +106,20 @@ public class Tile extends BaseEntity{
             setAnimatedImage(value);
             boolean[] borders = {false,false,false,false};
             for (int i = 0;i<4;i++){
-                Tile neightbor = getNeighbors()[i];
-                if (neightbor != null && this != null){
-                    if (neightbor.isHigherthan(this)){
+                Tile neighbor = getNeighbors()[i];
+                if (neighbor != null && this != null){
+                    if (neighbor.isHigherthan(this)){
     
                         
-                        if (value == 0 ||(!ImageContainer.doesPNGFileExist("tile/"+neightbor.getName()+value+"B"+1))){
-                            images.add(panel.imageContainer.getTileImage(neightbor.getName()+"B"+i));
+                        if (value == 0 ||(!ImageContainer.doesPNGFileExist("tile/"+neighbor.getName()+value+"B"+1))){
+                            images.add(panel.imageContainer.getTileImage(neighbor.getName()+"B"+i));
                         }else{
-                            images.add(panel.imageContainer.getTileImage(neightbor.getName()+value+"B"+i));
+                            images.add(panel.imageContainer.getTileImage(neighbor.getName()+value+"B"+i));
                         }
                        
                      
                         borders[i] = true;
-                        //images.add(panel.imageContainer.getImage(neightbor.getName()+"C"+i));
+                        //images.add(panel.imageContainer.getImage(neighbor.getName()+"C"+i));
                     }
                     
                 }
@@ -178,46 +183,6 @@ public class Tile extends BaseEntity{
            
     }
 
-    private void setImages(){
-        images.add(getImage());
-        boolean[] borders = {false,false,false,false};
-        for (int i = 0;i<4;i++){
-            Tile neightbor = getNeighbors()[i];
-            if (neightbor != null){
-                if (neightbor.isHigherthan(this)){
-
-                    //unsure if this will work.
-                    images.add(panel.imageContainer.getTileImage(neightbor.getName()+"B"+i));
-                    
-                    borders[i] = true;
-                    //images.add(panel.imageContainer.getImage(neightbor.getName()+"C"+i));
-                }
-                
-            }
-
-        }
-            
-        if ((borders[0] && borders[1] ) &&(getNeighbors()[0].getName().equals( getNeighbors()[1].getName()) )){
-            images.add(panel.imageContainer.getTileImage(getNeighbors()[0].getName()+"C"+1));
-        }
-
-        if ((borders[1] && borders[2] ) &&(getNeighbors()[1].getName() .equals( getNeighbors()[2].getName()) )){
-            images.add(panel.imageContainer.getTileImage(getNeighbors()[1].getName()+"C"+2));
-        }
-
-        if ((borders[2] && borders[3] ) &&(getNeighbors()[2].getName() .equals( getNeighbors()[3].getName()) )){
-            images.add(panel.imageContainer.getTileImage(getNeighbors()[2].getName()+"C"+3));
-        }
-
-        if ((borders[3] && borders[0] ) &&(getNeighbors()[3].getName() .equals( getNeighbors()[0].getName()) )){
-            images.add(panel.imageContainer.getTileImage(getNeighbors()[3].getName()+"C"+4));
-        }
-
-        
-    
-
-    }
-
     /**returns true if tile is higher than given tile */
     private boolean isHigherthan(Tile tile) {
         return panel.tileM.isHigher(tile,this);
@@ -230,13 +195,9 @@ public class Tile extends BaseEntity{
     @Override
     public ArrayList<BufferedImage> getImages(){
         if (images.size()== 0){
-            
-                setImages();
-                //setCliffImages2();
+            setAnimatedImages(0);
         }
-        
         return images;
-    
     }
 
 
@@ -295,11 +256,11 @@ public class Tile extends BaseEntity{
     private boolean isCliff() {
 
         for (int i = 0;i<4;i++){
-            Tile neightbor = getNeighbors()[i];
-            if (neightbor != null){
+            Tile neighbor = getNeighbors()[i];
+            if (neighbor != null){
 
                 //litt usikker på logikken her:
-                if (neightbor.floor <floor && neightbor.floor>=0){
+                if (neighbor.floor <floor && neighbor.floor>=0){
                     
                     return true;
                 }
@@ -338,132 +299,6 @@ public class Tile extends BaseEntity{
 
     
 
-    private void setCliffImages(){
-
-        int value = 0;
-        images.clear();
-        images.add(getImage());
-       
-        if (!(getNeighbors()[0].cliff ) && getNeighbors()[3] .cliff &&getNeighbors()[1] .cliff ) {
-            value = 2;
-            //UP
-        } else if(((getNeighbors()[0] .cliff) && getNeighbors()[1] .cliff && !getNeighbors()[2] .cliff) &&! getNeighbors()[3] .cliff){
-            //CORNER DOWN LEFT
-            value = 7;
-
-        }else if(((getNeighbors()[0] .cliff) && getNeighbors()[1] .cliff && getNeighbors()[2] .cliff) && getNeighbors()[3] .cliff && !getNeighbors()[2].getNeighbors()[1].cliff){
-            //CORNER DOWN LEFT
-            value = 11;
-        
-        
-        }else if(((getNeighbors()[0] .cliff) && getNeighbors()[1] .cliff && getNeighbors()[2] .cliff) && getNeighbors()[3] .cliff && !getNeighbors()[2].getNeighbors()[3].cliff){
-            //CORNER DOWN LEFT
-            value = 12;
-        
-
-        }else if(((getNeighbors()[0] .cliff) && getNeighbors()[1] .cliff && getNeighbors()[2] .cliff) && getNeighbors()[3] .cliff && !getNeighbors()[0].getNeighbors()[1].cliff){
-            //CORNER DOWN LEFT
-            value = 13;
-        
-
-        }else if(((getNeighbors()[0] .cliff) && getNeighbors()[1] .cliff && getNeighbors()[2] .cliff) && getNeighbors()[3] .cliff && !getNeighbors()[0].getNeighbors()[3].cliff){
-            //CORNER DOWN LEFT
-            value = 14;
-        
-
-
-        
-        
-
-        } else if ((getNeighbors()[0] .cliff) && getNeighbors()[3] .cliff  && !getNeighbors()[2] .cliff &&! getNeighbors()[1] .cliff){
-            value = 9;
-            //CORNER DOWNRIGHT
-        } else if ((getNeighbors()[2] .cliff) && getNeighbors()[1] .cliff && !getNeighbors()[3] .cliff &&! getNeighbors()[0] .cliff ){
-            value = 1;
-            //CORNER UPPERLEFT
-        }else if ((getNeighbors()[2] .cliff) && getNeighbors()[3] .cliff && !getNeighbors()[0] .cliff &&! getNeighbors()[1] .cliff ){
-            value = 3;
-            //CORNER UPPERRIGHT
-        }else if((!(getNeighbors()[2] .cliff) && getNeighbors()[1] .cliff && getNeighbors()[3] .cliff )){
-            // DOWN 
-            value = 8;
-
-        } else if((!(getNeighbors()[3] .cliff) && getNeighbors()[0] .cliff && getNeighbors()[2] .cliff )){
-            // LEFT
-            value = 4;
-
-        } else if((!(getNeighbors()[1] .cliff) && getNeighbors()[0] .cliff && getNeighbors()[2] .cliff )){
-            // RIGHT
-            value = 6;
-        }
-        
-        images.add(panel.imageContainer.getTileImage("protoCliff"+value));
-    }
-
-    private void setCliffImages2(){
-
-        int value = 0;
-       
-      
-        if ((getNeighbors()[0].floor < floor ) && getNeighbors()[3] .floor == floor &&getNeighbors()[1] .floor ==floor ) {
-            value = 2;
-            //UP
-        } else if(((getNeighbors()[0] .floor == floor) && getNeighbors()[1] .floor == floor && (getNeighbors()[2] .floor < floor)) && (getNeighbors()[3] .floor < floor)){
-            //CORNER DOWN LEFT
-            value = 7;
-
-        }else if(((getNeighbors()[0] .floor == floor) && getNeighbors()[1] .floor == floor && getNeighbors()[2] .floor == floor) && getNeighbors()[3] .floor == floor && (getNeighbors()[2].getNeighbors()[1].floor < floor)){
-            //CORNER DOWN LEFT
-            value = 12;
-        
-        
-        }else if(((getNeighbors()[0] .floor == floor) && getNeighbors()[1] .floor == floor && getNeighbors()[2] .floor == floor) && getNeighbors()[3] .floor == floor && (getNeighbors()[2].getNeighbors()[3].floor < floor)){
-            //CORNER DOWN LEFT
-            value = 11;
-        
-
-        }else if(((getNeighbors()[0] .floor == floor) && getNeighbors()[1] .floor == floor && getNeighbors()[2] .floor == floor) && getNeighbors()[3] .floor == floor && (getNeighbors()[0].getNeighbors()[1].floor) < floor){
-            //CORNER DOWN LEFT
-            value = 13;
-        
-
-        }else if(((getNeighbors()[0] .floor == floor) && getNeighbors()[1] .floor == floor && getNeighbors()[2] .floor == floor) && getNeighbors()[3] .floor == floor && (getNeighbors()[0].getNeighbors()[3].floor < floor)){
-            //CORNER DOWN LEFT
-            value = 14;
-        
-
-
-        
-        
-
-        } else if ((getNeighbors()[0] .floor == floor) && getNeighbors()[3] .floor == floor  && (getNeighbors()[2] .floor < floor) &&( getNeighbors()[1] .floor < floor)){
-            value = 9;
-            //CORNER DOWNRIGHT
-        } else if ((getNeighbors()[2] .floor == floor) && getNeighbors()[1] .floor == floor && (getNeighbors()[3] .floor < floor) &&( getNeighbors()[0] .floor < floor )){
-            value = 1;
-            //CORNER UPPERLEFT
-        }else if ((getNeighbors()[2] .floor == floor) && getNeighbors()[3] .floor == floor && (getNeighbors()[0] .floor < floor) &&( getNeighbors()[1] .floor < floor )){
-            value = 3;
-            //CORNER UPPERRIGHT
-        }else if(((getNeighbors()[2] .floor < floor) && getNeighbors()[1] .floor == floor && getNeighbors()[3] .floor == floor )){
-            // DOWN 
-            value = 8;
-
-        } else if(((getNeighbors()[3] .floor < floor) && getNeighbors()[0] .floor == floor && getNeighbors()[2] .floor == floor )){
-            // LEFT
-            value = 4;
-
-        } else if(((getNeighbors()[1] .floor < floor) && getNeighbors()[0] .floor == floor && getNeighbors()[2] .floor == floor )){
-            // RIGHT
-            value = 6;
-        }
-
-        else if (((getNeighbors()[1] .floor < floor) && getNeighbors()[0] .floor < floor && getNeighbors()[2] .floor == floor &&getNeighbors()[3] .floor < floor )){}
-
-        if (value != 0){cliff = true;images.add(panel.imageContainer.getTileImage("rockCliff"+value));}
-        
-        
-    }
 
 
 

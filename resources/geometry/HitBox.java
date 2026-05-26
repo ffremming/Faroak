@@ -1,4 +1,6 @@
-package ressurser.baseEntity;
+package resources.geometry;
+
+import resources.domain.entity.BaseEntity;
 import java.awt.Point;
 import java.awt.Rectangle;
 
@@ -39,7 +41,7 @@ public class HitBox extends Rectangle{
 
     // not done.... 
     public HitBox(BaseEntity entity){
-        super((int)(entity.worldX),(int)(entity.worldY),entity.width,entity.height);
+        super((int)(entity.worldX),(int)(entity.worldY),entity.getWidth(),entity.getHeight());
     }
 
     /**

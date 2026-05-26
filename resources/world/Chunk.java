@@ -1,16 +1,30 @@
-package ressurser.chunkSystem;
+package resources.world;
+
+import resources.app.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.domain.entity.Entity;
+import resources.domain.tile.Tile;
+import resources.domain.tile.CliffTile;
+import resources.geometry.HitBox;
+import resources.geometry.Vector;
+import resources.generation.factory.EntityFactory;
+import resources.domain.object.GameObject;
+import resources.domain.player.Moveable;
+import resources.domain.inventory.Item;
+import resources.domain.inventory.Stack;
+import resources.presentation.camera.Camera;
 
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import ressurser.baseEntity.BaseEntity;
-import ressurser.baseEntity.Entity;
-import ressurser.baseEntity.HitBox;
-import ressurser.baseEntity.playable.Moveable;
-import ressurser.baseEntity.tile.CliffTile;
-import ressurser.baseEntity.tile.Tile;
+import resources.domain.entity.BaseEntity;
+import resources.domain.entity.Entity;
+import resources.geometry.HitBox;
+import resources.domain.player.Moveable;
+import resources.domain.tile.CliffTile;
+import resources.domain.tile.Tile;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;

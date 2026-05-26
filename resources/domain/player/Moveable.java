@@ -1,11 +1,19 @@
-package ressurser.baseEntity.playable;
+package resources.domain.player;
+
+import resources.app.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.domain.entity.Entity;
+import resources.geometry.HitBox;
+import resources.geometry.Vector;
+import resources.domain.inventory.Inventory;
+import resources.domain.inventory.ItemManager;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import ressurser.baseEntity.Entity;
-import ressurser.baseEntity.HitBox;
-import ressurser.baseEntity.Vector;
-import ressurser.main.GamePanel;
+import resources.domain.entity.Entity;
+import resources.geometry.HitBox;
+import resources.geometry.Vector;
+import resources.app.GamePanel;
 
 public class Moveable extends Entity {
 

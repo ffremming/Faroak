@@ -1,4 +1,6 @@
-package ressurser.baseEntity;
+package resources.geometry;
+
+import resources.domain.entity.BaseEntity;
 
 public class Vector {
     

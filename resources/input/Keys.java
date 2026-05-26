@@ -1,4 +1,6 @@
-package ressurser.main;
+package resources.input;
+
+import resources.app.GamePanel;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;

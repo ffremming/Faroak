@@ -1,15 +1,39 @@
-package ressurser.main;
+package resources.app;
 
-import ressurser.baseEntity.playable.Playable;
-import ressurser.baseEntity.playable.Inventory.ItemManager;
-import ressurser.baseEntity.tile.TileManager;
-import ressurser.chunkSystem.WorkingMemory;
-import ressurser.drawing.Camera;
-import ressurser.enviroment.EnviromentManager;
-import ressurser.main.GUIMenu.Button;
-import ressurser.main.GUIMenu.Container;
-import ressurser.main.GUIMenu.UserInferface;
-import ressurser.worldGeneration.TerrainGenSimplex;
+import resources.presentation.image.ImageContainer;
+import resources.presentation.image.ImageResources;
+import resources.presentation.camera.Camera;
+import resources.presentation.ui.Container;
+import resources.presentation.ui.Button;
+import resources.presentation.ui.UserInterface;
+import resources.input.Keys;
+import resources.input.Mouse;
+import resources.input.InputHandlingSystem;
+import resources.world.MapHandler;
+import resources.world.ChunkSystem;
+import resources.world.WorkingMemory;
+import resources.domain.entity.BaseEntity;
+import resources.domain.entity.Entity;
+import resources.domain.tile.Tile;
+import resources.domain.tile.TileManager;
+import resources.domain.object.GameObject;
+import resources.domain.player.Playable;
+import resources.domain.player.Moveable;
+import resources.domain.inventory.ItemManager;
+import resources.environment.EnvironmentManager;
+import resources.generation.factory.EntityFactory;
+import resources.geometry.HitBox;
+import resources.geometry.Vector;
+
+import resources.domain.player.Playable;
+import resources.domain.inventory.ItemManager;
+import resources.domain.tile.TileManager;
+import resources.world.WorkingMemory;
+import resources.presentation.camera.Camera;
+import resources.environment.EnvironmentManager;
+import resources.presentation.ui.Button;
+import resources.presentation.ui.Container;
+import resources.presentation.ui.UserInterface;
 import java.awt.Dimension;
 import java.awt.Color;
 import java.lang.reflect.InvocationTargetException;
@@ -21,7 +45,7 @@ import javax.swing.SwingUtilities;
 
 
 
-public class GamePanel extends JPanel implements Runnable{
+public class GamePanel extends JPanel implements Runnable, GameContext {
     public int tileSize = 64;
     
     public final int screenHeight = tileSize *12;
@@ -34,14 +58,13 @@ public class GamePanel extends JPanel implements Runnable{
 
     // object components:
     GenerationManager generationM;
-    public TerrainGenSimplex terrainGen;
-    
+
     public TileManager tileM;
     public ItemManager itemM;
     public ImageContainer imageContainer;
     
 
-    public EnviromentManager enviromentM;
+    public EnvironmentManager environmentM;
     public MapHandler mapH;
     
     public Playable player;
@@ -49,7 +72,7 @@ public class GamePanel extends JPanel implements Runnable{
     public Mouse mouse;
     public InputHandlingSystem inputHandlingSystem;
     public Container UI;
-    public UserInferface userInterface;
+    public UserInterface userInterface;
     public WorkingMemory world;
     //public ItemContainer container;
    
@@ -99,7 +122,7 @@ public class GamePanel extends JPanel implements Runnable{
         generationM = new GenerationManager(this);
         generationM.generateMap();
 
-        enviromentM = new EnviromentManager(this);
+        environmentM = new EnvironmentManager(this);
        
         keys = new Keys(this);
         inputHandlingSystem = new InputHandlingSystem(this);
@@ -117,7 +140,7 @@ public class GamePanel extends JPanel implements Runnable{
         UI.add(new Button(this,"knapp"));
         */
        
-        userInterface = new UserInferface(this,0,0);
+        userInterface = new UserInterface(this,0,0);
         userInterface.setVisible(true);
         userInterface.enable();
         
@@ -240,7 +263,7 @@ public void run() {
     public void update(double delta){
         
         
-        enviromentM.updateTicks();
+        environmentM.updateTicks();
         inputHandlingSystem.update(delta);
         world.simulate(); 
         
@@ -286,5 +309,23 @@ public void run() {
         camera.follow(player);
     }
 
-    
+    // ---- GameContext implementation: forwards to existing fields so the rest of
+    // the codebase can depend on the GameContext interface instead of GamePanel directly.
+
+    @Override public resources.world.WorldRuntime  world()            { return world; }
+    @Override public TileManager                   tiles()            { return tileM; }
+    @Override public ItemManager                   items()            { return itemM; }
+    @Override public EnvironmentManager            environment()      { return environmentM; }
+    @Override public MapHandler                    mapHandler()       { return mapH; }
+    @Override public Playable                      player()           { return player; }
+    @Override public Camera                        camera()           { return camera; }
+    @Override public ImageContainer                images()           { return imageContainer; }
+    @Override public UserInterface                 userInterface()    { return userInterface; }
+    @Override public Keys                          keys()             { return keys; }
+    @Override public Mouse                         mouse()            { return mouse; }
+    @Override public InputHandlingSystem           input()            { return inputHandlingSystem; }
+    @Override public JFrame                        frame()            { return frame; }
+    @Override public int                           tileSize()         { return tileSize; }
+    @Override public int                           screenWidth()      { return screenWidth; }
+    @Override public int                           screenHeight()     { return screenHeight; }
 }

@@ -1,4 +1,11 @@
-package ressurser.main.GUIMenu;
+package resources.presentation.ui;
+
+import resources.app.GamePanel;
+import resources.domain.tile.Tile;
+import resources.domain.inventory.Inventory;
+import resources.domain.inventory.Item;
+import resources.domain.inventory.Stack;
+import resources.domain.inventory.ItemManager;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -7,7 +14,7 @@ import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.image.BufferedImage;
 
-import ressurser.main.GamePanel;
+import resources.app.GamePanel;
 
 public abstract class BaseComponent extends Rectangle {
     //everything tat can be placed inside a container

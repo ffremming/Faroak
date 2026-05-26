@@ -1,20 +1,27 @@
-package ressurser.main.GUIMenu;
+package resources.presentation.ui;
+
+import resources.app.GamePanel;
+import resources.domain.tile.Tile;
+import resources.domain.inventory.Inventory;
+import resources.domain.inventory.Item;
+import resources.domain.inventory.Stack;
+import resources.domain.inventory.ItemManager;
 
 import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.awt.Graphics2D;
 
-import ressurser.baseEntity.playable.Inventory.Inventory;
-import ressurser.main.GamePanel;
+import resources.domain.inventory.Inventory;
+import resources.app.GamePanel;
 
-public class UserInferface extends Container{
+public class UserInterface extends Container{
 
     private PlayerInventory inventoryUI;
     private Container menu;
 
 
-    public UserInferface(GamePanel panel, int x, int y) {
+    public UserInterface(GamePanel panel, int x, int y) {
         super(panel, x, y);
         width = panel.getFrameWidth();
         height = panel.getFrameHeight();

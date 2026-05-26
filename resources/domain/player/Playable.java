@@ -1,11 +1,19 @@
-package ressurser.baseEntity.playable;
+package resources.domain.player;
 
-import ressurser.baseEntity.BaseEntity;
-import ressurser.baseEntity.gameObject.GameObject;
-import ressurser.baseEntity.playable.Inventory.Inventory;
-import ressurser.baseEntity.playable.Inventory.Item;
-import ressurser.baseEntity.playable.Inventory.Stack;
-import ressurser.main.GamePanel;
+import resources.app.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.domain.entity.Entity;
+import resources.geometry.HitBox;
+import resources.geometry.Vector;
+import resources.domain.inventory.Inventory;
+import resources.domain.inventory.ItemManager;
+
+import resources.domain.entity.BaseEntity;
+import resources.domain.object.GameObject;
+import resources.domain.inventory.Inventory;
+import resources.domain.inventory.Item;
+import resources.domain.inventory.Stack;
+import resources.app.GamePanel;
 
 
 public class Playable extends Moveable{

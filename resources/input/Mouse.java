@@ -1,4 +1,6 @@
-package ressurser.main;
+package resources.input;
+
+import resources.app.GamePanel;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;

@@ -1,14 +1,39 @@
-package ressurser.main;
+package resources.app;
+
+import resources.presentation.image.ImageContainer;
+import resources.presentation.image.ImageResources;
+import resources.presentation.camera.Camera;
+import resources.presentation.ui.Container;
+import resources.presentation.ui.Button;
+import resources.presentation.ui.UserInterface;
+import resources.input.Keys;
+import resources.input.Mouse;
+import resources.input.InputHandlingSystem;
+import resources.world.MapHandler;
+import resources.world.ChunkSystem;
+import resources.world.WorkingMemory;
+import resources.domain.entity.BaseEntity;
+import resources.domain.entity.Entity;
+import resources.domain.tile.Tile;
+import resources.domain.tile.TileManager;
+import resources.domain.object.GameObject;
+import resources.domain.player.Playable;
+import resources.domain.player.Moveable;
+import resources.domain.inventory.ItemManager;
+import resources.environment.EnvironmentManager;
+import resources.generation.factory.EntityFactory;
+import resources.geometry.HitBox;
+import resources.geometry.Vector;
 import java.awt.Point;
 
-import ressurser.baseEntity.HitBox;
-import ressurser.baseEntity.playable.Moveable;
-import ressurser.baseEntity.playable.Playable;
-import ressurser.baseEntity.playable.Inventory.ItemManager;
-import ressurser.baseEntity.tile.TileManager;
-import ressurser.chunkSystem.ChunkSystem;
-import ressurser.chunkSystem.WorkingMemory;
-import ressurser.drawing.Camera;
+import resources.geometry.HitBox;
+import resources.domain.player.Moveable;
+import resources.domain.player.Playable;
+import resources.domain.inventory.ItemManager;
+import resources.domain.tile.TileManager;
+import resources.world.ChunkSystem;
+import resources.world.WorkingMemory;
+import resources.presentation.camera.Camera;
 
 public class GenerationManager {
     

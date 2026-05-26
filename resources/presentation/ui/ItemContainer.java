@@ -1,12 +1,19 @@
-package ressurser.main.GUIMenu;
+package resources.presentation.ui;
+
+import resources.app.GamePanel;
+import resources.domain.tile.Tile;
+import resources.domain.inventory.Inventory;
+import resources.domain.inventory.Item;
+import resources.domain.inventory.Stack;
+import resources.domain.inventory.ItemManager;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
 
-import ressurser.baseEntity.playable.Inventory.Inventory;
-import ressurser.baseEntity.playable.Inventory.Item;
-import ressurser.baseEntity.playable.Inventory.Stack;
-import ressurser.main.GamePanel;
+import resources.domain.inventory.Inventory;
+import resources.domain.inventory.Item;
+import resources.domain.inventory.Stack;
+import resources.app.GamePanel;
 
 
 public class ItemContainer extends Container {
@@ -82,7 +89,7 @@ public class ItemContainer extends Container {
                         Stack stack =  inventory.getStack(count);
                         
 
-                        Item item = stack.getItem(0);
+                        Item item = stack.getItem();
                         if (item != null){
                             System.out.println("drawing item");
                             g2.drawImage(item.images.get(0),comp.x+padding,comp.y+padding,comp.width-padding*2,comp.height-padding*2,null);

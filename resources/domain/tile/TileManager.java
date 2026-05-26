@@ -1,36 +1,33 @@
-package ressurser.baseEntity.tile;
+package resources.domain.tile;
+
+import resources.app.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.geometry.HitBox;
+import resources.presentation.image.ImageContainer;
 
 import java.util.HashMap;
-import java.util.NoSuchElementException;
 
 
-import ressurser.main.GamePanel;
+import resources.app.GamePanel;
 
 public class TileManager {
     
     GamePanel panel;
     public HashMap<String,Integer> tileHeight = new HashMap<>();
 
-    /**helper for tiles. can keep inportant information about tiles etc... */
+    /**helper for tiles. can keep important information about tiles etc... */
     public TileManager(GamePanel panel){
         this.panel = panel;
         setup();
 
         
     }
-    /**
-     * thows exception if the element does not have a corresponding name. 
-     */
+    /** Default rank for biomes that don't have an explicit height registered. */
+    private static final int DEFAULT_HEIGHT = 100;
+
     private int getHeight(Tile tile){
-        
-
-
-        if (tileHeight.containsKey(tile.getName())){
-            return tileHeight.get(tile.getName());
-        } else{
-            throw new NoSuchElementException(tile.getName());
-            
-        }
+        Integer h = tileHeight.get(tile.getName());
+        return h != null ? h : DEFAULT_HEIGHT;
     }
 
     /**returns true if tile2 is higher than tile */
@@ -84,7 +81,15 @@ public class TileManager {
         tileHeight.put("forest",101);
         tileHeight.put("savanna",15);
         tileHeight.put("seasonal forest",50);
-        
+
+        // Biomes added by ProceduralGen / BiomeRegistry
+        tileHeight.put("snowy taiga",  102);
+        tileHeight.put("snowy Tundra", 95);
+        tileHeight.put("rain forest",  103);
+        tileHeight.put("rain_forest",  103);
+        tileHeight.put("riverbank",    8);
+        tileHeight.put("river",        0);
+        tileHeight.put("mountain",     200);
     }
 
     

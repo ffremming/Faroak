@@ -1,4 +1,6 @@
-package ressurser.main;
+package resources.presentation.image;
+
+import resources.domain.entity.Entity;
 
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;

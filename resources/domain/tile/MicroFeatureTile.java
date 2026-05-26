@@ -1,6 +1,11 @@
-package ressurser.baseEntity.tile;
+package resources.domain.tile;
 
-import ressurser.main.GamePanel;
+import resources.app.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.geometry.HitBox;
+import resources.presentation.image.ImageContainer;
+
+import resources.app.GamePanel;
 
 public class MicroFeatureTile extends Tile {
 

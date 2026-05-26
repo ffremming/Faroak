@@ -1,4 +1,18 @@
-package ressurser.chunkSystem;
+package resources.world;
+
+import resources.app.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.domain.entity.Entity;
+import resources.domain.tile.Tile;
+import resources.domain.tile.CliffTile;
+import resources.geometry.HitBox;
+import resources.geometry.Vector;
+import resources.generation.factory.EntityFactory;
+import resources.domain.object.GameObject;
+import resources.domain.player.Moveable;
+import resources.domain.inventory.Item;
+import resources.domain.inventory.Stack;
+import resources.presentation.camera.Camera;
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -13,14 +27,14 @@ import java.util.Random;
 import javax.swing.JFrame;
 
 
-import ressurser.baseEntity.BaseEntity;
-import ressurser.baseEntity.Entity;
-import ressurser.baseEntity.HitBox;
+import resources.domain.entity.BaseEntity;
+import resources.domain.entity.Entity;
+import resources.geometry.HitBox;
 
-import ressurser.baseEntity.tile.Tile;
-import ressurser.chunkSystem.terrainGeneration.entityGeneration.EntityFactory;
+import resources.domain.tile.Tile;
+import resources.generation.factory.EntityFactory;
 
-import ressurser.main.GamePanel;
+import resources.app.GamePanel;
 
 
 

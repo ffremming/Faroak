@@ -1,5 +1,8 @@
-package ressurser.baseEntity;
-import ressurser.main.GamePanel;
+package resources.domain.entity;
+
+import resources.geometry.HitBox;
+import resources.geometry.Vector;
+import resources.app.GamePanel;
 import java.awt.Rectangle;
 
 public class Entity extends BaseEntity{

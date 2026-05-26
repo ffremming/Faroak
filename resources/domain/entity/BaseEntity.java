@@ -1,4 +1,7 @@
-package ressurser.baseEntity;
+package resources.domain.entity;
+
+import resources.geometry.HitBox;
+import resources.geometry.Vector;
 
 
 import java.awt.Graphics2D;
@@ -6,10 +9,10 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
-import ressurser.baseEntity.tile.Tile;
-import ressurser.main.GamePanel;
+import resources.domain.tile.Tile;
+import resources.app.GamePanel;
 
-public class BaseEntity {
+public class BaseEntity implements Tickable, Drawable {
 
     public GamePanel panel;
 

@@ -1,4 +1,14 @@
-package ressurser.drawing;
+package resources.presentation.camera;
+
+import resources.app.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.domain.entity.Entity;
+import resources.domain.entity.PrimitiveEntity;
+import resources.domain.tile.Tile;
+import resources.geometry.HitBox;
+import resources.geometry.Vector;
+import resources.world.Chunk;
+import resources.world.WorkingMemory;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -13,18 +23,18 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
-import ressurser.baseEntity.BaseEntity;
-import ressurser.baseEntity.Entity;
-import ressurser.baseEntity.HitBox;
-import ressurser.baseEntity.primitiveEntity;
-import ressurser.baseEntity.gameObject.GameObject;
-import ressurser.baseEntity.playable.Moveable;
-import ressurser.baseEntity.tile.Tile;
-import ressurser.chunkSystem.Chunk;
-import ressurser.main.GamePanel;
-import ressurser.main.GUIMenu.ItemContainer;
+import resources.domain.entity.BaseEntity;
+import resources.domain.entity.Entity;
+import resources.geometry.HitBox;
+import resources.domain.entity.PrimitiveEntity;
+import resources.domain.object.GameObject;
+import resources.domain.player.Moveable;
+import resources.domain.tile.Tile;
+import resources.world.Chunk;
+import resources.app.GamePanel;
+import resources.presentation.ui.ItemContainer;
 
-public class Camera extends primitiveEntity{
+public class Camera extends PrimitiveEntity{
 
     private BaseEntity followed;
     

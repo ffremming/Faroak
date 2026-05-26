@@ -1,8 +1,30 @@
-package ressurser.main;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
+package resources.app;
 
-import ressurser.main.GUIMenu.MenuPanel;
+import resources.presentation.image.ImageContainer;
+import resources.presentation.image.ImageResources;
+import resources.presentation.camera.Camera;
+import resources.presentation.ui.Container;
+import resources.presentation.ui.Button;
+import resources.presentation.ui.UserInterface;
+import resources.input.Keys;
+import resources.input.Mouse;
+import resources.input.InputHandlingSystem;
+import resources.world.MapHandler;
+import resources.world.ChunkSystem;
+import resources.world.WorkingMemory;
+import resources.domain.entity.BaseEntity;
+import resources.domain.entity.Entity;
+import resources.domain.tile.Tile;
+import resources.domain.tile.TileManager;
+import resources.domain.object.GameObject;
+import resources.domain.player.Playable;
+import resources.domain.player.Moveable;
+import resources.domain.inventory.ItemManager;
+import resources.environment.EnvironmentManager;
+import resources.generation.factory.EntityFactory;
+import resources.geometry.HitBox;
+import resources.geometry.Vector;
+import javax.swing.JFrame;
 
 public class Main{
     public static void main(String[] args) {

@@ -1,6 +1,8 @@
-package ressurser.main;
+package resources.input;
 
-import ressurser.baseEntity.Vector;
+import resources.app.GamePanel;
+
+import resources.geometry.Vector;
 
 public class InputHandlingSystem {
     

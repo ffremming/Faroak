@@ -1,4 +1,4 @@
-package ressurser.main;
+package resources.presentation.image;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -12,8 +12,7 @@ import java.awt.image.AffineTransformOp;
 
 import javax.imageio.ImageIO;
 
-import ressurser.baseEntity.Entity;
-import ressurser.chunkSystem.terrainGeneration.Biome;
+import resources.domain.entity.Entity;
 
 public class ImageContainer {
 
@@ -26,13 +25,41 @@ public class ImageContainer {
     }
 
     public BufferedImage getTileImage(String name){
-        
+
         if (images.containsKey(name)){
             return (images.get(name));
         }
-        else{
-            return retrieveTileSpriteImage(name);
+        BufferedImage loaded = retrieveTileSpriteImage(name);
+        if (loaded != null){
+            return loaded;
         }
+        BufferedImage fallback = makeFallbackTile(name);
+        images.put(name, fallback);
+        return fallback;
+    }
+
+    /** Solid-colour 64x64 tile keyed by name so different biomes get distinct shades when their sprite is missing. */
+    private BufferedImage makeFallbackTile(String name){
+        BufferedImage img = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        g.setColor(fallbackColor(name));
+        g.fillRect(0, 0, 64, 64);
+        g.dispose();
+        return img;
+    }
+
+    private Color fallbackColor(String name){
+        if (name == null) return new Color(0x80, 0x80, 0x80);
+        String n = name.toLowerCase();
+        if (n.startsWith("ocean") || n.startsWith("water") || n.startsWith("river")) return new Color(0x2E, 0x6B, 0xB5);
+        if (n.startsWith("beach") || n.startsWith("sand"))                            return new Color(0xE6, 0xD2, 0x9C);
+        if (n.startsWith("desert"))                                                   return new Color(0xD9, 0xB8, 0x76);
+        if (n.startsWith("snow") || n.startsWith("icy") || n.startsWith("ice"))       return new Color(0xDC, 0xE6, 0xEE);
+        if (n.startsWith("mountain") || n.startsWith("cliff") || n.startsWith("rock"))return new Color(0x80, 0x80, 0x80);
+        if (n.startsWith("savanna"))                                                  return new Color(0xCD, 0xBE, 0x70);
+        if (n.startsWith("swamp") || n.startsWith("moss") || n.startsWith("mud"))     return new Color(0x4E, 0x4E, 0x35);
+        if (n.startsWith("forest") || n.contains("forest"))                           return new Color(0x40, 0x80, 0x00);
+        return new Color(0xA0, 0xC0, 0x80);
     }
 
     public boolean containsImage(String name){
@@ -46,39 +73,48 @@ public class ImageContainer {
 
 
     private void setupBaseImages(){
-        try {
+        // Each mapping resolves independently so one missing sprite doesn't blank out the rest.
+        // Order matters: aliases below may reuse the canonical image loaded above.
+        loadTile("plains",          "plains.png");
+        loadTile("swamp",           "mud.png");
+        loadTile("seasonal forest", "moss.png");
+        loadTile("ocean",           "oceanT.png");
+        loadTile("savanna",         "savanna.png");
+        loadTile("desert",          "desert.png");
+        loadTile("forest",          "forest.png");
+        loadTile("beach",           "beach.png");
+        loadTile("mountain",        "rockCliff0.png");
 
-            BufferedImage grass = scaleImage( ImageIO.read(new File("ressurser/images/tile/plains.png")),64,64);
-            BufferedImage mud = scaleImage(ImageIO.read(new File("ressurser/images/tile/mud.png")),64,64);
-            BufferedImage moss = scaleImage(ImageIO.read(new File("ressurser/images/tile/moss.png")),64,64);
-            BufferedImage sand = scaleImage(ImageIO.read(new File("ressurser/images/tile/sand.png")),64,64);
-            BufferedImage water = scaleImage(ImageIO.read(new File("ressurser/images/tile/ocean.png")),64,64);
-            BufferedImage dark_grass = scaleImage(ImageIO.read(new File("ressurser/images/tile/dark_grass.png")),64,64);
-            BufferedImage savanna = scaleImage(ImageIO.read(new File("ressurser/images/tile/savanna.png")),64,64);
+        aliasTile("snowy Tundra", "plains");
+        aliasTile("snowy taiga",  "forest");
+        aliasTile("rain_forest",  "forest");
+        aliasTile("rain forest",  "forest");
+        aliasTile("riverbank",    "beach");
+    }
 
+    /** Load a single tile under {@code key}, falling back to a colour swatch if the file is missing. */
+    private void loadTile(String key, String fileName){
+        File file = new File("resources/images/tile/" + fileName);
+        if (file.exists()) {
+            try {
+                images.put(key, scaleImage(ImageIO.read(file), 64, 64));
+                return;
+            } catch (IOException e) {
+                System.out.println("failed to read tile " + fileName + ": " + e.getMessage());
+            }
+        } else {
+            System.out.println("tile sprite missing: " + fileName + " (using fallback for '" + key + "')");
+        }
+        images.put(key, makeFallbackTile(key));
+    }
 
-            images.put("plains",grass);
-            images.put("swamp",mud);
-            images.put("seasonal forest",moss);
-            images.put("desert",sand);
-            images.put("ocean",water);
-            images.put("forest",dark_grass);
-            images.put("savanna",savanna);
-
-            images.put("snowy Tundra",dark_grass);
-            images.put("snowy taiga",dark_grass);
-            images.put("beach",sand);
-            images.put("rain_forest",savanna);
-
-            
-           
-
-    
-
-        } catch (IOException e) {
-            
-            System.out.println("problem with base load of images");
-            System.out.println(e);
+    /** Point a biome name at an already-loaded tile image. */
+    private void aliasTile(String alias, String existingKey){
+        BufferedImage img = images.get(existingKey);
+        if (img != null) {
+            images.put(alias, img);
+        } else {
+            images.put(alias, makeFallbackTile(alias));
         }
     }
 
@@ -89,7 +125,7 @@ public class ImageContainer {
         BufferedImage image = null;
         try {
             
-            image = scaleImage(ImageIO.read(new File("ressurser/images/tile/"+name+".png")),32,32);
+            image = scaleImage(ImageIO.read(new File("resources/images/tile/"+name+".png")),32,32);
             
         }catch (IOException e) {
             //create the right image from file
@@ -127,7 +163,7 @@ public class ImageContainer {
     public static boolean doesPNGFileExist( String fileName) {
        
         try {
-            BufferedImage image = ImageIO.read(new File("ressurser/images/"+fileName+".png"));
+            BufferedImage image = ImageIO.read(new File("resources/images/"+fileName+".png"));
             return true;
         } catch (IOException e) {
            return false;
@@ -169,21 +205,21 @@ public class ImageContainer {
     public ArrayList<BufferedImage> setPlayableImages(String name) {
         ArrayList<BufferedImage> images = new ArrayList<>();
         try {
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/up1.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/up2.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/up3.png")));
+        images.add(ImageIO.read(new File("resources/images/playable/"+name+"/up1.png")));
+        images.add(ImageIO.read(new File("resources/images/playable/"+name+"/up2.png")));
+        images.add(ImageIO.read(new File("resources/images/playable/"+name+"/up3.png")));
 
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/right1.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/right2.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/right3.png")));
+        images.add(ImageIO.read(new File("resources/images/playable/"+name+"/right1.png")));
+        images.add(ImageIO.read(new File("resources/images/playable/"+name+"/right2.png")));
+        images.add(ImageIO.read(new File("resources/images/playable/"+name+"/right3.png")));
 
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/down1.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/down2.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/down3.png")));
+        images.add(ImageIO.read(new File("resources/images/playable/"+name+"/down1.png")));
+        images.add(ImageIO.read(new File("resources/images/playable/"+name+"/down2.png")));
+        images.add(ImageIO.read(new File("resources/images/playable/"+name+"/down3.png")));
 
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/left1.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/left2.png")));
-        images.add(ImageIO.read(new File("ressurser/images/playable/"+name+"/left3.png")));
+        images.add(ImageIO.read(new File("resources/images/playable/"+name+"/left1.png")));
+        images.add(ImageIO.read(new File("resources/images/playable/"+name+"/left2.png")));
+        images.add(ImageIO.read(new File("resources/images/playable/"+name+"/left3.png")));
         
     } catch (IOException e) {
         System.out.println(name + " could not load the sprites of playable");
@@ -222,7 +258,7 @@ public class ImageContainer {
     public ArrayList<BufferedImage> getObjectImagesFromFile(String name) {
         ArrayList<BufferedImage> images = new ArrayList<>();
 
-        File folder = new File("ressurser/images/objects/"+name); // Change this to your folder path
+        File folder = new File("resources/images/objects/"+name); // Change this to your folder path
         
         if (folder.isDirectory()) {
             File[] files = folder.listFiles();
@@ -291,7 +327,7 @@ public class ImageContainer {
         BufferedImage image = null;
        
         try {
-            File file = new File("ressurser/images/items/"+name+".png");
+            File file = new File("resources/images/items/"+name+".png");
             if(file.exists()){
                 image = ImageIO.read(file);
                 System.out.println("#loaded item image");

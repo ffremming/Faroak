@@ -1,10 +1,14 @@
-package ressurser.baseEntity.playable.Inventory;
+package resources.domain.inventory;
+
+import resources.app.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.geometry.HitBox;
 
 import java.util.HashMap;
 
-import ressurser.baseEntity.BaseEntity;
-import ressurser.baseEntity.gameObject.PlaceAble;
-import ressurser.main.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.domain.object.PlaceAble;
+import resources.app.GamePanel;
 
 public class ItemManager {
 
