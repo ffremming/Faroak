@@ -99,21 +99,30 @@ public class GamePanel extends JPanel implements GameContext {
     }
 
     private void setUpObjects() {
+        resources.presentation.ui.LoadingScreen.setStatus("Generating world");
         generationM = new GenerationManager(this);
         generationM.generateMap();
+        resources.presentation.ui.LoadingScreen.setStatus("Preparing environment");
         environmentM = new EnvironmentManager(this);
+        resources.presentation.ui.LoadingScreen.setStatus("Wiring input");
         keys  = new Keys(this);
         mouse = new Mouse(this);
         inputHandlingSystem = new InputHandlingSystem(this);
+        resources.presentation.ui.LoadingScreen.setStatus("Building UI");
         UI = new Container(this, 100, 100);
         userInterface = new UserInterface(this, 0, 0);
         userInterface.setVisible(true);
         userInterface.enable();
+        resources.presentation.ui.LoadingScreen.setStatus("Placing player");
         generationM.initiate();
+        resources.presentation.ui.LoadingScreen.setStatus("Spawning entities");
         generationM.seedWorldEntities();
+        resources.presentation.ui.LoadingScreen.setStatus("Setting up camera");
         camera = new Camera(this, "camera", 0, 0,
             (short) (screenWidth + 400), (short) (screenHeight + 400));
+        resources.presentation.ui.LoadingScreen.setStatus("Initializing multiplayer");
         multiplayer = MultiplayerRuntime.createDefault(this);
+        resources.presentation.ui.LoadingScreen.setStatus("Finalizing");
     }
 
     private void wireInput() {

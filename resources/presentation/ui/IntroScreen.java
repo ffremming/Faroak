@@ -53,7 +53,7 @@ public class IntroScreen extends JPanel {
         setDoubleBuffered(true);
         setFocusable(true);
 
-        background = tryLoad(ASSETS + "farm.png");
+        background = tryLoad(ASSETS + "map.png");
 
         // Load all available board PNGs and pick a random one per button.
         java.util.List<BufferedImage> boards = new java.util.ArrayList<>();

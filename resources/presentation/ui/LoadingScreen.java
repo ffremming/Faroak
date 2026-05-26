@@ -43,25 +43,30 @@ public class LoadingScreen extends JPanel {
 
     private BufferedImage sky;
     private BufferedImage clouds;
-    private BufferedImage mountains;
     private final BufferedImage[] treeFrames = new BufferedImage[3];
-    private final BufferedImage[] grassFrames = new BufferedImage[2];
 
     private double skyOffset      = 0;
     private double cloudOffset    = 0;
-    private double mountainOffset = 0;
 
     private final long startNanos = System.nanoTime();
     private float tSeconds = 0f;
 
+    /** Current status line ("Preparing images…", "Loading world…", etc.).
+     *  Volatile so background init threads can update it while the EDT paints. */
+    private static volatile String status = "Starting up";
+
+    /** Called from the background init thread to describe the current phase. */
+    public static void setStatus(String s) {
+        status = (s == null || s.isEmpty()) ? "" : s;
+    }
+
     private static final double SKY_SPEED      =  -4;
     private static final double CLOUD_SPEED    = -18;
-    private static final double MOUNTAIN_SPEED =  -1;
     private static final double TREE_FRAME_DT  = 0.55;
-    private static final double GRASS_FRAME_DT = 0.35;
 
     /** Entry point: swap the frame to the loading screen and kick off the game-init thread. */
     public static void show(JFrame frame, boolean loadExisting) {
+        setStatus("Starting up");
         LoadingScreen screen = new LoadingScreen();
         frame.getContentPane().removeAll();
         frame.getContentPane().add(screen);
@@ -128,12 +133,9 @@ public class LoadingScreen extends JPanel {
     private void loadAssets() {
         sky        = tryLoad("sky.png");
         clouds     = autoCrop(keyOutWhite(tryLoad("clouds.png")));
-        mountains  = autoCrop(keyOutWhite(tryLoad("mountains.png")));
         treeFrames[0]  = autoCrop(keyOutWhite(tryLoad("trees_frame1.png")));
         treeFrames[1]  = autoCrop(keyOutWhite(tryLoad("trees_frame2.png")));
         treeFrames[2]  = autoCrop(keyOutWhite(tryLoad("trees_frame3.png")));
-        grassFrames[0] = autoCrop(keyOutWhite(tryLoad("grass_frame1.png")));
-        grassFrames[1] = autoCrop(keyOutWhite(tryLoad("grass_frame2.png")));
     }
 
     private static BufferedImage keyOutWhite(BufferedImage src) {
@@ -178,9 +180,8 @@ public class LoadingScreen extends JPanel {
 
     private void tick() {
         double dt = 0.016;
-        skyOffset      += SKY_SPEED      * dt;
-        cloudOffset    += CLOUD_SPEED    * dt;
-        mountainOffset += MOUNTAIN_SPEED * dt;
+        skyOffset   += SKY_SPEED   * dt;
+        cloudOffset += CLOUD_SPEED * dt;
     }
 
     @Override
@@ -208,36 +209,20 @@ public class LoadingScreen extends JPanel {
             g2.fillRect(0, 0, W, H);
         }
 
-        int grassBottom = H;
-        int grassH = (int) (H * 0.18);
-        int grassTop = grassBottom - grassH;
-
-        int treeBottom = grassTop + (int) (grassH * 0.25);
-        int treeH = (int) (H * 0.32);
+        int treeBottom = H;
+        int treeH = (int) (H * 0.70);
         int treeTop = treeBottom - treeH;
 
-        int mountainBottom = treeTop + (int) (treeH * 0.30);
-        int mountainH = (int) (H * 0.28);
-        int mountainTop = mountainBottom - mountainH;
-
-        int cloudTop = (int) (H * 0.02);
-        int cloudH   = (int) (H * 0.22);
+        int cloudTop = (int) (H * 0.0);
+        int cloudH   = (int) (H * 0.28);
 
         if (clouds != null) {
             drawScrollingLayer(g2, clouds, cloudOffset, cloudTop, cloudH);
-        }
-        if (mountains != null) {
-            drawScrollingLayer(g2, mountains, mountainOffset, mountainTop, mountainH);
         }
 
         BufferedImage tree = pickFrame(treeFrames, tSeconds, TREE_FRAME_DT);
         if (tree != null) {
             g2.drawImage(tree, 0, treeTop, W, treeH, null);
-        }
-
-        BufferedImage grass = pickFrame(grassFrames, tSeconds, GRASS_FRAME_DT);
-        if (grass != null) {
-            g2.drawImage(grass, 0, grassTop, W, grassH, null);
         }
     }
 
@@ -288,5 +273,20 @@ public class LoadingScreen extends JPanel {
         g2.drawString(s, sx + 3, sy + 3);
         g2.setColor(new Color(250, 235, 205));
         g2.drawString(s, sx, sy);
+
+        // Status line beneath the "Loading…" header — describes the current
+        // phase of game init (set from background threads via setStatus).
+        String statusText = status;
+        if (statusText != null && !statusText.isEmpty()) {
+            Font sf = new Font("Serif", Font.PLAIN, 22);
+            g2.setFont(sf);
+            int stw = g2.getFontMetrics().stringWidth(statusText);
+            int stx = (W - stw) / 2;
+            int sty = sy + 44;
+            g2.setColor(new Color(0, 0, 0, 180));
+            g2.drawString(statusText, stx + 2, sty + 2);
+            g2.setColor(new Color(245, 230, 200));
+            g2.drawString(statusText, stx, sty);
+        }
     }
 }

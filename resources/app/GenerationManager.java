@@ -13,10 +13,15 @@ import resources.input.InputHandlingSystem;
 import resources.generation.cave.CaveBootstrap;
 import resources.generation.dimension.Dimension;
 import resources.generation.dimension.DimensionRegistry;
+import resources.generation.interior.Interior;
 import resources.generation.interior.InteriorBootstrap;
+import resources.generation.interior.InteriorManager;
+import resources.generation.interior.InteriorRegistry;
 import resources.generation.noise.ProceduralGen;
 import resources.domain.farming.FarmingRegistry;
 import resources.domain.object.Portal;
+import resources.domain.player.Npc;
+import resources.domain.ai.IdleStrollBehavior;
 import resources.domain.spawn.BoatSpawner;
 import resources.world.DimensionService;
 import resources.world.MapHandler;
@@ -57,15 +62,22 @@ public class GenerationManager {
 
 
     public void generateMap(){
+        resources.presentation.ui.LoadingScreen.setStatus("Allocating world memory");
         panel.world = new WorkingMemory(panel);
+        resources.presentation.ui.LoadingScreen.setStatus("Loading images");
         panel.imageContainer = new ImageContainer();
+        resources.presentation.ui.LoadingScreen.setStatus("Building animations");
         Animations.bootstrap(panel.animations(), panel.imageContainer);
+        resources.presentation.ui.LoadingScreen.setStatus("Loading items");
         panel.itemM = new ItemManager(panel);
 
+        resources.presentation.ui.LoadingScreen.setStatus("Preparing maps");
         panel.mapH = new MapHandler(panel);
 
+        resources.presentation.ui.LoadingScreen.setStatus("Preparing tiles");
         panel.tileM = new TileManager(panel);
 
+        resources.presentation.ui.LoadingScreen.setStatus("Registering dimensions");
         ProceduralGen gen = new ProceduralGen();
         DimensionRegistry.instance().register(DimensionRegistry.OVERWORLD,
             new Dimension(DimensionRegistry.OVERWORLD,
@@ -83,6 +95,7 @@ public class GenerationManager {
         // Wire harvest profiles for mature crops (idempotent).
         FarmingRegistry.init();
 
+        resources.presentation.ui.LoadingScreen.setStatus("Generating terrain");
         panel.world.initial();
         panel.world.update(new Point(0,0));
 
@@ -101,13 +114,50 @@ public class GenerationManager {
             DimensionRegistry.OVERWORLD, DimensionRegistry.CAVE, new Point(0, 0));
         toCave.addComponent(new resources.domain.entity.component.LabelComponent("Cave"));
         panel.world.placeEntity(toCave);
+        // Arrive one tile north of the starter house door so the player
+        // spawns on a floor cell, not inside the door tile itself.
+        Point doorPx = interiorDoorPixel(InteriorRegistry.STARTER_HOUSE, 0, 0);
+        Point arrival = new Point(doorPx.x, doorPx.y - panel.tileSize);
+        Point overworldDoor = new Point(p.x + 128, p.y + 128);
         Portal toInterior = new Portal(panel, "door",
-            p.x + 128, p.y + 128,
-            DimensionRegistry.OVERWORLD, DimensionRegistry.INTERIOR, new Point(0, 0));
+            overworldDoor.x, overworldDoor.y,
+            DimensionRegistry.OVERWORLD, DimensionRegistry.INTERIOR, arrival);
         toInterior.addComponent(new resources.domain.entity.component.LabelComponent("House"));
         panel.world.placeEntity(toInterior);
+        // Doors inside any interior should return the player to the overworld
+        // portal location, not (0,0).
+        InteriorManager interiors = InteriorBootstrap.lastBuilt();
+        if (interiors != null) interiors.setOverworldArrival(overworldDoor);
         // Scatter a handful of boats on the nearest patch of water.
         BoatSpawner.spawnBoatsNear(panel, p, 3);
+        // A small welcoming committee: a few NPCs strolling near spawn.
+        spawnStartingNpcs(p);
+    }
+
+    /**
+     * Place a handful of NPCs around the player's spawn point. Each candidate
+     * tile is checked against the same land/solid rules used for the player so
+     * NPCs don't pop into water or rocks. Skips a candidate if its patch is
+     * blocked; doesn't search further to avoid pushing NPCs out of sight.
+     */
+    private void spawnStartingNpcs(Point spawn) {
+        int ts = panel.tileSize;
+        Point[] offsets = {
+            new Point( ts * 3,  0),
+            new Point(-ts * 3,  0),
+            new Point( 0,       ts * 3),
+            new Point( ts * 2, -ts * 3),
+            new Point(-ts * 2,  ts * 2)
+        };
+        long seed = System.nanoTime();
+        for (int i = 0; i < offsets.length; i++) {
+            int x = spawn.x + offsets[i].x;
+            int y = spawn.y + offsets[i].y;
+            if (!isLandPatch(x, y, ts)) continue;
+            Npc npc = new Npc(panel, "npc", x, y, 20,
+                new IdleStrollBehavior(seed ^ ((long) x << 16) ^ y));
+            panel.world.placeEntity(npc);
+        }
     }
 
     public void newSeed(){
@@ -144,6 +194,14 @@ public class GenerationManager {
             }
         }
         return new Point(0, 0);
+    }
+
+    /** World-pixel of the door tile for an interior anchored at (slotX, slotY). */
+    private Point interiorDoorPixel(Interior interior, int slotX, int slotY) {
+        int ts = panel.tileSize;
+        int tx = slotX * InteriorManager.SLOT_TILES + interior.doorTx();
+        int ty = slotY * InteriorManager.SLOT_TILES + interior.doorTy();
+        return new Point(tx * ts, ty * ts);
     }
 
     private boolean isLandPatch(int x, int y, int ts){

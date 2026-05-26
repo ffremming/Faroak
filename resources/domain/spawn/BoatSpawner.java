@@ -42,6 +42,10 @@ public final class BoatSpawner {
         int placed = 0;
         for (Point p : waterTiles) {
             if (placed >= count) break;
+            // Pre-flight the placement so we don't build a Boat that will be
+            // rejected — under crowded shorelines this used to construct ~30×
+            // more boats than it kept.
+            if (!Boat.canPlaceAt(ctx, p.x, p.y)) continue;
             Boat boat = new Boat(ctx.player().panel, p.x, p.y);
             if (ctx.world().placeEntity(boat)) placed++;
         }

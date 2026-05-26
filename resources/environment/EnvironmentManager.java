@@ -31,13 +31,18 @@ public class EnvironmentManager {
     }
 
     public void updateTicks(){
-       
-      
-        ms++;
-        if (ms%panel.camera.FPS == 0){
 
-            //based on camera, but should be something that is followed.
+
+        ms++;
+
+        // Chunk streaming runs at ~10 Hz so newly entered chunks load
+        // promptly, well before the player can outrun the render rectangle.
+        int chunkTickInterval = Math.max(1, panel.camera.FPS / 10);
+        if (ms % chunkTickInterval == 0){
             panel.world.update(panel.camera.getHitBox().getCenter());
+        }
+
+        if (ms%panel.camera.FPS == 0){
             second++;
             updatePanelDimensions();
 

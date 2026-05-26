@@ -24,6 +24,12 @@ public final class HarvestRegistry {
         register("oak_M",    new Profile("axe", 4, DropTable.of(new DropSpec("block", 3, 5))));
         register("spruce_M", new Profile("axe", 3, DropTable.of(new DropSpec("block", 2, 4))));
         register("palm_M",   new Profile("axe", 3, DropTable.of(new DropSpec("block", 2, 4))));
+
+        // Rocks: mine with a pickaxe, yield 1–3 stone.
+        register("stone",    new Profile("pickaxe", 3, DropTable.of(new DropSpec("stone", 1, 3))));
+
+        // Driftwood: light beach debris — one hit, no tool requirement, yields wood.
+        register("driftwood", new Profile(null, 1, DropTable.of(new DropSpec("block", 1, 2))));
     }
 
     public static HarvestableComponent componentFor(String objectName) {

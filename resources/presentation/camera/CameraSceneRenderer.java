@@ -12,6 +12,7 @@ import resources.domain.entity.BaseEntity;
 import resources.domain.entity.Entity;
 import resources.domain.entity.component.AnimationComponent;
 import resources.domain.entity.component.LabelComponent;
+import resources.domain.object.BoatRideComponent;
 import resources.domain.tile.Tile;
 
 /**
@@ -47,6 +48,11 @@ public final class CameraSceneRenderer {
 
     /** Draw one entity in camera space, including its shadow if non-Tile. */
     public void drawRelative(Graphics2D g2, BaseEntity entity) {
+        // Rider is slaved to the boat's position; rendering them on top just
+        // looks like a person standing on the deck. Hide them (and their
+        // shadow) while a BoatRideComponent is attached.
+        if (entity.hasComponent(BoatRideComponent.class)) return;
+
         int camX = (int) camera.getWorldX();
         int camY = (int) camera.getWorldY();
         int x = (int) (entity.getWorldX() - camX);

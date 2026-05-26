@@ -45,7 +45,7 @@ public class ChunkSystem {
         this.panel         = panel;
         this.type          = type;
         this.entityFactory = entFact;
-        this.renderDistance = 20 * panel.tileSize;
+        this.renderDistance = 30 * panel.tileSize;
 
         setID();
         tryClearStorage();

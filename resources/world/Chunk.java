@@ -28,6 +28,7 @@ public class Chunk extends TreeNode {
     final ArrayList<Entity> entities = new ArrayList<>();
 
     private boolean loaded = false;
+    private boolean connected = false;
     private final ChunkLoader loader = new ChunkLoader(this);
 
     public Chunk(ChunkSystem chunkS, int x, int y, int width, int height) {
@@ -54,6 +55,7 @@ public class Chunk extends TreeNode {
         }
         entities.clear();
         loaded = false;
+        connected = false;
     }
 
     /** Called by {@link ChunkLoader} when first-time generation completes. */
@@ -136,11 +138,13 @@ public class Chunk extends TreeNode {
 
     /** Walk all tiles and wire each tile to its four neighbors. */
     void connectTiles() {
+        if (connected) return;
         for (int i = 0; i < tiles.length; i++) {
             for (int j = 0; j < tiles[i].length; j++) {
                 if (tiles[i][j] != null) tiles[i][j].setNeighBors();
             }
         }
+        connected = true;
     }
 
     /** Move out any Moveable entity that has left this chunk's bounds. */

@@ -4,6 +4,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -26,6 +28,8 @@ public class ImageContainer {
 
     private final TileImageLoader   tileLoader   = new TileImageLoader(images);
     private final ObjectImageLoader objectLoader = new ObjectImageLoader(objectImages, itemImages);
+
+    private final Map<BufferedImage, BufferedImage> outlineCache = new IdentityHashMap<>();
 
     public ImageContainer() {}
 
@@ -60,7 +64,13 @@ public class ImageContainer {
 
     // ---- image processing (thin pass-through to ImageOps) ----
 
-    public BufferedImage getOutline(BufferedImage src)        { return ImageOps.outline(src); }
+    public BufferedImage getOutline(BufferedImage src) {
+        BufferedImage cached = outlineCache.get(src);
+        if (cached != null) return cached;
+        BufferedImage outline = ImageOps.outline(src);
+        outlineCache.put(src, outline);
+        return outline;
+    }
     public BufferedImage reduceTransparency(BufferedImage src){ return ImageOps.reduceTransparency(src); }
     public boolean checkIntersection(Entity a, Entity b)      { return ImageOps.pixelIntersection(a, b); }
 

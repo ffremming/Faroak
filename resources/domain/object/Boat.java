@@ -49,10 +49,10 @@ public final class Boat extends Moveable {
     // Pirate-ship art is roughly square (bow points up by default), so the
     // sprite footprint is square too. Hitbox is a bit smaller to forgive
     // pixel-fringe collisions against shorelines.
-    private static final short WIDTH         = 96;
-    private static final short HEIGHT        = 96;
-    private static final short HITBOX_WIDTH  = 72;
-    private static final short HITBOX_HEIGHT = 72;
+    private static final short WIDTH         = 192;
+    private static final short HEIGHT        = 192;
+    private static final short HITBOX_WIDTH  = 144;
+    private static final short HITBOX_HEIGHT = 144;
     private static final short HITBOX_REL_X  = (short) ((WIDTH  - HITBOX_WIDTH)  / 2);
     private static final short HITBOX_REL_Y  = (short) ((HEIGHT - HITBOX_HEIGHT) / 2);
 
@@ -70,7 +70,7 @@ public final class Boat extends Moveable {
      *  shore edge often left their hitbox straddling water. */
     private static final int DISMOUNT_INLAND_STEPS = 2;
     private static final double DIAGONAL_FACTOR   = 0.7071; // 1/sqrt(2)
-    private static final double BOARDING_RADIUS   = 96.0;   // pixels — "close proximity" for clicks
+    private static final double BOARDING_RADIUS   = 192.0;  // pixels — "close proximity" for clicks
     private static final String[] DIR_NAMES       = {"e","se","s","sw","w","nw","n","ne"};
 
     /**
@@ -91,6 +91,9 @@ public final class Boat extends Moveable {
         "ChatGPT Image 26. mai 2026, 20_35_00 (1).png", // 6 n
         "ChatGPT Image 26. mai 2026, 20_35_03 (5).png"  // 7 ne
     };
+
+    /** Shared sprite cache — all Boat instances reuse the same 8 images. */
+    private static volatile ArrayList<BufferedImage> SHARED_DIRECTIONAL_IMAGES;
 
     private final ArrayList<BufferedImage> directionalImages;
     /** Last non-zero heading index into DIR_NAMES so a stopped boat keeps facing where it was. */
@@ -128,6 +131,19 @@ public final class Boat extends Moveable {
         }
     }
 
+    /**
+     * Cheap pre-flight: would a Boat placed at {@code (worldX, worldY)} fit
+     * here without colliding with anything solid? Mirrors what
+     * {@code placeEntity} checks, but without constructing the Boat (which
+     * costs nothing now that sprites are cached, but the hitbox/component
+     * setup is still wasted work if placement would fail).
+     */
+    public static boolean canPlaceAt(GameContext ctx, int worldX, int worldY) {
+        HitBox hb = new HitBox(worldX + HITBOX_REL_X, worldY + HITBOX_REL_Y,
+                               HITBOX_WIDTH, HITBOX_HEIGHT);
+        return !ctx.world().solidCollision(hb);
+    }
+
     private static Map<String, Double> buildTerrainTable() {
         Map<String, Double> m = new HashMap<>();
         m.put("ocean",     1.0);
@@ -138,21 +154,31 @@ public final class Boat extends Moveable {
     }
 
     /**
-     * Load the 8 directional sprites. We first try the artist-provided pirate
-     * ship set under {@link #SHIP_DIR}; entries with no dedicated PNG (south
-     * and southwest) are derived by vertically flipping their north
-     * counterparts. Anything still missing falls back to a procedurally drawn
-     * arrow placeholder so the boat is always visible.
+     * Load the 8 directional sprites once, then hand out the same list to every
+     * Boat instance. Decoding the artist PNGs costs ~190 ms per Boat, so
+     * spawning N boats was paying N× that cost; now it's paid once. The images
+     * are treated as immutable — render code only reads them.
+     *
+     * We first try the artist-provided pirate ship set under {@link #SHIP_DIR};
+     * entries with no dedicated PNG (south and southwest) are derived by
+     * vertically flipping their north counterparts. Anything still missing
+     * falls back to a procedurally drawn arrow placeholder.
      */
-    private ArrayList<BufferedImage> loadDirectionalImages() {
-        ArrayList<BufferedImage> out = new ArrayList<>(8);
-        for (int i = 0; i < DIR_NAMES.length; i++) {
-            BufferedImage img = loadShipSprite(i);
-            if (img == null) img = readBoatImage(DIR_NAMES[i]);
-            if (img == null) img = placeholderBoat(i);
-            out.add(img);
+    private static ArrayList<BufferedImage> loadDirectionalImages() {
+        ArrayList<BufferedImage> cached = SHARED_DIRECTIONAL_IMAGES;
+        if (cached != null) return cached;
+        synchronized (Boat.class) {
+            if (SHARED_DIRECTIONAL_IMAGES != null) return SHARED_DIRECTIONAL_IMAGES;
+            ArrayList<BufferedImage> out = new ArrayList<>(8);
+            for (int i = 0; i < DIR_NAMES.length; i++) {
+                BufferedImage img = loadShipSprite(i);
+                if (img == null) img = readBoatImage(DIR_NAMES[i]);
+                if (img == null) img = placeholderBoat(i);
+                out.add(img);
+            }
+            SHARED_DIRECTIONAL_IMAGES = out;
+            return out;
         }
-        return out;
     }
 
     /** Look up the starter-ship file for direction index {@code i}, deriving south/SW by vertical flip. */
