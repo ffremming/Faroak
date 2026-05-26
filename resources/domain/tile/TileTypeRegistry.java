@@ -22,8 +22,11 @@ public final class TileTypeRegistry {
     public static final TileType SAVANNA         = define("savanna",         15,  false, false, false);
     public static final TileType DESERT          = define("desert",          10,  false, false, false);
     public static final TileType BEACH           = define("beach",           7,   false, false, false);
+    public static final TileType WET_BEACH       = define("wetBeach",        5,   false, false, false);
+    public static final TileType TIDAL_SAND      = define("tidalSand",       4,   false, false, false);
     public static final TileType SWAMP           = define("swamp",           70,  false, false, false);
     public static final TileType OCEAN           = define("ocean",           0,   true,  true,  true);
+    public static final TileType SHALLOW_WATER   = define("shallowWater",    3,   true,  true,  true);
     public static final TileType MOUNTAIN        = define("mountain",        200, false, true,  false);
     public static final TileType SNOWY_TAIGA     = define("snowy taiga",     102, false, false, false);
     public static final TileType SNOWY_TUNDRA    = define("snowy Tundra",    95,  false, false, false);

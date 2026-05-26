@@ -44,6 +44,7 @@ public interface WorldRuntime {
     boolean placeEntity(BaseEntity entity);
     void removeEntity(BaseEntity entity);
     boolean solidCollision(HitBox hitbox);
+    boolean solidCollision(HitBox hitbox, BaseEntity mover);
     ArrayList<BaseEntity> getEntitiesCollidedWith(HitBox hitbox);
     ArrayList<BaseEntity> getEntitiesCollidedWith(Point worldPoint);
     void addToRemovalQueue(BaseEntity entity);

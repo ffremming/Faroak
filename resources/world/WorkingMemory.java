@@ -180,6 +180,7 @@ public class WorkingMemory implements WorldRuntime {
 
     @Override public Tile           getTile(Point p)                     { return interaction.tileAt(p); }
     @Override public boolean        solidCollision(HitBox hb)            { return interaction.solidCollision(hb); }
+    @Override public boolean        solidCollision(HitBox hb, BaseEntity mover) { return interaction.solidCollision(hb, mover); }
     @Override public ArrayList<BaseEntity> getEntitiesCollidedWith(HitBox hb) { return interaction.entitiesCollidedWith(hb); }
     @Override public ArrayList<BaseEntity> getEntitiesCollidedWith(Point p)   { return interaction.entitiesCollidedWith(p); }
     @Override public boolean        placeEntity(BaseEntity e)            { return interaction.placeEntity(e); }

@@ -51,10 +51,13 @@ public final class TileImageLoader {
         loadTile("swamp",           "mud.png");
         loadTile("seasonal forest", "seasonal forest.png");
         loadTile("ocean",           "oceanT.png");
+        loadTile("shallowWater",    "oceanT_light.png");
         loadTile("savanna",         "savanna.png");
         loadTile("desert",          "desert.png");
         loadTile("forest",          "forest.png");
         loadTile("beach",           "beach.png");
+        loadTile("wetBeach",        "wetBeach.png");
+        loadTile("tidalSand",       "tidalSand.png");
         loadTile("mountain",        "rockCliff0.png");
 
         alias("snowy Tundra", "plains");
@@ -142,6 +145,7 @@ public final class TileImageLoader {
     private static Map<String, Color> buildColorHints() {
         Map<String, Color> m = new HashMap<>();
         m.put("ocean",    new Color(0x2E, 0x6B, 0xB5));
+        m.put("shallowwater", new Color(0x5F, 0x9C, 0xE2));
         m.put("water",    new Color(0x2E, 0x6B, 0xB5));
         m.put("river",    new Color(0x2E, 0x6B, 0xB5));
         m.put("beach",    new Color(0xE6, 0xD2, 0x9C));

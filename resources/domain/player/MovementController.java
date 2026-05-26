@@ -57,6 +57,6 @@ public final class MovementController {
     }
 
     private boolean canMoveTo(HitBox candidate) {
-        return !owner.panel.world.solidCollision(candidate);
+        return !owner.panel.world.solidCollision(candidate, owner);
     }
 }

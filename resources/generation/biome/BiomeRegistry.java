@@ -19,10 +19,13 @@ public final class BiomeRegistry {
     // OCEAN_LVL pulled toward 0 to give the seed more open water (large oceans),
     // and the gap between OCEAN_LVL and BEACH_LVL widened so islands have broad
     // sandy belts instead of a one-tile rim.
-    public static final double OCEAN_LVL       = -0.10;
-    public static final double BEACH_LVL       =  0.05;
-    public static final double MOUNTAIN_LVL    =  0.55;
-    public static final double RIVER_THRESHOLD =  0.04;
+    public static final double OCEAN_LVL          = -0.175;
+    public static final double SHALLOW_WATER_LVL  = -0.10;
+    public static final double TIDAL_SAND_LVL     = -0.09;
+    public static final double WET_BEACH_LVL      = -0.025;
+    public static final double BEACH_LVL          =  0.05;
+    public static final double MOUNTAIN_LVL       =  0.55;
+    public static final double RIVER_THRESHOLD    =  0.04;
     public static final double RIVERBANK_THRESHOLD = 0.07;
 
     // Vegetation rules — only density lives here; everything else (size, hitbox,
@@ -44,7 +47,10 @@ public final class BiomeRegistry {
     private static final VegetationRule BEACH_PALM = density("palm_M",    0.03);
 
     public static final Biome OCEAN            = new Biome("ocean",           "ocean",           true,  Collections.emptyList());
+    public static final Biome SHALLOW_WATER    = new Biome("shallowWater",    "shallowWater",    true,  Collections.emptyList());
     public static final Biome RIVER            = new Biome("river",           "ocean",           true,  Collections.emptyList());
+    public static final Biome WET_BEACH        = new Biome("wetBeach",        "wetBeach",        false, Collections.emptyList());
+    public static final Biome TIDAL_SAND       = new Biome("tidalSand",       "tidalSand",       false, Collections.emptyList());
     public static final Biome BEACH            = new Biome("beach",           "beach",           false, Arrays.asList(DRIFTWOOD, BEACH_PALM, STONE));
     public static final Biome RIVERBANK        = new Biome("riverbank",       "beach",           false, Arrays.asList(DRIFTWOOD, STONE));
     public static final Biome MOUNTAIN         = new Biome("mountain",        "mountain",        true,  Collections.emptyList());
@@ -65,9 +71,12 @@ public final class BiomeRegistry {
 
     /** Pick a biome from noise samples in [-1,1] for height/temperature/humidity and [0,1] for river. */
     public static Biome classify(double height, double temperature, double humidity, double river) {
-        if (height <= OCEAN_LVL) return OCEAN;
-        if (river  <  RIVER_THRESHOLD)     return RIVER;
-        if (height <= BEACH_LVL) return BEACH;
+        if (height <= OCEAN_LVL)         return OCEAN;
+        if (height <= SHALLOW_WATER_LVL) return SHALLOW_WATER;
+        if (height <= TIDAL_SAND_LVL)    return TIDAL_SAND;
+        if (height <= WET_BEACH_LVL)     return WET_BEACH;
+        if (river  <  RIVER_THRESHOLD)   return RIVER;
+        if (height <= BEACH_LVL)         return BEACH;
         if (river  <  RIVERBANK_THRESHOLD) return RIVERBANK;
         if (height >= MOUNTAIN_LVL) return MOUNTAIN;
 

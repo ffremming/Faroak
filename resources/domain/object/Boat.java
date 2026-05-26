@@ -146,10 +146,13 @@ public final class Boat extends Moveable {
 
     private static Map<String, Double> buildTerrainTable() {
         Map<String, Double> m = new HashMap<>();
-        m.put("ocean",     1.0);
-        m.put("river",     1.0);
-        m.put("beach",     0.3);
-        m.put("riverbank", 0.3);
+        m.put("ocean",        1.0);
+        m.put("shallowWater", 1.0);
+        m.put("river",        1.0);
+        m.put("beach",        0.3);
+        m.put("wetBeach",     0.3);
+        m.put("tidalSand",    0.3);
+        m.put("riverbank",    0.3);
         return m;
     }
 
@@ -361,7 +364,7 @@ public final class Boat extends Moveable {
                 Tile t = panel.world.getTile(new Point(x, y));
                 if (t == null) return false;
                 String name = t.getName();
-                if (!("ocean".equals(name) || "river".equals(name))) return false;
+                if (!("ocean".equals(name) || "river".equals(name) || "shallowWater".equals(name))) return false;
             }
         }
         return true;
@@ -426,8 +429,11 @@ public final class Boat extends Moveable {
         if (!player.hasComponent(TerrainSpeedComponent.class)) {
             Map<String, Double> map = new HashMap<>();
             map.put("ocean", 1.0);
+            map.put("shallowWater", 1.0);
             map.put("river", 1.0);
             map.put("beach", 1.0);
+            map.put("wetBeach", 1.0);
+            map.put("tidalSand", 1.0);
             map.put("riverbank", 1.0);
             player.addComponent(new TerrainSpeedComponent(map));
         }
@@ -534,6 +540,6 @@ public final class Boat extends Moveable {
         Tile t = panel.world.getTile(new Point(worldX, worldY));
         if (t == null) return false;
         String n = t.getName();
-        return !("ocean".equals(n) || "river".equals(n));
+        return !("ocean".equals(n) || "river".equals(n) || "shallowWater".equals(n));
     }
 }

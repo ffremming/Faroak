@@ -67,7 +67,7 @@ public final class BoatSpawner {
                 Tile tile = ctx.world().getTile(world);
                 if (tile == null) continue;
                 String name = tile.getName();
-                if ("ocean".equals(name) || "river".equals(name)) out.add(world);
+                if ("ocean".equals(name) || "river".equals(name) || "shallowWater".equals(name)) out.add(world);
             }
         }
         return out;

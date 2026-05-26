@@ -12,14 +12,15 @@ import resources.presentation.image.ImageContainer;
  */
 public final class Animations {
 
-    public static final Identifier OCEAN_WAVES = Identifier.of("tile/ocean_waves");
+    public static final Identifier OCEAN_WAVES         = Identifier.of("tile/ocean_waves");
+    public static final Identifier SHALLOW_WATER_WAVES = Identifier.of("tile/shallow_water_waves");
 
     private Animations() {}
 
     /** Register all canonical clips into {@code library}. Idempotent for tests. */
     public static void bootstrap(AnimationLibrary library, ImageContainer images) {
-        if (library.contains(OCEAN_WAVES)) return;
-        library.register(OCEAN_WAVES, oceanWaves(images));
+        if (!library.contains(OCEAN_WAVES))         library.register(OCEAN_WAVES,         oceanWaves(images));
+        if (!library.contains(SHALLOW_WATER_WAVES)) library.register(SHALLOW_WATER_WAVES, shallowWaterWaves(images));
     }
 
     /** 3-frame wave loop. 30 sim-ticks/frame ≈ 0.5 second/frame. */
@@ -28,5 +29,13 @@ public final class Animations {
             new AnimationFrame(images.getTileImage("ocean0"), 30),
             new AnimationFrame(images.getTileImage("ocean1"), 30),
             new AnimationFrame(images.getTileImage("ocean2"), 30));
+    }
+
+    /** Same cadence as ocean, lighter sprite set used in the shore transition band. */
+    private static AnimationClip shallowWaterWaves(ImageContainer images) {
+        return new AnimationClip(SHALLOW_WATER_WAVES, true,
+            new AnimationFrame(images.getTileImage("shallowWater0"), 30),
+            new AnimationFrame(images.getTileImage("shallowWater1"), 30),
+            new AnimationFrame(images.getTileImage("shallowWater2"), 30));
     }
 }

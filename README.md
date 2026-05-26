@@ -1,4 +1,4 @@
-# gameDev2D
+# FarOak
 
 A 2D top-down survival game with a procedurally generated, chunk-streamed world. Explore forest, beach, and ocean biomes, gather resources, fight off pirates, and (soon) sail between islands.
 

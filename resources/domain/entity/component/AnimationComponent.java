@@ -21,7 +21,6 @@ public final class AnimationComponent implements EntityComponent, Tickable {
     private AnimationClip clip;
     private int localTicks;
     private final GameClock sharedClock;
-    private int sharedClockOrigin;
 
     /** Free-running component; each instance maintains its own cursor. */
     public AnimationComponent(AnimationClip initial) {
@@ -33,18 +32,21 @@ public final class AnimationComponent implements EntityComponent, Tickable {
      * report the same frame at any tick. Use for world-wide synchronised loops
      * (water waves, sun cycle); leave free-running for per-entity playback
      * (a walk animation that pauses with the entity).
+     *
+     * Clock-synced cursors read the clock directly with no per-instance origin,
+     * so newly-attached entities join the world-wide phase mid-cycle rather
+     * than restarting it.
      */
     public AnimationComponent(AnimationClip initial, GameClock sharedClock) {
         this.clip        = initial;
         this.sharedClock = sharedClock;
     }
 
-    /** Swap to a new clip and reset the cursor (for both time-source modes). */
+    /** Swap to a new clip and reset the cursor (free-running only). */
     public void play(AnimationClip next) {
         if (next == clip) return;
         this.clip = next;
         this.localTicks = 0;
-        if (sharedClock != null) this.sharedClockOrigin = (int) sharedClock.ticks();
     }
 
     public AnimationClip clip() { return clip; }
@@ -59,8 +61,7 @@ public final class AnimationComponent implements EntityComponent, Tickable {
     }
 
     private int elapsed() {
-        if (sharedClock == null) return localTicks;
-        return (int) sharedClock.ticks() - sharedClockOrigin;
+        return sharedClock == null ? localTicks : (int) sharedClock.ticks();
     }
 
     @Override
@@ -70,7 +71,6 @@ public final class AnimationComponent implements EntityComponent, Tickable {
 
     @Override
     public void onAttach(BaseEntity owner) {
-        if (sharedClock != null) this.sharedClockOrigin = (int) sharedClock.ticks();
     }
 
     @Override

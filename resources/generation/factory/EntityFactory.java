@@ -90,7 +90,7 @@ public class EntityFactory implements resources.generation.WorldGenerator {
     /** Map biome to an altitude bucket so TileManager's higher/lower comparisons stay meaningful. */
     private int altitudeFor(Biome biome, int worldX, int worldY) {
         if (biome.water) return 0;
-        if ("beach".equals(biome.tileName) || "riverbank".equals(biome.id)) return 50;
+        if ("beach".equals(biome.tileName) || "wetBeach".equals(biome.tileName) || "tidalSand".equals(biome.tileName) || "riverbank".equals(biome.id)) return 50;
         if ("mountain".equals(biome.tileName)) return 600;
         double h = proceduralGen.height(worldX, worldY);
         return 100 + (int) ((h + 1.0) * 150);

@@ -45,6 +45,7 @@ public final class BoatRideComponent implements EntityComponent {
     private static Map<String, Double> waterTable() {
         Map<String, Double> m = new HashMap<>();
         m.put("ocean", 1.0);
+        m.put("shallowWater", 1.0);
         m.put("river", 1.0);
         return m;
     }

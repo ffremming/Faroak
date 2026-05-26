@@ -45,7 +45,17 @@ public final class WorldInteraction {
     }
 
     public boolean solidCollision(HitBox hitbox) {
+        return solidCollision(hitbox, null);
+    }
+
+    /** Solid-collision check that excludes {@code mover} from the candidate set.
+     *  Use when testing a hypothetical hitbox (e.g. "can this NPC step forward?")
+     *  whose underlying entity would otherwise collide with itself — the
+     *  candidate is a freshly-allocated HitBox so the reference-equality skip
+     *  in {@link #entitiesCollidedWith(HitBox)} doesn't catch it. */
+    public boolean solidCollision(HitBox hitbox, BaseEntity mover) {
         for (BaseEntity be : entitiesCollidedWith(hitbox)) {
+            if (be == mover) continue;
             if (be.isSolid()) return true;
         }
         return false;
@@ -189,7 +199,7 @@ public final class WorldInteraction {
                 Tile t = tileAt(new java.awt.Point(x, y));
                 if (t == null) return false;
                 String n = t.getName();
-                if (!("ocean".equals(n) || "river".equals(n))) return false;
+                if (!("ocean".equals(n) || "river".equals(n) || "shallowWater".equals(n))) return false;
             }
         }
         return true;

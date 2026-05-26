@@ -31,9 +31,25 @@ public final class TileBorderResolver {
      */
     private static final Map<String, String> OVERLAY_FAMILY = buildOverlayFamilyMap();
 
+    /**
+     * Optional override keyed by "&lt;host&gt;|&lt;neighbour&gt;". Lets a
+     * specific pair use a different sprite family than the default. Used so
+     * tidalSand draws a foam-less wetBeach edge (since both sides of that
+     * boundary are sand — no water foam belongs there), while shallowWater
+     * still gets the foamed crescent on the rare occasion it borders wetBeach
+     * directly.
+     */
+    private static final Map<String, String> HOST_OVERLAY_FAMILY = buildHostOverlayFamilyMap();
+
     private static Map<String, String> buildOverlayFamilyMap() {
         Map<String, String> m = new HashMap<>();
         m.put("riverbank", "beach");
+        return m;
+    }
+
+    private static Map<String, String> buildHostOverlayFamilyMap() {
+        Map<String, String> m = new HashMap<>();
+        m.put("tidalSand|wetBeach", "wetBeachDry");
         return m;
     }
 
@@ -66,13 +82,15 @@ public final class TileBorderResolver {
         for (int side = 0; side < 4; side++) {
             Tile neighbor = tile.getNeighbors()[side];
             if (neighbor == null || !tile.isLowerThan(neighbor)) continue;
-            sink.add(images.getTileImage(borderKey(overlayFamily(neighbor.getName()), frame, side)));
+            sink.add(images.getTileImage(borderKey(overlayFamily(tile.getName(), neighbor.getName()), frame, side)));
             borders[side] = true;
         }
         return borders;
     }
 
-    private static String overlayFamily(String neighborName) {
+    private static String overlayFamily(String hostName, String neighborName) {
+        String hostScoped = HOST_OVERLAY_FAMILY.get(hostName + "|" + neighborName);
+        if (hostScoped != null) return hostScoped;
         String mapped = OVERLAY_FAMILY.get(neighborName);
         return mapped != null ? mapped : neighborName;
     }
@@ -89,7 +107,7 @@ public final class TileBorderResolver {
                                   Tile[] n, int sideA, int sideB, int corner) {
         if (!(borders[sideA] && borders[sideB])) return;
         if (!n[sideA].getName().equals(n[sideB].getName())) return;
-        sink.add(images.getTileImage(cornerKey(overlayFamily(n[sideA].getName()), frame, corner)));
+        sink.add(images.getTileImage(cornerKey(overlayFamily(tile.getName(), n[sideA].getName()), frame, corner)));
     }
 
     private String borderKey(String neighbor, int frame, int side) {

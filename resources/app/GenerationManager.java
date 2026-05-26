@@ -214,7 +214,7 @@ public class GenerationManager {
                 resources.domain.tile.Tile t = panel.world.getTile(new java.awt.Point(sx, sy));
                 if (t == null) return false;
                 String n = t.getName();
-                if ("ocean".equals(n) || "river".equals(n)) return false;
+                if ("ocean".equals(n) || "river".equals(n) || "shallowWater".equals(n)) return false;
             }
         }
         return true;

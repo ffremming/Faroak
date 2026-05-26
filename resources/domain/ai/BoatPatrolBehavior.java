@@ -74,6 +74,6 @@ public final class BoatPatrolBehavior implements AIBehavior {
         Tile t = ctx.world().getTile(new Point(x, y));
         if (t == null) return false;
         String name = t.getName();
-        return "ocean".equals(name) || "river".equals(name);
+        return "ocean".equals(name) || "river".equals(name) || "shallowWater".equals(name);
     }
 }
