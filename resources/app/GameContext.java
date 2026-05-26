@@ -2,6 +2,8 @@ package resources.app;
 
 import javax.swing.JFrame;
 
+import resources.core.event.EventBus;
+import resources.core.time.GameClock;
 import resources.domain.player.Playable;
 import resources.domain.tile.TileManager;
 import resources.domain.inventory.ItemManager;
@@ -25,6 +27,10 @@ import resources.world.WorldRuntime;
  * accessors are the recommended path for new code.
  */
 public interface GameContext {
+
+    // Cross-cutting kernel
+    EventBus  events();
+    GameClock clock();
 
     // World + simulation
     WorldRuntime world();

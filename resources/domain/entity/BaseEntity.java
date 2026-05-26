@@ -9,10 +9,32 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
+import resources.domain.entity.component.ComponentBag;
+import resources.domain.entity.component.EntityComponent;
 import resources.domain.tile.Tile;
 import resources.app.GamePanel;
 
 public class BaseEntity implements Tickable, Drawable {
+
+    /** Composed behaviours (lighting, growth, AI, harvestable, …). */
+    private final ComponentBag components = new ComponentBag(this);
+
+    public <T extends EntityComponent> T addComponent(T component) {
+        return components.add(component);
+    }
+
+    public <T extends EntityComponent> T getComponent(Class<T> type) {
+        return components.get(type);
+    }
+
+    public boolean hasComponent(Class<? extends EntityComponent> type) {
+        return components.has(type);
+    }
+
+    public ComponentBag components() {
+        return components;
+    }
+
 
     public GamePanel panel;
 
@@ -192,7 +214,9 @@ public class BaseEntity implements Tickable, Drawable {
         
     }
     public void update() {
-        
+        for (EntityComponent c : components.all()) {
+            if (c instanceof Tickable) ((Tickable) c).update();
+        }
     }
     public Point getPoint() {
         return new Point((int)worldX,(int)worldY);
