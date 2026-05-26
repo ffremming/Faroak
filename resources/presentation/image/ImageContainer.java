@@ -1,8 +1,11 @@
 package resources.presentation.image;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import resources.domain.entity.Entity;
 
@@ -32,9 +35,21 @@ public class ImageContainer {
 
     public boolean containsImage(String name) { return images.containsKey(name); }
 
+    /**
+     * Fast, cached check for "does this PNG actually live on disk?" Used in the
+     * tile border / corner key lookup to decide between frame-stamped and
+     * unstamped sprite variants. Uses {@link File#exists()} (no image decoding)
+     * with a process-wide cache so it's effectively free after warm-up.
+     */
     public static boolean doesPNGFileExist(String relativePath) {
-        return new TileImageLoader(new HashMap<>()).spriteExists(relativePath);
+        Boolean cached = EXISTS_CACHE.get(relativePath);
+        if (cached != null) return cached;
+        boolean exists = new File("resources/images/" + relativePath + ".png").exists();
+        EXISTS_CACHE.put(relativePath, exists);
+        return exists;
     }
+
+    private static final ConcurrentMap<String, Boolean> EXISTS_CACHE = new ConcurrentHashMap<>();
 
     // ---- object + item caches ----
 

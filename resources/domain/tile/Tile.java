@@ -6,6 +6,9 @@ import java.util.ArrayList;
 
 import resources.app.GamePanel;
 import resources.domain.entity.BaseEntity;
+import resources.domain.entity.component.AnimationComponent;
+import resources.presentation.animation.AnimationClip;
+import resources.presentation.animation.Animations;
 
 /**
  * One terrain cell. Holds altitude/floor data, links to four neighbours, and
@@ -30,6 +33,7 @@ public class Tile extends BaseEntity {
     int altitude;
     int floor;
     boolean cliff = false;
+    private int lastBuiltFrame = -1;
 
     private final TileBorderResolver borderResolver;
 
@@ -49,9 +53,10 @@ public class Tile extends BaseEntity {
     private void setupSpecialBehaviour() {
         floor = altitude / 300;
         if ("ocean".equals(getName())) {
-            animated = true;
             solid = true;
             lightSource = true;
+            AnimationClip waves = panel.animations().require(Animations.OCEAN_WAVES);
+            addComponent(new AnimationComponent(waves, panel.clock()));
         }
     }
 
@@ -69,12 +74,25 @@ public class Tile extends BaseEntity {
     // ---- animation ----
 
     @Override
-    public void animate(int value) { borderResolver.resolveInto(images, value); }
+    public void update() {
+        super.update();
+        AnimationComponent anim = getComponent(AnimationComponent.class);
+        if (anim == null) return;
+        int idx = anim.currentFrameIndex();
+        if (idx != lastBuiltFrame) {
+            rebuildImageStack(idx);
+            lastBuiltFrame = idx;
+        }
+    }
 
     @Override
     public ArrayList<BufferedImage> getImages() {
-        if (images.isEmpty()) borderResolver.resolveInto(images, 0);
+        if (images.isEmpty()) rebuildImageStack(0);
         return images;
+    }
+
+    private void rebuildImageStack(int frame) {
+        borderResolver.resolveInto(images, frame);
     }
 
     // ---- neighbours ----

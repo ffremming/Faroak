@@ -11,8 +11,10 @@ import resources.environment.EnvironmentManager;
 import resources.input.InputHandlingSystem;
 import resources.input.Keys;
 import resources.input.Mouse;
+import resources.presentation.animation.AnimationLibrary;
 import resources.presentation.camera.Camera;
 import resources.presentation.image.ImageContainer;
+import resources.presentation.lighting.LightField;
 import resources.presentation.ui.UserInterface;
 import resources.world.MapHandler;
 import resources.world.WorldRuntime;
@@ -45,6 +47,8 @@ public interface GameContext {
     // Presentation
     Camera camera();
     ImageContainer images();
+    AnimationLibrary animations();
+    LightField lighting();
     UserInterface userInterface();
 
     // Input

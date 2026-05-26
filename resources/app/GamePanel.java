@@ -16,8 +16,10 @@ import resources.environment.EnvironmentManager;
 import resources.input.InputHandlingSystem;
 import resources.input.Keys;
 import resources.input.Mouse;
+import resources.presentation.animation.AnimationLibrary;
 import resources.presentation.camera.Camera;
 import resources.presentation.image.ImageContainer;
+import resources.presentation.lighting.LightField;
 import resources.presentation.ui.Container;
 import resources.presentation.ui.UserInterface;
 import resources.world.MapHandler;
@@ -57,8 +59,10 @@ public class GamePanel extends JPanel implements GameContext {
     public InputHandlingSystem inputHandlingSystem;
 
     // Cross-cutting kernel
-    private final EventBus  eventBus = new EventBus();
-    private final GameClock clock    = new GameClock();
+    private final EventBus         eventBus  = new EventBus();
+    private final GameClock        clock     = new GameClock();
+    private final AnimationLibrary animations = new AnimationLibrary();
+    private final LightField       lighting   = new LightField();
 
     public final JFrame frame;
     final boolean newGame;
@@ -153,6 +157,8 @@ public class GamePanel extends JPanel implements GameContext {
     @Override public Playable            player()        { return player; }
     @Override public Camera              camera()        { return camera; }
     @Override public ImageContainer      images()        { return imageContainer; }
+    @Override public AnimationLibrary    animations()    { return animations; }
+    @Override public LightField          lighting()      { return lighting; }
     @Override public UserInterface       userInterface() { return userInterface; }
     @Override public Keys                keys()          { return keys; }
     @Override public Mouse               mouse()         { return mouse; }

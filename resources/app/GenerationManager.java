@@ -1,5 +1,6 @@
 package resources.app;
 
+import resources.presentation.animation.Animations;
 import resources.presentation.image.ImageContainer;
 import resources.presentation.image.ImageResources;
 import resources.presentation.camera.Camera;
@@ -47,15 +48,16 @@ public class GenerationManager {
     public void generateMap(){
         panel.world = new WorkingMemory(panel);
         panel.imageContainer = new ImageContainer();
+        Animations.bootstrap(panel.animations(), panel.imageContainer);
         panel.itemM = new ItemManager(panel);
-        
+
         panel.mapH = new MapHandler(panel);
-      
+
         panel.tileM = new TileManager(panel);
-      
+
         panel.world.initial();
         panel.world.update(new Point(0,0));
-        
+
     }
 
     public void newSeed(){

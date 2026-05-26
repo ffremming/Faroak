@@ -91,7 +91,7 @@ public class WorkingMemory implements WorldRuntime {
             }
             index.setEntities(inRange);
         }
-        index.setSortedVisible(visibility.visibleEntities(panel.camera));
+        index.setSortedVisible(visibility.visibleEntities(panel.camera, index.entities()));
         EntitySorter.sortByWorldY(index.sortedVisible());
         if (panel.camera != null) {
             panel.camera.setObservedSortTime(System.nanoTime() - startTime);
@@ -113,6 +113,9 @@ public class WorkingMemory implements WorldRuntime {
         int nonTile = 0;
         for (BaseEntity baseE : snapshot) {
             if (!(baseE instanceof Tile)) { baseE.update(); nonTile++; }
+        }
+        for (Tile t : index.tiles()) {
+            if (t != null && t.components().size() > 0) t.update();
         }
         reportTickStats(snapshot.size(), nonTile);
     }

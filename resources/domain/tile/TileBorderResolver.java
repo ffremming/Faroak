@@ -2,6 +2,8 @@ package resources.domain.tile;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import resources.presentation.image.ImageContainer;
 
@@ -22,6 +24,20 @@ import resources.presentation.image.ImageContainer;
  */
 public final class TileBorderResolver {
 
+    /**
+     * Per-tile-name substitution for the overlay sprite family drawn ON the
+     * lower tile. Lets beach neighbours render as "wetBeach<side>" on the
+     * adjacent ocean tile so the transition shares the water animation cadence.
+     */
+    private static final Map<String, String> OVERLAY_FAMILY = buildOverlayFamilyMap();
+
+    private static Map<String, String> buildOverlayFamilyMap() {
+        Map<String, String> m = new HashMap<>();
+        m.put("beach",     "wetBeach");
+        m.put("riverbank", "wetBeach");
+        return m;
+    }
+
     private final Tile tile;
     private final ImageContainer images;
 
@@ -39,8 +55,11 @@ public final class TileBorderResolver {
     }
 
     private BufferedImage baseFrame(int frame) {
-        BufferedImage animated = images.getTileImage(tile.getName() + frame);
-        return animated != null ? animated : images.getTileImage(tile.getName());
+        String frameKey = tile.getName() + frame;
+        if (ImageContainer.doesPNGFileExist("tile/" + frameKey)) {
+            return images.getTileImage(frameKey);
+        }
+        return images.getTileImage(tile.getName());
     }
 
     private boolean[] addBorders(ArrayList<BufferedImage> sink, int frame) {
@@ -48,10 +67,15 @@ public final class TileBorderResolver {
         for (int side = 0; side < 4; side++) {
             Tile neighbor = tile.getNeighbors()[side];
             if (neighbor == null || !tile.isLowerThan(neighbor)) continue;
-            sink.add(images.getTileImage(borderKey(neighbor.getName(), frame, side)));
+            sink.add(images.getTileImage(borderKey(overlayFamily(neighbor.getName()), frame, side)));
             borders[side] = true;
         }
         return borders;
+    }
+
+    private static String overlayFamily(String neighborName) {
+        String mapped = OVERLAY_FAMILY.get(neighborName);
+        return mapped != null ? mapped : neighborName;
     }
 
     private void addCorners(ArrayList<BufferedImage> sink, int frame, boolean[] borders) {
@@ -66,7 +90,7 @@ public final class TileBorderResolver {
                                   Tile[] n, int sideA, int sideB, int corner) {
         if (!(borders[sideA] && borders[sideB])) return;
         if (!n[sideA].getName().equals(n[sideB].getName())) return;
-        sink.add(images.getTileImage(cornerKey(n[sideA].getName(), frame, corner)));
+        sink.add(images.getTileImage(cornerKey(overlayFamily(n[sideA].getName()), frame, corner)));
     }
 
     private String borderKey(String neighbor, int frame, int side) {

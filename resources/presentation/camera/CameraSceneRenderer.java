@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import resources.app.GamePanel;
 import resources.domain.entity.BaseEntity;
 import resources.domain.entity.Entity;
+import resources.domain.entity.component.AnimationComponent;
 import resources.domain.tile.Tile;
 
 /**
@@ -50,6 +51,13 @@ public final class CameraSceneRenderer {
 
         if (!(entity instanceof Tile)) {
             drawShadow(g2, entity, camX, camY);
+        }
+
+        AnimationComponent anim = entity.getComponent(AnimationComponent.class);
+        BufferedImage animFrame = anim != null ? anim.currentImage() : null;
+        if (animFrame != null) {
+            g2.drawImage(animFrame, x, y, entity.getWidth(), entity.getHeight(), null);
+            return;
         }
 
         for (BufferedImage img : entity.getImages()) {

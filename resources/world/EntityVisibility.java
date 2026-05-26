@@ -12,6 +12,14 @@ import resources.presentation.camera.Camera;
  * decisions out of {@link WorkingMemory} so that culling strategy can evolve
  * (frustum tweaks, lighting culls, occlusion) without touching the index or
  * the simulator.
+ *
+ * Two entity-list overloads exist on purpose:
+ *   - {@link #visibleEntities(Camera)} reads the already-sorted draw list
+ *     (what the renderer wants every frame)
+ *   - {@link #visibleEntities(Camera, ArrayList)} filters an arbitrary candidate
+ *     list (what {@link WorkingMemory#sortVisibleEntities} feeds in to build
+ *     the sorted list in the first place — without this overload the two
+ *     callers feed back into each other and nothing ever gets drawn)
  */
 public final class EntityVisibility {
 
@@ -21,13 +29,20 @@ public final class EntityVisibility {
         this.index = index;
     }
 
+    /** Filter the already-sorted visible list against the camera (renderer entry point). */
     public ArrayList<Entity> visibleEntities(Camera camera) {
+        return visibleEntities(camera, index.sortedVisible());
+    }
+
+    /** Filter an arbitrary candidate list against the camera (used when building the sorted list). */
+    public ArrayList<Entity> visibleEntities(Camera camera, ArrayList<Entity> candidates) {
         ArrayList<Entity> out = new ArrayList<>();
         if (camera == null) return out;
         HitBox camHB = camera.getImageHitbox();
-        for (Entity e : index.sortedVisible()) {
+        for (Entity e : candidates) {
             if (e.getImageHitbox().collision(camHB) || e.getHitBox().collision(camHB)) {
-                // Always added below — keeping the test for future culling parity.
+                // Currently keeps every candidate — empty body retained so future
+                // culling can be added inside the test without changing call sites.
             }
             out.add(e);
         }

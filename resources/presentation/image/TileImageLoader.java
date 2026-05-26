@@ -49,7 +49,7 @@ public final class TileImageLoader {
     private void registerCanonicalBiomes() {
         loadTile("plains",          "plains.png");
         loadTile("swamp",           "mud.png");
-        loadTile("seasonal forest", "moss.png");
+        loadTile("seasonal forest", "seasonal forest.png");
         loadTile("ocean",           "oceanT.png");
         loadTile("savanna",         "savanna.png");
         loadTile("desert",          "desert.png");

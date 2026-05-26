@@ -43,11 +43,17 @@ public final class AnimationClip {
 
     /** Frame for the given elapsed-tick offset within the clip. */
     public AnimationFrame frameAt(int elapsedTicks) {
+        return frames.get(frameIndexAt(elapsedTicks));
+    }
+
+    /** Index of the frame active at the given elapsed-tick offset. */
+    public int frameIndexAt(int elapsedTicks) {
         int t = looping ? Math.floorMod(elapsedTicks, totalTicks) : Math.min(elapsedTicks, totalTicks - 1);
-        for (AnimationFrame f : frames) {
-            if (t < f.durationTicks()) return f;
-            t -= f.durationTicks();
+        for (int i = 0; i < frames.size(); i++) {
+            int dur = frames.get(i).durationTicks();
+            if (t < dur) return i;
+            t -= dur;
         }
-        return frames.get(frames.size() - 1);
+        return frames.size() - 1;
     }
 }
