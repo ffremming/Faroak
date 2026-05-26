@@ -1,203 +1,127 @@
 package resources.presentation.ui;
 
-import resources.app.GamePanel;
-import resources.domain.tile.Tile;
-import resources.domain.inventory.Inventory;
-import resources.domain.inventory.Item;
-import resources.domain.inventory.Stack;
-import resources.domain.inventory.ItemManager;
-
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 import resources.app.GamePanel;
-import java.awt.BasicStroke;
-
 import resources.domain.inventory.Inventory;
 import resources.domain.inventory.Item;
 import resources.domain.inventory.Stack;
 
-public class ItemContainerSlot extends Component{
+/**
+ * One cell in an {@link ItemContainer} grid. Paints itself, draws the item
+ * sprite (with count overlay) when an inventory is attached, and on click
+ * swaps its stack with whatever the player is currently holding.
+ */
+public class ItemContainerSlot extends Component {
+
+    private static final int PADDING  = 8;
+    private static final int LABEL_PADDING = 10;
 
     Item item;
-    int col;
-    int row;
-    Inventory inventory;
-    int number; 
+    final int col;
+    final int row;
+    final int number;
+    final Inventory inventory;
 
-    public ItemContainerSlot(GamePanel panel,int x,int y,int width,int height,int col,int row,int number,Inventory inventory) {
+    public ItemContainerSlot(GamePanel panel, int x, int y, int width, int height,
+                             int col, int row, int number, Inventory inventory) {
         super(panel);
-
-
-        
         borderSize = 1;
-        
-        this.x = x;
-        this.y = y;
-        this.width = width;
+        this.x = x; this.y = y;
+        this.width  = width;
         this.height = height;
+        this.col = col; this.row = row;
+        this.number = number;
+        this.inventory = inventory;
         setBackground(Color.green);
         setForeGround(Color.black);
-        this.col = col;
-        this.row = row;
-        this.inventory = inventory;
-        this.number = number;
     }
 
+    public void addItem(Item item)  { this.item = item; }
+    public void removeItem()        { item = null; }
+    public Item getItem()           { return item; }
+    public void hover()             { hover = true; }
+    public void press()             {}
 
+    public void draw(Graphics2D g2, int count, Inventory inv) { drawRect(g2); }
 
-    public void addItem(Item item){
-        this.item = item;
-    }
-
-
-    public void removeItem(){
-        item = null;
-    }   
-
-    public void hover(){
-        hover = true;
-    }
-
-    public void press(){
-    }
-
-    public void draw(Graphics2D g2,int count,Inventory inventory){
-       
-        drawRect(g2);
-
-        
-    }
     @Override
-    public void drawRect(Graphics2D g2){
-       
-        
-        if (hover){
-            setBackground(Color.white);
-            setForeGround(new Color(240,240,240));
-        } else {
-            setBackground(Color.gray);
-            setForeGround(Color.black);
-        }
-
-
-        width = (container.width-(8*(container.cols+1)))/(container.cols) ;
-        height = (container.height- (8*(container.rows+1)))/(container.rows) ;
-
-       
-        
-        
-        
-        x = container.x + col*(width+8) +8 ;
-        y = container.y + row*(height+8) +8;
-        g2.setColor(background);
-        g2.fillRect(x,y,width,height);
-        g2.setColor(foreground);
-        g2.drawRect(x,y,width,height);
-
-        drawContent(g2,number,inventory);
+    public void drawRect(Graphics2D g2) {
+        applyHoverColors();
+        layoutInGrid();
+        paintCell(g2);
+        drawStackAt(g2, x, y, number, true);
     }
 
-    public void drawRectInPos(Graphics2D g2,int x,int y,boolean indexed){
-        
-        if (hover){
-            setBackground(Color.white);
-            setForeGround(new Color(240,240,240));
-        } else {
-            setBackground(Color.gray);
-            setForeGround(Color.black);
-        }
-
-        width = (container.width-(8*(container.cols+1)))/(container.cols) ;
+    public void drawRectInPos(Graphics2D g2, int slotX, int slotY, boolean indexed) {
+        applyHoverColors();
+        width  = (container.width - PADDING * (container.cols + 1)) / container.cols;
         height = width;
+        this.x = slotX;
+        this.y = slotY;
+        paintCell(g2);
+        drawStackAt(g2, slotX, slotY, number, false);
+        if (indexed) paintSelectedHighlight(g2, slotX, slotY);
+    }
 
-        this.x = x;
-        this.y = y;
+    public void drawContent(Graphics2D g2, int count, Inventory inv) {
+        drawStackAt(g2, x, y, count, true);
+    }
 
-        g2.setColor(background);
-        g2.fillRect(x,y,width,height);
+    // ---- shared helpers ----
+
+    private void applyHoverColors() {
+        if (hover) { setBackground(Color.white); setForeGround(new Color(240, 240, 240)); }
+        else        { setBackground(Color.gray);  setForeGround(Color.black); }
+    }
+
+    private void layoutInGrid() {
+        width  = (container.width  - PADDING * (container.cols + 1)) / container.cols;
+        height = (container.height - PADDING * (container.rows + 1)) / container.rows;
+        x = container.x + col * (width  + PADDING) + PADDING;
+        y = container.y + row * (height + PADDING) + PADDING;
+    }
+
+    private void paintCell(Graphics2D g2) {
+        g2.setColor(background); g2.fillRect(x, y, width, height);
+        g2.setColor(foreground); g2.drawRect(x, y, width, height);
+    }
+
+    private void drawStackAt(Graphics2D g2, int slotX, int slotY, int slotIndex, boolean showCount) {
+        if (inventory == null) return;
+        Stack stack = inventory.getStack(slotIndex);
+        if (stack == null || "empty".equals(stack.getName())) return;
+        BufferedImage image = panel.imageContainer.getItemImage(stack.getName());
+        g2.drawImage(image, slotX, slotY, width, height, null);
+        if (showCount) {
+            g2.drawString(stack.getAmount() + "", slotX + width - LABEL_PADDING, slotY + height - LABEL_PADDING);
+        }
+    }
+
+    private void paintSelectedHighlight(Graphics2D g2, int slotX, int slotY) {
+        g2.setColor(Color.white);
+        g2.setStroke(new BasicStroke(5));
+        g2.drawRect(slotX - 1, slotY - 1, width + 2, height + 2);
         g2.setColor(foreground);
-        g2.drawRect(x,y,width,height);
-
-        if (inventory!= null){
-            if (inventory.getStack(number) != null){
-                if (!inventory.getStack(number).getName().equals("empty")){
-                    if (inventory.getStack(number)!= null){
-                        BufferedImage image = panel.imageContainer.getItemImage(inventory.getStack(number).getName());
-                        
-                        g2.drawImage(image, x, y, width, height, null);
-                    }
-                }
-            }
-        }
-        if (indexed){
-            g2.setColor(Color.white);
-            g2.setStroke(new BasicStroke(5));
-            g2.drawRect(x-1,y-1,width+2,height+2);
-
-            g2.setColor(foreground);
-            g2.setStroke(new BasicStroke(1));
-            
-        }
-        
-
-
-    }
-    public void drawContent(Graphics2D g2,int count,Inventory inventory){
-        if (inventory!= null){
-            if (inventory.getStack(count) != null){
-                if (!inventory.getStack(count).getName().equals("empty")){
-                    if (inventory.getStack(count)!= null){
-                        BufferedImage image = panel.imageContainer.getItemImage(inventory.getStack(count).getName());
-                        
-                        g2.drawImage(image, x, y, width, height, null);
-                        g2.drawString(inventory.getStack(count).getAmount()+"", x+width-10, y+height-10);
-                    }
-                }
-            }
-        }
+        g2.setStroke(new BasicStroke(1));
     }
 
+    // ---- mouse ----
 
+    @Override
+    public void mousePressed(MouseEvent e) { swapWithPlayerHand(); }
 
-    public void mousePressed(MouseEvent e){
+    @Override
+    public void mouseMoved(MouseEvent e)   { hover(); }
 
-        switchItems();
-       
-    }
-
-    private void switchItems(){
-    
+    private void swapWithPlayerHand() {
         Stack tempInHand = panel.player.getTempInHand();
-        Stack thisStack = getStack();
-    
-        panel.player.setTempInHand(thisStack);
-        setStack(tempInHand);
-       
-    }
-
-    
-
-
-
-    public Item getItem(){
-        
-        return item;
-        
-    }
-    //getPointerInfo().getLocation()
-
-    public void mouseMoved(MouseEvent e){
-        hover();
-    }
-
-    private Stack getStack(){
-        return inventory.getStack(number);
-    }
-
-    private void setStack(Stack tempInHand) {
-        inventory.setStack(number,tempInHand);
+        Stack mine = inventory.getStack(number);
+        panel.player.setTempInHand(mine);
+        inventory.setStack(number, tempInHand);
     }
 }

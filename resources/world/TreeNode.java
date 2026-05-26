@@ -1,229 +1,132 @@
 package resources.world;
 
-import resources.app.GamePanel;
-import resources.domain.entity.BaseEntity;
-import resources.domain.entity.Entity;
-import resources.domain.tile.Tile;
-import resources.domain.tile.CliffTile;
-import resources.geometry.HitBox;
-import resources.geometry.Vector;
-import resources.generation.factory.EntityFactory;
-import resources.domain.object.GameObject;
-import resources.domain.player.Moveable;
-import resources.domain.inventory.Item;
-import resources.domain.inventory.Stack;
-import resources.presentation.camera.Camera;
-
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-
-import javax.imageio.ImageIO;
 
 import resources.domain.entity.BaseEntity;
 import resources.domain.entity.Entity;
-import resources.geometry.HitBox;
 import resources.domain.tile.Tile;
+import resources.geometry.HitBox;
 
-public class TreeNode extends HitBox{
+/**
+ * Internal quadtree node above the chunk-leaf layer. Subdivides the world into
+ * four quadrants; {@link Chunk} extends this and overrides the recursion to
+ * stop at leaves.
+ *
+ * The two constructors handle the two creation paths:
+ *   - fresh build (creates four children eagerly)
+ *   - expansion (re-roots with an existing child placed in one quadrant)
+ */
+public class TreeNode extends HitBox {
 
-    
-
-    
-
-    ChunkSystem chunkS;
-
-    
-
+    /** Smallest leaf size in chunks per side; one quadrant of this size holds 8x8 chunks. */
     final int CHUNKSIZE = 8;
 
-    boolean generated= false;
+    final ChunkSystem chunkS;
+    boolean generated = false;
 
-    private TreeNode [] children = new TreeNode[4];
+    private final TreeNode[] children = new TreeNode[4];
 
-    public TreeNode(ChunkSystem chunkS,int x,int y,int width,int height){
-        super(x,y,width,height);
+    public TreeNode(ChunkSystem chunkS, int x, int y, int width, int height) {
+        super(x, y, width, height);
         this.chunkS = chunkS;
-
-            
-            addChildren();
-            
-            
+        addChildren();
     }
 
-    /**new inserted parent nodes */
-    public TreeNode(ChunkSystem chunkS,int x,int y,int width,int height,TreeNode child){
-        super(x,y,width,height);
+    /** Re-root case: one of the new node's quadrants is the existing child. */
+    public TreeNode(ChunkSystem chunkS, int x, int y, int width, int height, TreeNode child) {
+        super(x, y, width, height);
         this.chunkS = chunkS;
-
-            addChildren(child);
+        addChildren(child);
     }
 
+    // ---- subdivision ----
 
-    
-    
-
-
-    protected void addChildren(){
-
-        if (width == CHUNKSIZE*chunkS.panel.tileSize){      //to create chunks at bottom lvl
-            children[0] = (new Chunk(chunkS,x,y,width/2,height/2));
-            children[1] = (new Chunk(chunkS,x+width/2,y,width/2,height/2));
-            children[2] = (new Chunk(chunkS,x,y+height/2,width/2,height/2));
-            children[3] = (new Chunk(chunkS,x+width/2,y+height/2,width/2,height/2));
-        } else {
-
-            children[0] = (new TreeNode(chunkS,x,y,width/2,height/2));
-            children[1] = (new TreeNode(chunkS,x+width/2,y,width/2,height/2));
-            children[2] = (new TreeNode(chunkS,x,y+height/2,width/2,height/2));
-            children[3] = (new TreeNode(chunkS,x+width/2,y+height/2,width/2,height/2));
-        }
+    protected void addChildren() {
+        boolean atChunkLevel = width == CHUNKSIZE * chunkS.panel.tileSize;
+        int halfW = width / 2, halfH = height / 2;
+        children[0] = childAt(x,         y,         halfW, halfH, atChunkLevel);
+        children[1] = childAt(x + halfW, y,         halfW, halfH, atChunkLevel);
+        children[2] = childAt(x,         y + halfH, halfW, halfH, atChunkLevel);
+        children[3] = childAt(x + halfW, y + halfH, halfW, halfH, atChunkLevel);
     }
 
-    /** only is used when adding new children when one child is already in the system. */
-    protected void addChildren(TreeNode child){
+    private TreeNode childAt(int cx, int cy, int cw, int ch, boolean asChunk) {
+        return asChunk ? new Chunk(chunkS, cx, cy, cw, ch) : new TreeNode(chunkS, cx, cy, cw, ch);
+    }
 
-        int childX = child.x;
-        int childY = child.y;
+    protected void addChildren(TreeNode existing) {
+        int existingX = existing.x, existingY = existing.y;
         int counter = 0;
-        for (int newX = x;newX<x+width;newX+=width/2){
-            for (int newY = y;newY<y+width;newY+=width/2){
-                if (newY != childY && newX != childX){
-                        children[counter] =new TreeNode(chunkS,newX,newY,width/2,height/2);
-                } else {
-                    children[counter] = child;
-                }
-                counter ++;
+        for (int newX = x; newX < x + width;  newX += width / 2) {
+            for (int newY = y; newY < y + width; newY += width / 2) {
+                children[counter++] = (newX == existingX && newY == existingY)
+                    ? existing
+                    : new TreeNode(chunkS, newX, newY, width / 2, width / 2);
             }
         }
     }
 
-    
+    public boolean hasChildren()       { return children[0] != null; }
+    protected TreeNode[] getChildren() { return children; }
 
-    public boolean hasChildren(){
-        return children[0]!= null;
+    // ---- recursion across children ----
+
+    protected void getAllChunks(ArrayList<Chunk> list) {
+        for (TreeNode c : children) c.getAllChunks(list);
     }
 
-    protected void getAllChunks(ArrayList<Chunk> list){
-        for(int i=0; i<children.length; i++) {
-                children[i].getAllChunks(list);
-            
+    protected void getAllChunks(Rectangle rect, ArrayList<Chunk> list) {
+        for (TreeNode c : children) {
+            if (c.contains(rect) || c.intersects(rect)) c.getAllChunks(rect, list);
         }
     }
 
-    /**figure out which chunk/node fits with rect. adds chunk to list. does not return. */
-    protected void getAllChunks(Rectangle rect,ArrayList<Chunk> list){
-       
-        for(int i=0; i<children.length; i++) {
-            if (children[i].contains(rect)||children[i].intersects(rect)){
-              
-                children[i].getAllChunks(rect,list);
-            }
+    public void addEntity(BaseEntity entity) throws OutOfChunkBounds {
+        HitBox hb = entity.getHitBox();
+        for (TreeNode c : children) {
+            if (c.contains(hb) || c.intersects(hb)) { c.addEntity(entity); return; }
         }
     }
 
-    /**
-     * can be placed in different 
-     */
-    public void addEntity(BaseEntity entity) throws OutOfChunkBounds{
-        for(int i=0; i<children.length; i++) {
-            if (children[i].contains(entity.getHitBox())||children[i].intersects(entity.getHitBox())){
-                children[i].addEntity(entity);
-                return;
-            }
+    public ArrayList<BaseEntity> getEntitiesInPoint(Point point, ArrayList<BaseEntity> sink) {
+        for (TreeNode c : children) {
+            if (c.contains(point)) c.getEntitiesInPoint(point, sink);
         }
+        return sink;
     }
 
-    
-
-
-    /**recursive method of getting all kinds of entities at specified point */
-    public ArrayList<BaseEntity> getEntitiesInPoint (Point point,ArrayList<BaseEntity> arrayList){
-        for(int i=0; i<children.length; i++) {
-            if (children[i].contains(point)){
-                
-                children[i].getEntitiesInPoint(point,arrayList);
-            }
+    public ArrayList<Entity> getEntitiesInBound(Rectangle rect, ArrayList<Entity> sink) {
+        for (TreeNode c : children) {
+            if (c.contains(rect) || c.intersects(rect)) c.getEntitiesInBound(rect, sink);
         }
-        return arrayList;
+        return sink;
     }
 
-     /**recursive method of getting all kinds of entities at specified rect(hitbox) 
-      * @return only entities(not tiles)
-     */
-    public ArrayList<Entity> getEntitiesInBound (Rectangle rect,ArrayList<Entity> arrayList){
-        for(int i=0; i<children.length; i++) {
-            if (children[i].contains(rect)||children[i].intersects(rect)){
-                getEntitiesInBound(rect,arrayList);
-            }
-        }
-        return arrayList;
-    }
-
-
-    public boolean removeEntity (BaseEntity entity) {
-        for(int i=0; i<children.length; i++) {
-            if (children[i].contains(entity.getHitBox())||children[i].intersects(entity.getHitBox()) ||children[i].intersects(new Rectangle((int)(entity.getWorldX()),(int)entity.getWorldY(),(int)entity.getWidth(),(int)entity.getHeight()))){
-               
-                if (children[i].removeEntity(entity)){
-                    return true;
-                }
-                
-
+    public boolean removeEntity(BaseEntity entity) {
+        HitBox hb = entity.getHitBox();
+        Rectangle bbox = new Rectangle(
+            (int) entity.getWorldX(), (int) entity.getWorldY(),
+            entity.getWidth(), entity.getHeight());
+        for (TreeNode c : children) {
+            if ((c.contains(hb) || c.intersects(hb) || c.intersects(bbox)) && c.removeEntity(entity)) {
+                return true;
             }
         }
         return false;
     }
-    
 
-  
-    private BufferedImage getImageOfEntities() {
-        return chunkS.entityFactory.proceduralGen.getImage(x,y,width,height);
-    }
-
-    
-    void paintMap(){
-        System.out.println("painting map for treeNode");
-        try{
-            BufferedImage image = getImageOfEntities();
-            ImageIO.write(image, "png", new File("reeNodeImage.png"));
-        }
-        catch (IOException e){
-            System.out.println("could not paint map");
-            e.printStackTrace();
-        }
-	} 
-
-
-    public int getWorldX(){
-        return x;
-    }
-    public int getWorldY(){
-        return y;
-    }
-    //methods from rectangle is inherited!
-    
-
-    protected TreeNode [] getChildren(){
-        return children;
-    }
-    public int getSquareMeter(){
-        return width*height;
-    }
-
-    /**antar at det bare finnes en Tile på et sted. */
     public Tile getTileInPoint(Point p) {
-        for(int i=0; i<children.length; i++) {
-            if (children[i].contains(p)){
-                
-                return children[i].getTileInPoint(p);
-            }
+        for (TreeNode c : children) {
+            if (c.contains(p)) return c.getTileInPoint(p);
         }
         return null;
     }
+
+    // ---- position ----
+
+    public int getWorldX()      { return x; }
+    public int getWorldY()      { return y; }
+    public int getSquareMeter() { return width * height; }
 }
-
-

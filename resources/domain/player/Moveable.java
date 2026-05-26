@@ -1,282 +1,140 @@
 package resources.domain.player;
 
-import resources.app.GamePanel;
-import resources.domain.entity.BaseEntity;
-import resources.domain.entity.Entity;
-import resources.geometry.HitBox;
-import resources.geometry.Vector;
-import resources.domain.inventory.Inventory;
-import resources.domain.inventory.ItemManager;
-
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+
+import resources.app.GamePanel;
 import resources.domain.entity.Entity;
 import resources.geometry.HitBox;
 import resources.geometry.Vector;
-import resources.app.GamePanel;
 
+/**
+ * Entity capable of self-directed movement plus directional sprite frames.
+ *
+ * State (velocity, direction, current path, animation phase) lives here;
+ * the per-tick movement loop is delegated to {@link MovementController} so the
+ * collision/step policy can be swapped (boats, sliding, knockback) without
+ * editing this class.
+ */
 public class Moveable extends Entity {
 
-    private Vector velocity = new Vector();
-    private Vector direction = new Vector(1,1); 
-    protected ArrayList<Vector> path = new ArrayList<>();
+    private static final int ANIM_FRAME_RIGHT = 1;
+    private static final int ANIM_FRAME_DOWN  = 0;  // up
+    private static final int ANIM_FRAME_LEFT  = 3;
+    private static final int ANIM_FRAME_UP    = 2;  // down
+    private static final int ANIM_WRAP        = 60;
+    private static final int ANIM_HALF        = 30;
+
+    private final Vector velocity  = new Vector();
+    private final Vector direction = new Vector(1, 1);
+    final ArrayList<Vector> path   = new ArrayList<>();
 
     private double movementSpeed = 1;
-    private int directionIndex = 0;
+    private int    directionIndex = 0;
     private HitBox interactionHitBox;
 
-    public Moveable(GamePanel panel, String name, int worldX, int worldY, short width, short height, short hitBoxWidth,
-            short hitBoxHeight, short relativeXPLus, short relativeYPlus) {
-        super(panel, name, worldX, worldY, width, height, hitBoxWidth, hitBoxHeight, relativeXPLus, relativeYPlus);
-       
-        setImages();
+    private final MovementController movement = new MovementController(this);
+
+    public Moveable(GamePanel panel, String name, int worldX, int worldY,
+                    short width, short height, short hitBoxWidth, short hitBoxHeight,
+                    short relativeXPlus, short relativeYPlus) {
+        super(panel, name, worldX, worldY, width, height, hitBoxWidth, hitBoxHeight,
+            relativeXPlus, relativeYPlus);
+        loadDirectionalSprites();
     }
 
-
-    public HitBox getHitboxInfront(){
-
-        int movementX = (int)(1*direction.getX());
-        int movementY = (int)(1*direction.getY());
-
-        HitBox usingHB = getHitBox();
-        usingHB.updateCoords();
-        HitBox inFront = new HitBox(usingHB.x+movementX,usingHB.y+movementY,usingHB.width,usingHB.height);
-
-        return inFront;
-      
+    @Override
+    public void update() {
+        movement.step();
+        advanceAnimation();
     }
 
-    public HitBox setInteractIonHitBox(){
+    // ---- velocity / direction / path ----
 
-        int xVal = 0;
-        int yVal = 0;
+    public Vector getVelocity()        { return velocity; }
+    public Vector getDirection()       { return direction; }
+    public double getMovementSpeed()   { return movementSpeed; }
+    public void   setMovementSpeed(double v) { this.movementSpeed = v; }
 
-        if (directionIndex == 0){
-            yVal = -50;
-            xVal-= ((64/2)-(getHitBox().width/2));
-        }
-        else if (directionIndex == 1){
-            xVal = getHitBox().width/2;
-            yVal-= ((64/2)-(getHitBox().height/2));
-        }
-        else if (directionIndex == 2){
-            //yVal = (int)getHitBox().getHeight();
-            xVal-= ((64/2)-(getHitBox().width/2));
-            
-        }
-        else if (directionIndex == 3){
-            yVal-= ((64/2)-(getHitBox().height/2));
-            xVal = -(64-(getHitBox().width/2));
-        }
+    public void addVelocity(Vector v) { velocity.add(v); }
+    public void setVelocity(Vector v) { velocity.set(v.x, v.y); }
+    public void setPath(ArrayList<Vector> newPath) { path.clear(); path.addAll(newPath); }
+    public void addPath(ArrayList<Vector> newPath) { path.addAll(newPath); }
 
-        HitBox usingHB = getHitBox();
-        usingHB.updateCoords();
-        HitBox inFront = new HitBox(usingHB.x+xVal,usingHB.y+yVal,64,64);
-        return inFront;
-      
+    // ---- collision-friendly mutation (called by controller) ----
+
+    public void moveBy(double dx, double dy) {
+        worldX += dx;
+        worldY += dy;
+        getHitBox().updateCoords();
     }
 
+    // ---- interaction box ----
 
-    public HitBox getInteractionHitBox(){
-        if (interactionHitBox == null){
-            interactionHitBox = setInteractIonHitBox();
-        }
+    public void resetInteractionHitBox() { interactionHitBox = null; }
+
+    public HitBox getInteractionHitBox() {
+        if (interactionHitBox == null) interactionHitBox = computeInteractionHitBox();
         return interactionHitBox;
     }
 
-    @Override
-    public void update(){
-       
-        move();
-        updateAnimation();
-        
+    public HitBox getHitboxInfront() {
+        HitBox hb = getHitBox();
+        hb.updateCoords();
+        return new HitBox(hb.x + (int) direction.getX(), hb.y + (int) direction.getY(),
+            hb.width, hb.height);
     }
 
-    private void updateAnimation() {
-
-        //chechks for direction cahnges, might not be necacarry
-
-        if (!direction.hasNoVelocity()){
-            animationIndex +=2;
-        if (animationIndex >= 60){
-            animationIndex = 1;
+    private HitBox computeInteractionHitBox() {
+        HitBox hb = getHitBox();
+        hb.updateCoords();
+        int half = 64 / 2;
+        int xOffset = 0, yOffset = 0;
+        switch (directionIndex) {
+            case 0: yOffset = -50; xOffset = -(half - hb.width  / 2); break;
+            case 1: xOffset = hb.width / 2; yOffset = -(half - hb.height / 2); break;
+            case 2: xOffset = -(half - hb.width / 2); break;
+            case 3: yOffset = -(half - hb.height / 2); xOffset = -(64 - hb.width / 2); break;
+            default: break;
         }
-        }
-        //Could check for directional changes..
-        
-        if (direction.getX()>0){
-                //moves right
-                directionIndex = 1;
-            
-        } else if (direction.getX()<0){
-                //moves left
-                directionIndex = 3;
-        } else if(direction.getY()<0){
-            //moves down
-            directionIndex = 0;
-
-        } else if(direction.getY()>0){
-            //moves up
-            directionIndex = 2;
-            
-        } else {
-            //no movement
-            //no need to change
-        }
-
-        panel.camera.addbackendPrintData("direction: "+String.valueOf(direction));
-       
-        
-       
+        return new HitBox(hb.x + xOffset, hb.y + yOffset, 64, 64);
     }
 
+    // ---- sprite + animation ----
 
-    
-
-    /**not used.. */
-    public void move() {
-        //resets interactionHitbox
-        interactionHitBox = null;
-
-
-        panel.camera.addbackendPrintData("velocity: "+String.valueOf(velocity));
-        double movementX;
-        double movementY;
-        
-
-
-        if (path.size()== 0){
-            
-            //double [] xy = velocity.transferValues(5);
-            Vector movement =velocity.transfer(movementSpeed*10);
-            double [] xy = {movement.x,movement.y};
-            movementX = xy[0];
-            movementY = xy[1];
-            direction.set(movementX,movementY);
-           
-        
-
-            if (!(isCollided(getHitboxInfront()))){
-                panel.camera.addbackendPrintData("velocity: "+movementX+","+movementY);
-                panel.camera.addbackendPrintData("speed: "+(panel.camera.FPS*Math.sqrt(movementX*movementX+movementY*movementY)));
-               
-                worldX += movementX;
-                worldY += movementY;
-               
-                getHitBox().updateCoords();
-            }
-        }
-
-        else{
-            panel.camera.addbackendPrintData("path: true");
-            Vector movement = path.get(0).transfer(movementSpeed*2);
-            double [] xy = {movement.x,movement.y};
-            
-
-            
-            movementX = xy[0];
-            movementY = xy[1];
-            panel.camera.addbackendPrintData("path velocity: "+path.get(0));
-            
-            
-            
-           
-            if (!(isCollided(getHitboxInfront()))){
-                direction.set(movementX,movementY);
-             
-                panel.camera.addbackendPrintData("speed: "+(panel.camera.FPS*Math.sqrt(movementX*movementX+movementY*movementY)));
-               
-                worldX += movementX;
-                worldY += movementY;
-               
-                getHitBox().updateCoords();
-            }
-
-            
-
-        
-            if (path.get(0).hasNoVelocity()){
-                path.remove(0);
-            }
-
-            if (!(isCollided(getHitboxInfront()))){
-
-                worldX += movementX;
-                worldY += movementY;
-                getHitBox().updateCoords();
-            }
-        }
-
-        
-        
-    }
-
-    /**moves hitbox and checks for collisions, moves hitbox back */
-    private boolean isCollided(HitBox hitBox) {
-        boolean collision = panel.world.solidCollision(hitBox);
-        panel.camera.addbackendPrintData("collision: "+String.valueOf(collision));
-        return collision;
-    }
-
-    public void addVelocity(Vector newVector){
-        velocity.add(newVector);
-    }
-
-    public void setVelocity(Vector newVector){
-        velocity = (newVector);
-    }
-
-    private void setImages(){
+    private void loadDirectionalSprites() {
         images = panel.imageContainer.setPlayableImages(getName());
     }
 
-    /**returns the one image that is supposed to be returned */
+    private void advanceAnimation() {
+        if (!direction.hasNoVelocity()) {
+            animationIndex += 2;
+            if (animationIndex >= ANIM_WRAP) animationIndex = 1;
+        }
+        updateDirectionIndex();
+    }
+
+    private void updateDirectionIndex() {
+        if      (direction.getX() > 0) directionIndex = ANIM_FRAME_RIGHT;
+        else if (direction.getX() < 0) directionIndex = ANIM_FRAME_LEFT;
+        else if (direction.getY() < 0) directionIndex = ANIM_FRAME_DOWN;
+        else if (direction.getY() > 0) directionIndex = ANIM_FRAME_UP;
+    }
+
     @Override
     public ArrayList<BufferedImage> getImages() {
-        ArrayList<BufferedImage> arr = new ArrayList<>();
-        if (images.size()>0){
-            arr.add(images.get(getCorrespondingSpriteIndex()));
-        }
-        return arr;
+        ArrayList<BufferedImage> out = new ArrayList<>();
+        if (!images.isEmpty()) out.add(images.get(spriteIndex()));
+        return out;
     }
 
-    private int getCorrespondingSpriteIndex() {
-        int index = (directionIndex)*3;
-        if (index <0){index = 0;}
-        
-        int index2 = 0;
-
-        if (animationIndex == 0){
-            
-        } else if (animationIndex<30){
-            index2 = 1;
-        } else {
-            index2 = 2;
-        }
-        
-
-        return index +index2;// + animationIndex/20;
-
-
-        
+    private int spriteIndex() {
+        int base = directionIndex * 3;
+        int phase = (animationIndex == 0) ? 0 : (animationIndex < ANIM_HALF) ? 1 : 2;
+        return Math.max(0, base) + phase;
     }
-
-    public Vector getVelocity(){
-        return velocity;
-    }
-
-
-    public void setPath(ArrayList<Vector> newPath) {
-        path = newPath;
-    }
-    public void addPath(ArrayList<Vector> newPath){
-        path.addAll(newPath);
-    }
-
 
     public void interact() {
-        throw new UnsupportedOperationException("Unimplemented method 'interact'");
+        throw new UnsupportedOperationException("Unimplemented: subclass to react to interaction");
     }
-
-    
 }
