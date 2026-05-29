@@ -13,9 +13,6 @@ import resources.domain.object.Chest;
  */
 public final class ChestUIBridge {
 
-    private static final int DEFAULT_X = 280;
-    private static final int DEFAULT_Y = 260;
-
     private static final Map<Chest, ChestContainerUI> OPEN = new IdentityHashMap<>();
 
     private ChestUIBridge() {}
@@ -24,8 +21,13 @@ public final class ChestUIBridge {
         if (panel == null || chest == null) return;
         if (OPEN.containsKey(chest)) return;
 
+        // Place the chest grid centered horizontally and high enough that it sits
+        // ABOVE the player inventory, which renders centered on screen — the two
+        // panels stack without overlapping. Width of a 9-col grid is 9*50+10*8=530.
+        int chestX = panel.screenWidth / 2 - 265;
+        int chestY = panel.screenHeight / 2 - 320;
         ChestContainerUI ui = new ChestContainerUI(
-            panel, chest.getChestInventory(), DEFAULT_X, DEFAULT_Y);
+            panel, chest.getChestInventory(), chestX, chestY);
         ui.visible = true;
         ui.enable();
 

@@ -33,9 +33,12 @@ public final class ChestPairProbe {
             panel.world.placeEntity(chest);
             panel.world.update(new Point(px, py));
 
-            // Seed chest slot 0 with an item; make sure player inv slot 0 is empty.
+            // Seed chest slot 0 with a real (non-empty) stack; clear player slot 0.
             Inventory chestInv = chest.getChestInventory();
-            chestInv.setStack(0, new Stack(panel, "wood"));
+            Stack seed = new Stack(panel, "wood");
+            seed.addItem(new resources.domain.inventory.Item(panel, "wood"));
+            seed.addItem(new resources.domain.inventory.Item(panel, "wood"));
+            chestInv.setStack(0, seed);
             Inventory playerInv = panel.player.getInventory();
             playerInv.setStack(0, new Stack(panel, "empty"));
 
@@ -75,6 +78,13 @@ public final class ChestPairProbe {
             boolean moved = "wood".equals(playerInv.getStack(0).getName())
                 && "empty".equals(chestInv.getStack(0).getName());
             System.out.println("[RESULT] item moved chest -> inventory = " + moved);
+
+            // E should close the chest overlay AND hide the paired inventory.
+            panel.keys.keyPressed(new java.awt.event.KeyEvent(panel,
+                java.awt.event.KeyEvent.KEY_PRESSED, 0L, 0, java.awt.event.KeyEvent.VK_E, 'e'));
+            System.out.println("[E-CLOSE] hasOverlay=" + panel.userInterface.hasOpenOverlay()
+                + " modal=" + panel.userInterface.isModalUIOpen()
+                + " | " + (!panel.userInterface.hasOpenOverlay() ? "CHEST CLOSED" : "STILL OPEN"));
         }
         System.exit(0);
     }
