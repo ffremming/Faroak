@@ -75,11 +75,32 @@ public final class ObjectImageLoader {
 
     private ArrayList<BufferedImage> loadObjectFolder(String name) {
         ArrayList<BufferedImage> images = new ArrayList<>();
-        File png = resolveObjectPng(name);
-        if (png.isFile()) tryAdd(images, png);
+        BufferedImage fenceTile = fenceVariantTile(name);
+        if (fenceTile != null) {
+            images.add(fenceTile);
+        } else {
+            File png = resolveObjectPng(name);
+            if (png.isFile()) tryAdd(images, png);
+        }
         if (images.isEmpty()) images.add(PLACEHOLDER);
         objectCache.put(name, images);
         return images;
+    }
+
+    /**
+     * Resolve a {@code "fence_v<mask>"} name to its tile sliced from the fence
+     * autotile sheet, where {@code <mask>} is the integer 0..15 connection mask.
+     * Returns null if the name isn't a fence variant or no sheet is on disk, so
+     * the caller falls back to the legacy per-file fence art.
+     */
+    private BufferedImage fenceVariantTile(String name) {
+        if (name == null || !name.startsWith(FENCE_VARIANT_PREFIX)) return null;
+        String suffix = name.substring(FENCE_VARIANT_PREFIX.length());
+        try {
+            return FenceSpriteSheet.tile(Integer.parseInt(suffix));
+        } catch (NumberFormatException notNumericMask) {
+            return null; // legacy named variant (e.g. "fence_vBfenceStandard")
+        }
     }
 
     /**

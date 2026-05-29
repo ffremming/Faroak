@@ -40,6 +40,7 @@ public final class MultiplayerRuntime {
     private long sequence;
     private boolean started;
     private boolean joined;
+    private boolean joinSent;
     private boolean closed;
     private long nextReconnectAttemptAtMs;
     private long lastMovementMask = -1L;
@@ -84,6 +85,7 @@ public final class MultiplayerRuntime {
             reconnectIfDue();
             return;
         }
+        sendJoinIfPossible();
         if (!joined) return;
         publishMovement();
         publishActions();
@@ -98,6 +100,7 @@ public final class MultiplayerRuntime {
         adapter.disconnect(config.playerId());
         started = false;
         joined = false;
+        joinSent = false;
         nextReconnectAttemptAtMs = 0L;
     }
 
@@ -125,13 +128,19 @@ public final class MultiplayerRuntime {
     }
 
     private void connectAndJoin() {
-        adapter.connect(config.playerId());
-        if (!adapter.isConnected()) return;
         joined = false;
-        adapter.submit(new ClientJoinMessage(config.playerId()));
+        joinSent = false;
         pendingInputs.clear();
         lastMovementMask = -1L;
+        adapter.connect(config.playerId());
         nextReconnectAttemptAtMs = 0L;
+        sendJoinIfPossible();
+    }
+
+    private void sendJoinIfPossible() {
+        if (closed || joined || joinSent || !adapter.isConnected()) return;
+        adapter.submit(new ClientJoinMessage(config.playerId()));
+        joinSent = true;
     }
 
     private void publishMovement() {
@@ -195,6 +204,7 @@ public final class MultiplayerRuntime {
             return;
         }
         joined = true;
+        joinSent = true;
         long acknowledged = welcome.acknowledgedSequence();
         if (acknowledged > 0L) {
             onAck(new ServerAckMessage(config.playerId(), acknowledged, 0L));

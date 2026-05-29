@@ -74,7 +74,7 @@ public class Container extends Component{
     }
 
     public void draw(Graphics2D g2){
-        
+
         if (visible){
             drawRect(g2);
            

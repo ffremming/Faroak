@@ -28,7 +28,7 @@ import resources.app.GamePanel;
  *   - Music: N%         → cycle music volume
  *   - Sound: N%         → cycle SFX volume
  *   - Respawn           → revive at spawn point (via PlayerLifecycle)
- *   - Exit Game         → System.exit
+ *   - Main Menu         → leave the game and return to the title screen
  *
  * Mouse handling is self-contained — the menu intercepts presses inside its
  * panel and dispatches to the relevant button. Outside the panel, presses
@@ -38,7 +38,10 @@ import resources.app.GamePanel;
 public final class EscapeMenu extends Component {
 
     private static final String BOARDS_DIR = "resources/images/ui/UISprites/boards/";
+    // Boards 6 and 7 have ropes (they're hanging signs), so they're excluded
+    // from the flat button pool and reserved for the hanging title sign.
     private static final int[] BOARD_INDICES = { 0, 1, 2, 3, 4, 5 };
+    private static final int SIGN_BOARD_INDEX = 6;
 
     private static final Color PANEL_BG = new Color(0, 0, 0, 140);
 
@@ -46,11 +49,17 @@ public final class EscapeMenu extends Component {
     private static final int BTN_H = 70;
     private static final int BTN_GAP = 14;
 
+    /** Hanging sign drawn flush against the top edge; its ropes read as if it
+     *  dangles from the top of the screen. Width is fixed; height follows the
+     *  source aspect ratio. */
+    private static final int SIGN_W = 460;
+
     private final GamePanel panel;
     private final long startNanos = System.nanoTime();
     private final List<WoodenButton> buttons = new ArrayList<>();
     private final WoodenButton musicButton;
     private final WoodenButton soundButton;
+    private final BufferedImage signBoard;
 
     public EscapeMenu(GamePanel panel) {
         super(panel);
@@ -63,7 +72,8 @@ public final class EscapeMenu extends Component {
         buttons.add(musicButton);
         buttons.add(soundButton);
         buttons.add(new WoodenButton("Respawn",       randomBoard(boards, rng), this::actionRespawn));
-        buttons.add(new WoodenButton("Exit Game",     randomBoard(boards, rng), this::actionQuit));
+        buttons.add(new WoodenButton("Main Menu",      randomBoard(boards, rng), this::actionQuit));
+        signBoard = tryLoad(BOARDS_DIR + "board" + SIGN_BOARD_INDEX + ".png");
         refreshAudioLabels();
     }
 
@@ -112,16 +122,46 @@ public final class EscapeMenu extends Component {
         g2.setColor(PANEL_BG);
         g2.fillRect(0, 0, panel.width, panel.height);
 
-        drawTitle(g2);
+        drawHangingSign(g2);
 
         float t = (System.nanoTime() - startNanos) / 1_000_000_000f;
         for (WoodenButton b : buttons) b.draw(g2, t);
     }
 
-    private void drawTitle(Graphics2D g2) {
+    /**
+     * Draws the "Paused" title on a wooden sign that hangs by its ropes from the
+     * top edge of the screen. The source board (board6) already includes the
+     * ropes running up to its top edge, so anchoring the image flush to y=0 makes
+     * it read as if it dangles from the top of the screen.
+     */
+    private void drawHangingSign(Graphics2D g2) {
+        String title = "Paused";
+
+        if (signBoard != null) {
+            int w = SIGN_W;
+            int h = (int) (signBoard.getHeight() * (SIGN_W / (float) signBoard.getWidth()));
+            int sx = (panel.width - w) / 2;
+            int sy = 0;
+            g2.drawImage(signBoard, sx, sy, w, h, null);
+
+            // Title sits on the plank face, below the ropes. The board art
+            // reserves roughly the top third for the ropes/nails.
+            Font f = new Font("Serif", Font.BOLD, 44);
+            g2.setFont(f);
+            int tw = g2.getFontMetrics().stringWidth(title);
+            int lh = g2.getFontMetrics().getAscent();
+            int tx = sx + (w - tw) / 2;
+            int ty = sy + (int) (h * 0.42f) + lh / 2;
+            g2.setColor(new Color(40, 22, 8, 220));
+            g2.drawString(title, tx + 2, ty + 2);
+            g2.setColor(new Color(250, 235, 205));
+            g2.drawString(title, tx, ty);
+            return;
+        }
+
+        // Fallback: no sign art — keep a plain floating title.
         Font titleFont = new Font("Serif", Font.BOLD, 56);
         g2.setFont(titleFont);
-        String title = "Paused";
         int tw = g2.getFontMetrics().stringWidth(title);
         int tx = (panel.width - tw) / 2;
         int ty = panel.height / 2 - (buttons.size() * (BTN_H + BTN_GAP)) / 2 - 50;
@@ -134,7 +174,12 @@ public final class EscapeMenu extends Component {
     private void layoutButtons() {
         int totalH = buttons.size() * BTN_H + (buttons.size() - 1) * BTN_GAP;
         int x = (panel.width - BTN_W) / 2;
-        int y = (panel.height - totalH) / 2;
+        // Centre the button stack, but bias it downward so it clears the
+        // hanging sign at the top of the screen.
+        int signH = signBoard != null
+            ? (int) (signBoard.getHeight() * (SIGN_W / (float) signBoard.getWidth()))
+            : 0;
+        int y = Math.max((panel.height - totalH) / 2, signH + 30);
         for (WoodenButton b : buttons) {
             b.setBounds(x, y, BTN_W, BTN_H);
             y += BTN_H + BTN_GAP;
@@ -187,8 +232,23 @@ public final class EscapeMenu extends Component {
         hide();
     }
 
+    /**
+     * Leave the running game and return to the title screen rather than killing
+     * the process. Stops the game loop / networking, then swaps the frame's
+     * content back to a fresh {@link IntroScreen} on the EDT.
+     */
     private void actionQuit() {
-        System.exit(0);
+        hide();
+        panel.stopGameThread();
+        javax.swing.JFrame frame = panel.frame;
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            frame.getContentPane().removeAll();
+            IntroScreen intro = new IntroScreen(frame);
+            frame.getContentPane().add(intro);
+            frame.revalidate();
+            frame.repaint();
+            intro.requestFocusInWindow();
+        });
     }
 
     private void refreshAudioLabels() {

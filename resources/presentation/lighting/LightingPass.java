@@ -83,10 +83,13 @@ public final class LightingPass {
      * — minimum darkness at p=0.25 (mid-day), maximum at p=0.75 (mid-night).
      */
     private int ambientAlpha() {
-        double p = clock.dayPhase();
-        double cos = Math.cos((p - 0.25) * 2.0 * Math.PI);
-        double t = (1.0 - cos) * 0.5;
-        return (int) Math.round(t * MAX_NIGHT_ALPHA);
+        // Light changes disabled for now: keep time-of-day static (full daylight,
+        // no ambient darkness overlay). Restore the cosine ramp below to re-enable.
+        return 0;
+        // double p = clock.dayPhase();
+        // double cos = Math.cos((p - 0.25) * 2.0 * Math.PI);
+        // double t = (1.0 - cos) * 0.5;
+        // return (int) Math.round(t * MAX_NIGHT_ALPHA);
     }
 
     private static final int MAX_NIGHT_ALPHA = 220;

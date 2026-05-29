@@ -25,8 +25,25 @@ public class Keys implements KeyListener{
         // so it works regardless of which component holds focus. Handling it here too would
         // double-toggle the menu (open then close) whenever this panel has focus.
 
-        // Escape menu is modal: gameplay keys are ignored until resumed.
-        if (panel.userInterface != null && panel.userInterface.isMenuOpen()) {
+        // E always toggles the player inventory, even while it (or another
+        // modal) is open — otherwise you couldn't close the inventory with the
+        // same key that opened it. While a container overlay (chest/barrel/
+        // crafting) is open, E closes that overlay instead — the inventory is
+        // shown paired with it, so dismissing the chest dismisses both.
+        if (code == KeyEvent.VK_E){
+            if (panel.userInterface.hasOpenOverlay()) {
+                panel.userInterface.closeTopOverlay();
+            } else {
+                panel.userInterface.toggleInventory();
+            }
+            return;
+        }
+
+        // Any modal UI (pause menu, or an open chest/crafting/barrel overlay)
+        // captures input: gameplay keys are ignored so SPACE doesn't re-interact
+        // and WASD doesn't walk the player while a container is open. Escape is
+        // routed separately (window-scoped binding) so it can still close them.
+        if (panel.userInterface != null && panel.userInterface.isModalUIOpen()) {
             return;
         }
 
@@ -108,11 +125,6 @@ public class Keys implements KeyListener{
             panel.newSeed();
 
         }
-
-        if (code == KeyEvent.VK_E){
-            panel.userInterface.toggleInventory();
-        }
-            
 
     }
 

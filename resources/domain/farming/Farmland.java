@@ -15,18 +15,17 @@ import resources.domain.player.Playable;
  *
  * Interaction rules (see {@link #interact(Playable)}):
  *   - If the player has a "watering_can" equipped, the tile is watered.
- *   - If the player has a seed item equipped ({@code crop_*} item name), a
- *     {@link Crop} is spawned on top and one seed is consumed.
+ *   - If the player has a seed item equipped ({@code seeds_*}, or a direct
+ *     {@code crop_*}), a {@link Crop} is spawned on top and one seed consumed.
  *
- * The actual tool/seed naming is data-driven via {@link CropRegistry} — no
- * hard-coded crop names beyond the "crop_" prefix used as a seed marker.
+ * The seed→crop mapping and naming are data-driven via {@link CropRegistry}
+ * (see {@link FarmingService#cropKeyFor(String)}) — no hard-coded crop names.
  */
 public final class Farmland extends GameObject {
 
     private static final String FARMLAND_SPRITE  = "farmland";
     private static final String WATERED_SPRITE   = "farmland_watered";
     private static final String WATERING_CAN     = "watering_can";
-    private static final String SEED_PREFIX      = "crop_";
 
     private boolean watered;
     private boolean planted;
@@ -70,8 +69,9 @@ public final class Farmland extends GameObject {
             water();
             return;
         }
-        if (itemName.startsWith(SEED_PREFIX) && !planted) {
-            if (plant(itemName)) equipped.removeOneItem();
+        String cropName = FarmingService.cropKeyFor(itemName);
+        if (cropName != null && !planted) {
+            if (plant(cropName)) equipped.removeOneItem();
         }
     }
 }

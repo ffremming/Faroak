@@ -1,6 +1,7 @@
 package resources.domain.object;
 
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
 import resources.app.GamePanel;
 import resources.domain.entity.BaseEntity;
@@ -67,6 +68,21 @@ public class Fence extends GameObject {
             this.name = "fence_v" + FenceVariants.fileForMask(connectionMask(panel));
         }
         return super.getImage();
+    }
+
+    /**
+     * The renderer draws via {@code getImages()}, not {@code getImage()}, so the
+     * per-frame variant resolution in {@link #getImage()} must be driven from
+     * here too — otherwise the sprite would freeze at whatever variant was
+     * resolved during construction (always the isolated post, since the fence
+     * has no neighbours when first built) and never react to fences placed or
+     * removed around it. Recomputing here keeps placed fences, the placement
+     * ghost, and chunk-reloaded fences all self-correcting.
+     */
+    @Override
+    public ArrayList<BufferedImage> getImages() {
+        getImage();
+        return super.getImages();
     }
 
     /**

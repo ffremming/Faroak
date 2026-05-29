@@ -13,8 +13,6 @@ import resources.domain.entity.Entity;
 import resources.domain.entity.component.AnimationComponent;
 import resources.domain.entity.component.LabelComponent;
 import resources.domain.object.BoatRideComponent;
-import resources.domain.combat.CombatProjectile;
-import resources.domain.combat.WeaponSwingEffect;
 import resources.domain.tile.Tile;
 import resources.geometry.HitBox;
 import resources.world.Chunk;
@@ -27,8 +25,6 @@ import resources.world.Chunk;
  * positional state or the debug overlay.
  */
 public final class CameraSceneRenderer {
-
-    private static final Color SHADOW = new Color(100, 100, 150, 60);
 
     private final GamePanel panel;
     private final Camera camera;
@@ -87,23 +83,17 @@ public final class CameraSceneRenderer {
         camera.addbackendPrintData("chunk bakes drawn: " + chunksDrawn);
     }
 
-    /** Draw one entity in camera space, including its shadow if non-Tile. */
+    /** Draw one entity in camera space. */
     public void drawRelative(Graphics2D g2, BaseEntity entity) {
         // Rider is slaved to the boat's position; rendering them on top just
-        // looks like a person standing on the deck. Hide them (and their
-        // shadow) while a BoatRideComponent is attached.
+        // looks like a person standing on the deck. Hide them while a
+        // BoatRideComponent is attached.
         if (entity.hasComponent(BoatRideComponent.class)) return;
 
         int camX = (int) camera.getWorldX();
         int camY = (int) camera.getWorldY();
         int x = (int) (entity.getWorldX() - camX);
         int y = (int) (entity.getWorldY() - camY);
-
-        if (!(entity instanceof Tile)
-            && !(entity instanceof WeaponSwingEffect)
-            && !(entity instanceof CombatProjectile)) {
-            drawShadow(g2, entity, camX, camY);
-        }
 
         AnimationComponent anim = entity.getComponent(AnimationComponent.class);
         BufferedImage animFrame = anim != null ? anim.currentImage() : null;
@@ -160,12 +150,4 @@ public final class CameraSceneRenderer {
     private static final Color INVALID_TINT   = new Color(255, 60, 60, 90);
     private static final Color INVALID_BORDER = new Color(255, 30, 30, 200);
 
-    private void drawShadow(Graphics2D g2, BaseEntity entity, int camX, int camY) {
-        int shadowX = entity.getHitBox().x - camX - 5;
-        int shadowY = entity.getHitBox().y - camY + 15;
-        g2.setColor(SHADOW);
-        g2.fillOval(shadowX, shadowY,
-            entity.getHitBox().width + 10,
-            entity.getHitBox().height);
-    }
 }

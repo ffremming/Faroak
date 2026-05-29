@@ -23,7 +23,6 @@ public final class HarvestRegistry {
         register("birch_M",  new Profile("axe", 3, DropTable.of(new DropSpec("block", 2, 4))));
         register("oak_M",    new Profile("axe", 4, DropTable.of(new DropSpec("block", 3, 5))));
         register("spruce_M", new Profile("axe", 3, DropTable.of(new DropSpec("block", 2, 4))));
-        register("palm_M",   new Profile("axe", 3, DropTable.of(new DropSpec("block", 2, 4))));
 
         // Rocks: mine with a pickaxe, yield 1–3 stone.
         register("stone",    new Profile("pickaxe", 3, DropTable.of(new DropSpec("stone", 1, 3))));

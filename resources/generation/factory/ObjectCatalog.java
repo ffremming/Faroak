@@ -49,16 +49,16 @@ public final class ObjectCatalog {
     }
 
     private static final int T = 64;
+    
 
     private static final Map<String, ObjectSpec> SPECS = new HashMap<>();
 
     static {
         // Trees — taller than the player (player ≈ 1 tile). Hitbox is a narrow
         // band at the trunk base so canopies can overlap freely.
-        registerBaseAnchored("oak_M",    (int)(T * 1.4), (int)(T * 2.2), T / 2, T / 3, true);
-        registerBaseAnchored("birch_M",  (int)(T * 1.3), (int)(T * 2.1), T / 2, T / 3, true);
-        registerBaseAnchored("spruce_M", (int)(T * 1.4), (int)(T * 2.3), T / 2, T / 3, true);
-        registerBaseAnchored("palm_M",   (int)(T * 1.5), (int)(T * 2.2), T / 2, T / 3, true);
+        registerBaseAnchored("oak_M",    (int)(T * 2.8), (int)(T * 4.4), T / 2, T / 3, true);
+        registerBaseAnchored("birch_M",  (int)(T * 2.6), (int)(T * 4.2), T / 2, T / 3, true);
+        registerBaseAnchored("spruce_M", (int)(T * 2.8), (int)(T * 4.6), T / 2, T / 3, true);
 
         // Bushes / shrubs — shorter than the player, hitbox nearly full sprite.
         registerBaseAnchored("shrub_M",        (int)(T * 1.1), (int)(T * 0.9), T - 16, T - 24, false);
@@ -85,15 +85,15 @@ public final class ObjectCatalog {
         registerCentered     ("plant_bush_berry",        (int)(T * 0.95), (int)(T * 0.85), T - 16, T - 20, false);
         registerCentered     ("plant_palm_frond",        (int)(T * 0.95), (int)(T * 0.85), T - 16, T - 20, false);
         // Small/medium trees — solid trunks.
-        registerBaseAnchored ("plant_sapling",           (int)(T * 0.7),  (int)(T * 1.05), T / 3,           T / 4,           true);
-        registerBaseAnchored ("plant_oak_round",         (int)(T * 1.55), (int)(T * 1.85), T / 2,           T / 3,           true);
-        registerBaseAnchored ("plant_conifer",           (int)(T * 1.35), (int)(T * 2.25), T / 2,           T / 3,           true);
-        registerBaseAnchored ("plant_oak_large",         (int)(T * 1.85), (int)(T * 2.05), (int)(T * 0.6),  T / 3,           true);
-        registerBaseAnchored ("plant_palm_tree",         (int)(T * 1.55), (int)(T * 2.2),  T / 2,           T / 3,           true);
+        registerBaseAnchored ("plant_sapling",           (int)(T * 1.26), (int)(T * 1.89), T / 3,           T / 4,           true);
+        registerBaseAnchored ("plant_oak_round",         (int)(T * 2.79), (int)(T * 3.33), T / 2,           T / 3,           true);
+        registerBaseAnchored ("plant_conifer",           (int)(T * 2.43), (int)(T * 4.05), T / 2,           T / 3,           true);
+        registerBaseAnchored ("plant_oak_large",         (int)(T * 3.33), (int)(T * 3.69), (int)(T * 0.6),  T / 3,           true);
+        registerBaseAnchored ("plant_palm_tree",         (int)(T * 2.09), (int)(T * 2.97), T / 2,           T / 3,           true);
         // Large showcase trees — base hitbox wider for thick trunks.
-        registerBaseAnchored ("plant_bonsai",            (int)(T * 1.95), (int)(T * 2.6),  (int)(T * 0.7),  T / 2,           true);
-        registerBaseAnchored ("plant_willow_large",      (int)(T * 2.6),  (int)(T * 3.1),  T,               (int)(T * 0.55), true);
-        registerBaseAnchored ("plant_oak_mega",          (int)(T * 3.8),  (int)(T * 3.4),  (int)(T * 1.4),  (int)(T * 0.7),  true);
+        registerBaseAnchored ("plant_bonsai",            (int)(T * 3.51), (int)(T * 4.68), (int)(T * 0.7),  T / 2,           true);
+        registerBaseAnchored ("plant_willow_large",      (int)(T * 4.68), (int)(T * 5.58), T,               (int)(T * 0.55), true);
+        registerBaseAnchored ("plant_oak_mega",          (int)(T * 6.84), (int)(T * 6.12), (int)(T * 1.4),  (int)(T * 0.7),  true);
         // Misc ground items — non-solid clutter.
         registerCentered     ("plant_mushroom_red",      (int)(T * 0.55), (int)(T * 0.65), T - 24, T - 28, false);
         registerCentered     ("plant_mushroom_tall",     (int)(T * 0.65), (int)(T * 1.1),  T - 20, T - 14, false);

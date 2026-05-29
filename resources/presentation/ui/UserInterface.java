@@ -21,6 +21,15 @@ public class UserInterface extends Container{
     private final EscapeMenu menu;
     private final HealthHUD hud;
 
+    /**
+     * Container overlays opened by world objects (chest / crafting table /
+     * barrel). Tracked here so the input layer knows a modal UI is up — without
+     * this {@link #isModalUIOpen()} returned false for these, so clicks fell
+     * through to the world instead of the UI and the slots were dead. Also gives
+     * Escape a single place to close the topmost overlay.
+     */
+    private final java.util.List<Container> overlays = new java.util.ArrayList<>();
+
     /** Transient message shown at the top of the screen (e.g. "can't dismount
      *  in open water"). Cleared automatically once {@link #toastUntilMs} has
      *  passed. */
@@ -90,6 +99,27 @@ public class UserInterface extends Container{
         panel.player.setTempInHand(null);
     }
 
+    /**
+     * Show the player inventory alongside an open chest (or other container)
+     * overlay so stacks can be dragged between the two grids. Uses the inventory
+     * exactly as the standalone {@code E} view renders it — no restyling, no
+     * repositioning — just makes it visible while the chest is open.
+     */
+    public void openInventoryPaired(Container anchor){
+        if (inventoryUI == null) return;
+        returnTempInHand();
+        inventoryUI.visible = true;
+        inventoryUI.enabled = true;
+    }
+
+    /** Hide the inventory again when the paired container closes. */
+    public void closeInventoryPaired(){
+        if (inventoryUI == null) return;
+        returnTempInHand();
+        inventoryUI.visible = false;
+        inventoryUI.enabled = false;
+    }
+
     public void toggleMenu(){
         if (menu.isOpen()) {
             menu.hide();
@@ -100,6 +130,48 @@ public class UserInterface extends Container{
             }
             menu.show();
         }
+    }
+
+    /**
+     * Register a freshly opened container overlay (chest / crafting / barrel).
+     * The bridge has already added the UI to {@code content} and set it
+     * visible/enabled; this only records it so the input layer treats it as
+     * modal and Escape can close it.
+     */
+    public void openOverlay(Container overlay){
+        if (overlay == null || overlays.contains(overlay)) return;
+        overlays.add(overlay);
+    }
+
+    /** Drop a closed overlay from the modal-tracking list. */
+    public void closeOverlay(Container overlay){
+        overlays.remove(overlay);
+    }
+
+    /** True while any container overlay is open. */
+    public boolean hasOpenOverlay(){ return !overlays.isEmpty(); }
+
+    /**
+     * Close the most recently opened overlay via its registered closer.
+     * Returns true if one was closed — lets Escape consume the keystroke for
+     * "close the chest" before falling back to "open the pause menu".
+     */
+    public boolean closeTopOverlay(){
+        if (overlays.isEmpty()) return false;
+        Container top = overlays.get(overlays.size() - 1);
+        Runnable closer = overlayClosers.remove(top);
+        if (closer != null) closer.run();   // bridge removes UI + calls closeOverlay
+        else { overlays.remove(top); remove(top); }
+        return true;
+    }
+
+    /** Per-overlay close callbacks supplied by the opening bridge. */
+    private final java.util.Map<Container, Runnable> overlayClosers = new java.util.IdentityHashMap<>();
+
+    /** Register an overlay together with the action that fully closes it. */
+    public void openOverlay(Container overlay, Runnable closer){
+        openOverlay(overlay);
+        if (closer != null) overlayClosers.put(overlay, closer);
     }
 
 
@@ -185,6 +257,7 @@ public class UserInterface extends Container{
      */
     public boolean isModalUIOpen() {
         if (menu.isOpen()) return true;
+        if (!overlays.isEmpty()) return true;
         return inventoryUI != null && inventoryUI.visible;
     }
 
@@ -197,9 +270,21 @@ public class UserInterface extends Container{
         return false;
     }
 
+    /**
+     * Wipe the UI back to its baseline. The escape menu is a permanent fixture
+     * (added in the constructor) so it must survive a clear — otherwise the
+     * player setup path ({@link resources.domain.player.Playable}) calls
+     * {@code clear()} then re-adds only the inventory, dropping the menu out of
+     * the draw list and leaving it invisible even though {@code isOpen()} reads
+     * true. Re-register it after clearing so it keeps rendering.
+     */
     public void clear() {
         content.clear();
+        add(menu);
     }
+
+    /** Test/probe hook: number of child components currently registered. */
+    public int debugContentCount() { return content.size(); }
 
     
 

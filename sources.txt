@@ -120,6 +120,7 @@ resources/testing/probes/AIProbe.java
 resources/testing/probes/SimulatePerfProbe.java
 resources/testing/probes/MultiplayerPersistenceProbe.java
 resources/testing/probes/BoatProbe.java
+resources/testing/probes/UiOpenProbe.java
 resources/testing/probes/HarvestableProbe.java
 resources/testing/probes/ChunkPersistenceProbe.java
 resources/testing/probes/PlayerVisibleAfterPortalProbe.java

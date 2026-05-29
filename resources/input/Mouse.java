@@ -4,6 +4,9 @@ import resources.app.GamePanel;
 import resources.domain.entity.BaseEntity;
 import resources.domain.inventory.Stack;
 import resources.domain.object.Boat;
+import resources.domain.object.Chest;
+import resources.domain.object.CraftingTable;
+import resources.domain.object.GameObject;
 import resources.world.placement.PlacementRegistry;
 
 import java.awt.Point;
@@ -24,6 +27,12 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
      *  server may reject it, so we don't want to lock the player out of
      *  legitimate retries. */
     private static final long PLACE_COOLDOWN_MS_ONLINE = 60L;
+
+    /** How close the player must be (center-to-center) to open a chest, in
+     *  pixels. Omnidirectional — unlike the facing-only interaction hitbox, a
+     *  chest the player is standing next to opens regardless of which way they
+     *  face. ~2 tiles keeps it to genuinely adjacent chests. */
+    private static final double CHEST_REACH_PX = 2 * 64;
 
     int x = 0;
     int y = 0;
@@ -93,6 +102,16 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
         // to, board it. Skipped automatically when the player is holding a
         // boat item — placement wins in that case (handled inside the helper).
         if (tryBoardClickedBoat(e)) return;
+
+        // Chest: clicking a nearby chest opens its container UI. Done before the
+        // placement/harvest routing so a click on the chest never gets consumed
+        // as a placement or harvest attempt.
+        if (tryOpenClickedChest(e)) return;
+
+        // Crafting table: same click-to-open semantics as the chest above —
+        // clicking a nearby table opens its crafting UI before the click can
+        // be consumed as a placement or harvest attempt.
+        if (tryOpenClickedCraftingTable(e)) return;
 
         boolean offline = panel.multiplayer() == null || !panel.multiplayer().isOnline();
         long cooldown = offline ? PLACE_COOLDOWN_MS : PLACE_COOLDOWN_MS_ONLINE;
@@ -168,6 +187,70 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
             return boat.tryBoardFromClick(panel.player);
         }
         return false;
+    }
+
+    /**
+     * Return true if the click landed on a {@link Chest}'s hitbox AND the
+     * player is within interaction reach of it. Mirrors
+     * {@link #tryBoardClickedBoat}: routes the click to the chest's own
+     * {@code interact()} (which opens the container UI) instead of letting it
+     * fall through to placement/harvest.
+     *
+     * <p>The reach gate is an omnidirectional center-to-center distance check
+     * ({@link #CHEST_REACH_PX}) rather than the player's facing-only
+     * interaction hitbox: a chest the player is standing next to should open
+     * no matter which way they happen to be facing.
+     */
+    private boolean tryOpenClickedChest(MouseEvent e) {
+        if (panel.player == null) return false;
+        int worldX = (int) panel.camera.getWorldX() + e.getX();
+        int worldY = (int) panel.camera.getWorldY() + e.getY();
+        Point at = new Point(worldX, worldY);
+        for (BaseEntity ent : panel.world.getEntitiesCollidedWith(at)) {
+            if (!(ent instanceof Chest)) continue;
+            Chest chest = (Chest) ent;
+            if (!chest.getHitBox().collision(at)) continue;
+            if (!withinReach(chest)) continue;
+            chest.interact(panel.player);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Return true if the click landed on a {@link CraftingTable}'s hitbox AND
+     * the player is within interaction reach of it. Identical click-to-open
+     * routing as {@link #tryOpenClickedChest}: hands the click to the table's
+     * own {@code interact()} (which opens the crafting UI) so it never falls
+     * through to placement/harvest.
+     */
+    private boolean tryOpenClickedCraftingTable(MouseEvent e) {
+        if (panel.player == null) return false;
+        int worldX = (int) panel.camera.getWorldX() + e.getX();
+        int worldY = (int) panel.camera.getWorldY() + e.getY();
+        Point at = new Point(worldX, worldY);
+        for (BaseEntity ent : panel.world.getEntitiesCollidedWith(at)) {
+            if (!(ent instanceof CraftingTable)) continue;
+            CraftingTable table = (CraftingTable) ent;
+            if (!table.getHitBox().collision(at)) continue;
+            if (!withinReach(table)) continue;
+            table.interact(panel.player);
+            return true;
+        }
+        return false;
+    }
+
+    /** True when the player's center is within {@link #CHEST_REACH_PX} of the
+     *  object's center, in any direction. Shared by the click-to-open chest
+     *  and crafting-table routing. */
+    private boolean withinReach(GameObject obj) {
+        double pcx = panel.player.getWorldX() + panel.player.getWidth()  / 2.0;
+        double pcy = panel.player.getWorldY() + panel.player.getHeight() / 2.0;
+        double ocx = obj.getWorldX() + obj.getWidth()  / 2.0;
+        double ocy = obj.getWorldY() + obj.getHeight() / 2.0;
+        double dx = ocx - pcx;
+        double dy = ocy - pcy;
+        return (dx * dx + dy * dy) <= (CHEST_REACH_PX * CHEST_REACH_PX);
     }
 
     private boolean heldItemIsBoat() {

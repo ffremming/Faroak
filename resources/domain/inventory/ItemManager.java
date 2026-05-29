@@ -58,6 +58,18 @@ public class ItemManager {
                 panel.imageContainer.itemImages.put("chest", imgs.get(0));
             }
         }
+        // Fence: its sprites live in the shared fences/ variant pack under
+        // "fence_v<variant>" names, so the plain "fence" item key resolves to
+        // the "?" placeholder by default. Reuse the world-object icon — the
+        // template fence has no neighbours, so its variant resolves to the
+        // isolated post (BfenceStandard), which reads well as an inventory icon.
+        BaseEntity fenceRep = physicalRepresentations.get("fence");
+        if (fenceRep != null) {
+            java.util.ArrayList<java.awt.image.BufferedImage> imgs = fenceRep.getImages();
+            if (!imgs.isEmpty()) {
+                panel.imageContainer.itemImages.put("fence", imgs.get(0));
+            }
+        }
     }
 
 
@@ -80,6 +92,11 @@ public class ItemManager {
         // Keep them placeable as a fallback so the inventory UI shows previews.
         physicalRepresentations.put("seeds_wheat",  new PlaceAble(panel, "crop_wheat_stage0",  0, 0, 64, 64, 48, 48, 8, 8, false));
         physicalRepresentations.put("seeds_carrot", new PlaceAble(panel, "crop_carrot_stage0", 0, 0, 64, 64, 48, 48, 8, 8, false));
+        for (String c : new String[]{"emberwheat","frostbloom","glowcap","manaberry",
+                                     "ironvine","sungourd","bloodroot","stardrop"}) {
+            physicalRepresentations.put("seeds_" + c,
+                new PlaceAble(panel, "crop_" + c + "_stage0", 0, 0, 64, 64, 48, 48, 8, 8, false));
+        }
 
         // Boat: a real Boat instance so left-click placement spawns a working
         // (rideable) vessel. The template never enters the world, so no AI;

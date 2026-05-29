@@ -57,6 +57,11 @@ public final class WebSocketTwoClientMovementProbe implements Probe {
             b = new WebSocketServerAdapter(bCfg);
             a.connect("p-a");
             b.connect("p-b");
+            if (!waitConnected(a, 120, 20L) || !waitConnected(b, 120, 20L)) {
+                return ProbeResult.fail(name() + " connect timeout",
+                    "aConnected=" + (a != null && a.isConnected())
+                    + ", bConnected=" + (b != null && b.isConnected()));
+            }
             a.submit(new ClientJoinMessage("p-a"));
             b.submit(new ClientJoinMessage("p-b"));
 
@@ -134,5 +139,16 @@ public final class WebSocketTwoClientMovementProbe implements Probe {
     private static String delta(double first, double max) {
         if (Double.isNaN(first) || Double.isNaN(max)) return "n/a";
         return String.format("%.2f", (max - first));
+    }
+
+    private static boolean waitConnected(WebSocketServerAdapter adapter, int attempts, long sleepMillis)
+            throws InterruptedException {
+        if (adapter == null) return false;
+        for (int i = 0; i < Math.max(1, attempts); i++) {
+            adapter.tick();
+            if (adapter.isConnected()) return true;
+            Thread.sleep(Math.max(1L, sleepMillis));
+        }
+        return adapter.isConnected();
     }
 }

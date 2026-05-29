@@ -10,7 +10,7 @@ import resources.domain.entity.BaseEntity;
 import resources.domain.entity.component.HealthComponent;
 import resources.domain.entity.component.LootComponent;
 import resources.domain.inventory.DropTable;
-import resources.domain.inventory.Item;
+import resources.domain.object.GroundItem;
 import resources.domain.player.Moveable;
 import resources.domain.player.Playable;
 import resources.geometry.Vector;
@@ -145,11 +145,21 @@ public final class CombatService {
 
         Playable player = (Playable) attacker;
         DropTable table = loot.dropTable();
+        // Spill loot onto the ground at the slain entity's centre; the player
+        // walks over it to collect (mirrors the harvest/farming drop flow).
+        int cx = (int) (target.getWorldX() + target.getWidth()  / 2.0);
+        int cy = (int) (target.getWorldY() + target.getHeight() / 2.0);
         for (DropTable.Drop drop : table.roll(rng)) {
-            Item item = new Item(player.panel, drop.itemName);
-            player.getInventory().addItem(item, drop.quantity);
+            int dx = rng.nextInt(LOOT_SCATTER_PX * 2 + 1) - LOOT_SCATTER_PX;
+            int dy = rng.nextInt(LOOT_SCATTER_PX * 2 + 1) - LOOT_SCATTER_PX;
+            GroundItem ground = new GroundItem(
+                player.panel, drop.itemName, drop.quantity, cx + dx, cy + dy);
+            ctx.world().placeEntity(ground);
         }
     }
+
+    /** Pixel scatter applied to each loot stack around a slain entity. */
+    private static final int LOOT_SCATTER_PX = 16;
 
     private List<TargetCandidate> targetsInArc(
             BaseEntity attacker,
@@ -186,6 +196,31 @@ public final class CombatService {
 
         candidates.sort((a, b) -> Double.compare(a.distSq, b.distSq));
         return candidates;
+    }
+
+    /**
+     * Spawn the visual swing + impact effects for a non-combat action (e.g. a
+     * harvest swing with an axe) without resolving any damage. Reuses the same
+     * {@link WeaponSwingEffect} / {@link CombatHitEffect} art as melee combat so
+     * chopping a tree looks consistent with striking an enemy.
+     *
+     * @param swingSpriteName equipped tool/weapon sprite (e.g. "axe"); null skips the swing arc.
+     * @param target          entity being struck; null skips the impact burst.
+     */
+    public void spawnActionEffects(
+            BaseEntity attacker,
+            GameContext ctx,
+            Vector aim,
+            String swingSpriteName,
+            int swingTicks,
+            double swingArcDegrees,
+            double swingRadiusPx,
+            BaseEntity target) {
+        if (attacker == null || !(ctx instanceof GamePanel)) return;
+        Vector direction = normalizedAim(aim, attacker);
+        spawnSwingEffect(attacker, ctx, direction, swingSpriteName,
+            Math.max(1, swingTicks), swingArcDegrees, swingRadiusPx);
+        if (target != null) spawnHitEffect(ctx, target);
     }
 
     private void spawnSwingEffect(

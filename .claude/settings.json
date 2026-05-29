@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(javac -d out @/tmp/srcs.txt)",
+      "Bash(java -cp out resources.testing.TestRunner)",
+      "Bash(javac -cp out/resources:out:. -d /tmp/fxbuild resources/domain/combat/CombatService.java resources/domain/combat/BoatCombatFx.java resources/domain/inventory/HarvestService.java resources/domain/player/Playable.java)",
+      "Bash(javac -d /tmp/fullbuild @/tmp/srcs.txt)",
+      "Bash(javac -d /tmp/craftbuild @/tmp/srcs.txt)",
+      "Bash(javac -d out -cp out resources/testing/probes/ChestPairProbe.java)",
+      "Bash(java -cp out resources.testing.probes.ChestPairProbe)",
+      "Bash(sips -g pixelWidth -g pixelHeight /tmp/chest_paired.png)",
+      "Bash(cd resources/images)",
+      "Bash([ -f \"items/$n.png\" ])"
+    ]
+  }
+}

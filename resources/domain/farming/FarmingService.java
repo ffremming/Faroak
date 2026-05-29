@@ -20,18 +20,24 @@ import resources.world.placement.TileRules;
  */
 public final class FarmingService {
 
-    private static final String HOE_ITEM    = "hoe";
-    private static final String SEED_PREFIX = "crop_";
+    private static final String HOE_ITEM     = "hoe";
+    private static final String CROP_PREFIX  = "crop_";
+    private static final String SEEDS_PREFIX = "seeds_";
 
     /**
      * If the equipped item is a seed and there's a Farmland in interaction
      * range, plant on it. Returns true if a crop was planted.
+     *
+     * Inventory seeds are named {@code seeds_<name>} while the planted crop
+     * entity / {@link CropRegistry} key is {@code crop_<name>}; this resolves
+     * the equipped item to its crop key before planting. Items already named
+     * {@code crop_*} are accepted as-is (direct-plant / test path).
      */
     public static boolean tryPlantOnFarmland(Playable player, GameContext ctx) {
         Stack eq = player.getEquipped();
         if (eq == null || eq.isEmpty()) return false;
-        String itemName = eq.getName();
-        if (itemName == null || !itemName.startsWith(SEED_PREFIX)) return false;
+        String cropName = cropKeyFor(eq.getName());
+        if (cropName == null) return false;
 
         HitBox reach = player.getInteractionHitBox();
         for (BaseEntity ent : ctx.world().getEntities()) {
@@ -39,12 +45,28 @@ public final class FarmingService {
             if (!ent.getHitBox().intersects(reach)) continue;
             Farmland fl = (Farmland) ent;
             if (fl.isPlanted()) continue;
-            if (fl.plant(itemName)) {
+            if (fl.plant(cropName)) {
                 eq.removeOneItem();
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Map an equipped item name to the crop key registered in
+     * {@link CropRegistry}, or null if the item isn't a plantable seed.
+     * Accepts both {@code seeds_<name>} (inventory) and {@code crop_<name>}.
+     */
+    static String cropKeyFor(String itemName) {
+        if (itemName == null) return null;
+        String crop = null;
+        if (itemName.startsWith(SEEDS_PREFIX)) {
+            crop = CROP_PREFIX + itemName.substring(SEEDS_PREFIX.length());
+        } else if (itemName.startsWith(CROP_PREFIX)) {
+            crop = itemName;
+        }
+        return (crop != null && CropRegistry.get(crop) != null) ? crop : null;
     }
 
     /**

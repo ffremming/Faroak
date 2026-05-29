@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import resources.app.GamePanel;
 import resources.domain.entity.Entity;
 import resources.presentation.image.BoatCombatSpriteSheet;
+import resources.presentation.image.CombatSpriteSheet;
 
 /**
  * Short-lived boat combat VFX entities (muzzle, hit, splash, sink).
@@ -107,6 +108,7 @@ public final class BoatCombatFx extends Entity implements TransientWorldEntity {
         synchronized (BoatCombatFx.class) {
             if (MUZZLE_FRAMES != null) return MUZZLE_FRAMES;
             ArrayList<BufferedImage> fromSheet = BoatCombatSpriteSheet.muzzleFrames(56);
+            if (fromSheet.isEmpty()) fromSheet = CombatSpriteSheet.hitFrames(56);
             MUZZLE_FRAMES = fromSheet.isEmpty() ? buildMuzzleFrames() : fromSheet;
             return MUZZLE_FRAMES;
         }
@@ -120,6 +122,7 @@ public final class BoatCombatFx extends Entity implements TransientWorldEntity {
             ArrayList<BufferedImage> combined = new ArrayList<>();
             combined.addAll(BoatCombatSpriteSheet.hitSparkFrames(70));
             combined.addAll(BoatCombatSpriteSheet.explosionFrames(70));
+            if (combined.isEmpty()) combined.addAll(CombatSpriteSheet.hitFrames(70));
             HIT_FRAMES = combined.isEmpty() ? buildHitFrames() : combined;
             return HIT_FRAMES;
         }

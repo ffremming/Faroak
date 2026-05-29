@@ -32,8 +32,13 @@ public final class BiomeRegistry {
     // solid) is read from the catalog by name.
     private static final VegetationRule OAK    = density("oak_M",          0.08);
     private static final VegetationRule BIRCH  = density("birch_M",        0.06);
+    // Half-density birch for plains — scattered trees, not a forest.
+    private static final VegetationRule PLAINS_BIRCH = density("birch_M",   0.03);
     private static final VegetationRule SPRUCE = density("spruce_M",       0.12);
-    private static final VegetationRule PALM   = density("palm_M",         0.05);
+    // Reduced-density spruce for plains — 3/4 of the standard rate, scattered not clustered.
+    private static final VegetationRule PLAINS_SPRUCE = density("spruce_M", 0.09);
+    // Palms now come from the plant pack (plant_palm_tree / plant_palm_frond);
+    // the old standalone "palm_M" sprite was removed, like driftwood below.
 
     private static final VegetationRule SHRUB  = density("shrub_M",        0.10);
     private static final VegetationRule BUSH   = density("bushTree",       0.07);
@@ -43,8 +48,9 @@ public final class BiomeRegistry {
 
     private static final VegetationRule STONE     = density("stone",      0.03);
     private static final VegetationRule STONE_HI  = density("stone",      0.08); // denser near mountains
-    private static final VegetationRule DRIFTWOOD = density("driftwood",  0.04);
-    private static final VegetationRule BEACH_PALM = density("palm_M",    0.03);
+    // "Driftwood" beach debris now uses the new plant-pack long log instead of
+    // the old standalone driftwood sprite.
+    private static final VegetationRule DRIFTWOOD = density("plant_log_long",  0.04);
 
     // Rock variant pack — densities are low so the world doesn't read as a
     // quarry; mineral rocks (crystal/iron) are rarer than the plain stones.
@@ -90,7 +96,7 @@ public final class BiomeRegistry {
     public static final Biome WET_BEACH        = new Biome("wetBeach",        "wetBeach",        false, Collections.emptyList());
     public static final Biome TIDAL_SAND       = new Biome("tidalSand",       "tidalSand",       false, Collections.emptyList());
     public static final Biome BEACH            = new Biome("beach",           "beach",           false,
-            Arrays.asList(DRIFTWOOD, BEACH_PALM, P_PALM_FROND, P_PALM_TREE, P_LOG_SHORT, STONE, R_BOULDER_S, R_RIVER_SMOOTH));
+            Arrays.asList(DRIFTWOOD, P_PALM_FROND, P_PALM_TREE, P_LOG_SHORT, STONE, R_BOULDER_S, R_RIVER_SMOOTH));
     public static final Biome RIVERBANK        = new Biome("riverbank",       "beach",           false,
             Arrays.asList(DRIFTWOOD, P_LOG_SHORT, P_GRASS_TUFT, STONE, R_BOULDER_S, R_RIVER_SMOOTH, R_CLUSTER_S));
     public static final Biome MOUNTAIN         = new Biome("mountain",        "mountain",
@@ -104,7 +110,7 @@ public final class BiomeRegistry {
 
     public static final Biome PLAINS           = new Biome("plains",          "plains",
             Arrays.asList("plains", "meadowGrass", "lushGrass"),
-            false, Arrays.asList(GRASS, SHRUB, BUSH, OAK,
+            false, Arrays.asList(PLAINS_BIRCH, PLAINS_SPRUCE, SHRUB, BUSH,
                     P_GRASS_TUFT, P_CLOVER, P_BUSH_SMALL, P_BUSH_BERRY, P_OAK_ROUND, P_SAPLING, P_OAK_LARGE,
                     STONE, R_BOULDER_S, R_CLUSTER_S, R_BOULDER_M, R_IRON_ORE));
     public static final Biome FOREST           = new Biome("forest",          "forest",
@@ -137,7 +143,7 @@ public final class BiomeRegistry {
                     STONE_HI, R_CRACKED, R_SPIRE, R_IRON_ORE));
     public static final Biome RAIN_FOREST      = new Biome("rain forest",     "forest",
             Arrays.asList("forest", "mossyGrass", "lushGrass"),
-            false, Arrays.asList(OAK, PALM, BUSH, SHRUB, GRASS,
+            false, Arrays.asList(OAK, BUSH, SHRUB, GRASS,
                     P_PALM_TREE, P_PALM_FROND, P_OAK_LARGE, P_OAK_MEGA, P_WILLOW_LARGE,
                     P_FERN, P_BUSH_LEAFY, P_BUSH_BERRY, P_MUSHROOM_RED, P_MUSHROOM_CLUSTER, P_LOG_LONG,
                     R_MOSSY, R_BOULDER_L));

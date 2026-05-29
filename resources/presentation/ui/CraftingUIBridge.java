@@ -32,6 +32,9 @@ public final class CraftingUIBridge {
         panel.userInterface.add(ui);
         panel.userInterface.enable();
         OPEN.put(table, ui);
+        // Register as a modal overlay so clicks route to the UI (not the world)
+        // and Escape can close it.
+        panel.userInterface.openOverlay(ui, () -> close(panel, table));
     }
 
     public static void close(GamePanel panel, CraftingTable table) {
@@ -41,5 +44,6 @@ public final class CraftingUIBridge {
         ui.visible = false;
         ui.disable();
         panel.userInterface.remove(ui);
+        panel.userInterface.closeOverlay(ui);
     }
 }

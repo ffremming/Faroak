@@ -51,6 +51,9 @@ public final class WebSocketGatewayProbe implements Probe {
                 MultiplayerMode.CLIENT, "websocket", "p-web", 10, 30, 20, 1, 120, 2.0, 128.0, 2048.0, "test.db");
             adapter = new WebSocketServerAdapter(ccfg);
             adapter.connect("p-web");
+            if (!waitConnected(adapter, 120, 20L)) {
+                return ProbeResult.fail(name() + " connect timeout", "connected=false");
+            }
             adapter.submit(new ClientJoinMessage("p-web"));
 
             boolean welcomed = false;
@@ -58,6 +61,7 @@ public final class WebSocketGatewayProbe implements Probe {
             boolean ackSeen = false;
             for (int i = 0; i < 120; i++) {
                 Thread.sleep(20L);
+                adapter.tick();
                 if (i == 10) adapter.submit(new ClientInputMessage("p-web", 1L, true, false, false, false));
                 List<ServerMessage> messages = adapter.poll();
                 for (ServerMessage msg : messages) {
@@ -79,5 +83,16 @@ public final class WebSocketGatewayProbe implements Probe {
             if (previous == null) System.clearProperty("game.multiplayer.serverUrl");
             else System.setProperty("game.multiplayer.serverUrl", previous);
         }
+    }
+
+    private static boolean waitConnected(WebSocketServerAdapter adapter, int attempts, long sleepMillis)
+            throws InterruptedException {
+        if (adapter == null) return false;
+        for (int i = 0; i < Math.max(1, attempts); i++) {
+            adapter.tick();
+            if (adapter.isConnected()) return true;
+            Thread.sleep(Math.max(1L, sleepMillis));
+        }
+        return adapter.isConnected();
     }
 }

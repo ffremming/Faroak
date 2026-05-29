@@ -84,7 +84,8 @@ public class GenerationManager {
         panel.tileM = new TileManager(panel);
 
         resources.presentation.ui.LoadingScreen.setStatus("Registering dimensions");
-        ProceduralGen gen = new ProceduralGen();
+        // Fresh random seed on every launch so the world differs each run.
+        ProceduralGen gen = new ProceduralGen(System.nanoTime());
         DimensionRegistry.instance().register(DimensionRegistry.OVERWORLD,
             new Dimension(DimensionRegistry.OVERWORLD,
                 new resources.generation.factory.EntityFactory(panel, gen),
@@ -221,10 +222,12 @@ public class GenerationManager {
      */
     private void placeStarterChest(Point spawn) {
         int ts = panel.tileSize;
+        // Prefer spots well to the right of the spawn; fall back to nearer /
+        // other directions only if the rightward tiles are blocked.
         int[][] offsets = {
-            {  2,  0 }, { -2,  0 }, {  0,  2 }, {  0, -2 },
-            {  2,  2 }, { -2,  2 }, {  2, -2 }, { -2, -2 },
-            {  3,  0 }, { -3,  0 }, {  0,  3 }, {  0, -3 }
+            {  4,  0 }, {  3,  0 }, {  4,  1 }, {  4, -1 },
+            {  3,  1 }, {  3, -1 }, {  2,  0 }, {  2,  2 },
+            {  2, -2 }, {  0,  2 }, {  0, -2 }, { -2,  0 }
         };
         for (int[] off : offsets) {
             int cx = spawn.x + off[0] * ts;

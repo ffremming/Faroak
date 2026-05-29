@@ -16,6 +16,7 @@ import resources.testing.probes.ChunkPersistenceProbe;
 import resources.testing.probes.DimensionProbe;
 import resources.testing.probes.FarmingProbe;
 import resources.testing.probes.GrowableProbe;
+import resources.testing.probes.GroundItemProbe;
 import resources.testing.probes.HarvestableProbe;
 import resources.testing.probes.HealthProbe;
 import resources.testing.probes.InteriorProbe;
@@ -63,6 +64,7 @@ public final class TestRunner {
         probes.add(new AnimationFrameProbe());
         probes.add(new LightingProbe());
         probes.add(new HarvestableProbe());
+        probes.add(new GroundItemProbe());
         probes.add(new GrowableProbe());
         probes.add(new AIProbe());
         probes.add(new TerrainSpeedProbe());

@@ -144,9 +144,14 @@ public class GamePanel extends JPanel implements GameContext {
         // focus / closes. A window-scoped binding always reaches the menu toggle.
         javax.swing.InputMap im = getInputMap(javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW);
         im.put(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0), "toggleEscapeMenu");
+        im.put(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_M, 0), "toggleEscapeMenu");
         getActionMap().put("toggleEscapeMenu", new javax.swing.AbstractAction() {
             @Override public void actionPerformed(java.awt.event.ActionEvent e) {
-                if (userInterface != null) userInterface.toggleMenu();
+                if (userInterface == null) return;
+                // Escape closes an open container overlay (chest/crafting/barrel)
+                // first; only when none is open does it toggle the pause menu.
+                if (userInterface.closeTopOverlay()) return;
+                userInterface.toggleMenu();
             }
         });
     }
@@ -171,7 +176,8 @@ public class GamePanel extends JPanel implements GameContext {
         if (multiplayer != null) multiplayer.update(delta);
         music.syncSettings();
         world.simulate();
-        clock.tick();
+        // Time-of-day frozen for now (light changes disabled). Re-enable to resume the day-night cycle.
+        // clock.tick();
     }
 
     @Override

@@ -21,6 +21,18 @@ public final class CropRegistry {
         // null tool = any tool (including bare hands) works.
         register("crop_wheat",  new Entry("wheat",  null));
         register("crop_carrot", new Entry("carrot", null));
+
+        // Fantasy crops (see FARM_CROPS.md). Sprites: crop_<name>_stage0..3
+        // sliced from objects/_spritesheets/crops_spritesheet.png. Seed items
+        // are added later; the planted-entity + harvest side is wired here.
+        register("crop_emberwheat", new Entry("emberwheat", null));
+        register("crop_frostbloom", new Entry("frostbloom", null));
+        register("crop_glowcap",    new Entry("glowcap",    null));
+        register("crop_manaberry",  new Entry("manaberry",  null));
+        register("crop_ironvine",   new Entry("ironvine",   null));
+        register("crop_sungourd",   new Entry("sungourd",   null));
+        register("crop_bloodroot",  new Entry("bloodroot",  null));
+        register("crop_stardrop",   new Entry("stardrop",   null));
     }
 
     public static void register(String cropName, Entry entry) {

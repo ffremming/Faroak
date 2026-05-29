@@ -109,6 +109,19 @@ public final class PlacementRegistry {
             PlacementAction.PLANT_SEED,
             null,
             false));
+
+        // Fantasy crop seeds (see FARM_CROPS.md) — same PLANT_SEED behaviour.
+        for (String c : new String[]{"emberwheat","frostbloom","glowcap","manaberry",
+                                     "ironvine","sungourd","bloodroot","stardrop"}) {
+            register(new PlacementSpec(
+                "seeds_" + c,
+                p -> null,
+                SurfaceRule.ON_FARMLAND_UNPLANTED,
+                SnapPolicy.TILE,
+                PlacementAction.PLANT_SEED,
+                null,
+                false));
+        }
     }
 
     private PlacementRegistry() {}

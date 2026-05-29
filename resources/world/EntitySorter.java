@@ -58,11 +58,29 @@ public final class EntitySorter {
         return e.getHitBox().getWorldY() + e.getHitBox().height;
     }
 
+    /**
+     * Total order over entities so the draw order is fully deterministic. Without
+     * this, two entities sharing a sort key (e.g. objects on the same row) could
+     * land in either order depending on their position in the rebuilt visible list,
+     * making overlapping sprites flicker back and forth between frames.
+     *
+     * Tiebreakers, in order: hitbox bottom (painter's depth) -> worldX (left-to-right)
+     * -> identity hash. identityHashCode is constant for an object's lifetime, so the
+     * relative order of two otherwise-equal entities never changes frame to frame.
+     */
+    private static int compare(Entity a, Entity b) {
+        int c = Double.compare(sortKey(a), sortKey(b));
+        if (c != 0) return c;
+        c = Double.compare(a.getWorldX(), b.getWorldX());
+        if (c != 0) return c;
+        return Integer.compare(System.identityHashCode(a), System.identityHashCode(b));
+    }
+
     private static int partition(ArrayList<Entity> list, int low, int high) {
-        double pivotY = sortKey(list.get(high));
+        Entity pivot = list.get(high);
         int i = low - 1;
         for (int j = low; j < high; j++) {
-            if (sortKey(list.get(j)) < pivotY) {
+            if (compare(list.get(j), pivot) < 0) {
                 i++;
                 Collections.swap(list, i, j);
             }
@@ -74,9 +92,8 @@ public final class EntitySorter {
     private static void insertionSort(ArrayList<Entity> list, int low, int high) {
         for (int i = low + 1; i <= high; i++) {
             Entity key = list.get(i);
-            double keyY = sortKey(key);
             int j = i - 1;
-            while (j >= low && sortKey(list.get(j)) > keyY) {
+            while (j >= low && compare(list.get(j), key) > 0) {
                 list.set(j + 1, list.get(j));
                 j--;
             }

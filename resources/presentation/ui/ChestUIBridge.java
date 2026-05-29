@@ -32,6 +32,12 @@ public final class ChestUIBridge {
         panel.userInterface.add(ui);
         panel.userInterface.enable();
         OPEN.put(chest, ui);
+        // Open the player inventory paired beneath the chest, sharing its look,
+        // so items can be dragged between the two grids while the chest is open.
+        panel.userInterface.openInventoryPaired(ui);
+        // Register as a modal overlay so clicks route to the UI (not the world)
+        // and Escape can close it.
+        panel.userInterface.openOverlay(ui, () -> close(panel, chest));
     }
 
     public static void close(GamePanel panel, Chest chest) {
@@ -41,5 +47,8 @@ public final class ChestUIBridge {
         ui.visible = false;
         ui.disable();
         panel.userInterface.remove(ui);
+        panel.userInterface.closeOverlay(ui);
+        // Hide the paired player inventory and restore its standalone look.
+        panel.userInterface.closeInventoryPaired();
     }
 }

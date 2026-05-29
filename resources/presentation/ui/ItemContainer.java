@@ -26,7 +26,13 @@ public class ItemContainer extends Container {
     int slotHeight;
     int slotWidth;
     Inventory inventory;
-    
+
+    /** Cell size and inter-cell gutter used to size the grid. The gutter MUST
+     *  match {@link ItemContainerSlot}'s internal PADDING (8) — that's what
+     *  {@code ItemContainerSlot.layoutInGrid} divides the container width/height
+     *  by at draw time. Keep them in sync or slots won't fill the box. */
+    private static final int CELL   = 50;
+    private static final int GUTTER = 8;
 
     public ItemContainer(GamePanel panel,int rows,int cols,int x,int y,Inventory inventory) {
         super(panel);
@@ -37,20 +43,26 @@ public class ItemContainer extends Container {
         this.cols = cols;
         this.x = x;
         this.y = y;
-        
 
-       
         padding = 10;
-        
+
+        // Size the container to fit a rows x cols grid of CELL-sized slots with
+        // a GUTTER between/around them. Without this, width/height stay 0
+        // (inherited from java.awt.Rectangle) and the slot layout collapses to
+        // zero/negative-sized cells — the container opens but draws nothing,
+        // which is exactly the "chest/barrel UI is invisible" bug.
+        this.width  = cols * CELL + (cols + 1) * GUTTER;
+        this.height = rows * CELL + (rows + 1) * GUTTER;
+
         this.slotHeight = ((height)+padding*2)/rows;
         this.slotWidth = (width+padding*2)/cols;
 
-        
+
         addSlots();
         setBackground(Color.lightGray);
         setForeGround(Color.gray);
-        
-        
+
+
     }
 
     private void addSlots(){

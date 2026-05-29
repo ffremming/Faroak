@@ -18,6 +18,7 @@ import javax.imageio.ImageIO;
 public final class CombatSpriteSheet {
 
     private static final String[] CANDIDATE_PATHS = {
+        "resources/images/objects/_spritesheets/equipment.png",
         "resources/images/items/combat_sheet.png",
         "resources/images/items/combat_spritesheet.png",
         "resources/images/items/combatSpriteSheet.png",
