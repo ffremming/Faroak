@@ -128,6 +128,16 @@ public class ProceduralGen {
             river(worldX, worldY));
     }
 
+    /**
+     * Smooth low-frequency noise for tile-variant patches in [-1, 1]. The default
+     * {@code freq} of ~0.04 produces blobs ~10-20 tiles across — large enough that
+     * a chunk usually sits inside a single patch but with organic biome-shaped edges.
+     * Use a distinct {@code salt} per decision so e.g. mud and grass don't realign.
+     */
+    public double patchNoise(int worldX, int worldY, long salt, double freq) {
+        return OpenSimplex2S.noise2(seed + salt, worldX * freq, worldY * freq);
+    }
+
     /** Deterministic [0,1) pseudo-random for (x,y) under given salt. Same seed + coords always returns the same value. */
     public double rollAt(int worldX, int worldY, long salt) {
         long h = (long) worldX * 73856093L

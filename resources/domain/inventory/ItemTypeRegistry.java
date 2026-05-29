@@ -28,8 +28,10 @@ public final class ItemTypeRegistry {
     public static final ItemType TORCH        = define("torch",        "torch",        16, "torch");
     public static final ItemType FENCE        = define("fence",        "fence",        64, "fence");
     public static final ItemType BARREL       = define("barrel",       "barrel",       16, "barrel");
+    public static final ItemType CHEST        = define("chest",        "chest",        16, "chest");
     public static final ItemType FARMLAND     = define("farmland",     "farmland",     16, "farmland");
     public static final ItemType BOAT         = define("boat",         "boat",         1,  "boat");
+    public static final ItemType CRAFTING_TABLE = define("crafting_table", "crafting_table", 16, "crafting_table");
 
     // Seeds
     public static final ItemType SEEDS_WHEAT  = define("seeds_wheat",  "seeds_wheat",  64, "crop_wheat");
@@ -40,6 +42,9 @@ public final class ItemTypeRegistry {
     public static final ItemType CARROT       = define("carrot",       "carrot",       64, null);
     public static final ItemType STONE        = define("stone",        "stone",        64, null);
     public static final ItemType IRON_ORE     = define("iron_ore",     "iron_ore",     64, null);
+    public static final ItemType CRYSTAL      = define("crystal",      "crystal",      64, null);
+    public static final ItemType MUSHROOM     = define("mushroom",     "mushroom",     64, null);
+    public static final ItemType BERRY        = define("berry",        "berry",        64, null);
     public static final ItemType MEAT         = define("meat",         "meat",         64, null);
     public static final ItemType HIDE         = define("hide",         "hide",         64, null);
 

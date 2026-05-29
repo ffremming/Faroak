@@ -7,7 +7,7 @@ import java.util.Map;
 
 import resources.app.GameContext;
 import resources.core.event.DimensionChangeEvent;
-import resources.domain.tile.CaveWallTile;
+import resources.domain.tile.MountainTile;
 import resources.domain.tile.Tile;
 import resources.generation.dimension.DimensionRegistry;
 import resources.testing.Logger;
@@ -48,7 +48,7 @@ public final class CaveWallSpriteProbe implements Probe {
             Map<Long, Integer> sigCounts = new LinkedHashMap<>();
             int walls = 0;
             for (Tile t : ctx.world().getTiles()) {
-                if (!(t instanceof CaveWallTile)) continue;
+                if (!(t instanceof MountainTile)) continue;
                 walls++;
                 long sig = spriteSignature(t);
                 sigCounts.merge(sig, 1, Integer::sum);

@@ -38,6 +38,8 @@ import resources.domain.player.Moveable;
 import resources.domain.inventory.ItemManager;
 import resources.environment.EnvironmentManager;
 import resources.generation.factory.EntityFactory;
+import resources.generation.plant.PlantCatalog;
+import resources.generation.factory.ObjectFactory;
 import resources.geometry.HitBox;
 import resources.geometry.Vector;
 import java.awt.Color;
@@ -66,6 +68,10 @@ public class GenerationManager {
         panel.world = new WorkingMemory(panel);
         resources.presentation.ui.LoadingScreen.setStatus("Loading images");
         panel.imageContainer = new ImageContainer();
+        // Plant pack is loaded from the hand-authored spritesheet (plants_green.png).
+        // bootstrap() is a deliberate no-op — the old procedural pipeline is NOT
+        // wired in and must never generate images at runtime.
+        PlantCatalog.bootstrap();
         resources.presentation.ui.LoadingScreen.setStatus("Building animations");
         Animations.bootstrap(panel.animations(), panel.imageContainer);
         resources.presentation.ui.LoadingScreen.setStatus("Loading items");
@@ -132,6 +138,35 @@ public class GenerationManager {
         BoatSpawner.spawnBoatsNear(panel, p, 3);
         // A small welcoming committee: a few NPCs strolling near spawn.
         spawnStartingNpcs(p);
+        // Demo: place every procedural plant in a tidy grid near spawn so the
+        // catalog is visible at a glance. Skips the normal solid-collision
+        // check so two adjacent trees can sit on neighbouring tiles.
+        spawnPlantDemoGrid(p);
+    }
+
+    /**
+     * Drop one of each {@link PlantCatalog} slug in a grid a few tiles north
+     * of spawn so the full pack is visible at a glance. Spacing is generous
+     * so the largest trees (oak_mega, willow_large) don't overlap their
+     * neighbours.
+     */
+    private void spawnPlantDemoGrid(Point spawn) {
+        int ts = panel.tileSize;
+        int cols = 5;
+        int spacingX = (int) (ts * 2.4);
+        int spacingY = (int) (ts * 3.2);
+        int originX = spawn.x - (cols - 1) * spacingX / 2;
+        int originY = spawn.y - ts * 6;
+
+        java.util.List<String> all = PlantCatalog.slugs();
+        for (int i = 0; i < all.size(); i++) {
+            int col = i % cols;
+            int row = i / cols;
+            int x = originX + col * spacingX;
+            int y = originY + row * spacingY;
+            GameObject plant = ObjectFactory.create(panel, all.get(i), x, y);
+            panel.world.placeEntity(plant);
+        }
     }
 
     /**
@@ -175,6 +210,30 @@ public class GenerationManager {
         panel.player = (new Playable(panel, "red",p.x,p.y,(short)48,(short)96,(short)36,(short)32,(short)6,(short)64));
         panel.world.placeEntity(panel.player);
         panel.player.components().add(new LightSourceComponent(200, 1.0f, new Color(255, 220, 160)));
+        placeStarterChest(p);
+    }
+
+    /**
+     * Drop a {@link resources.domain.object.Chest} a few tiles to the right of
+     * the player spawn. Scans outwards in a small ring so we don't end up
+     * stuck in solid terrain on cramped spawns; if nothing fits within the
+     * search radius we silently give up rather than crashing world-gen.
+     */
+    private void placeStarterChest(Point spawn) {
+        int ts = panel.tileSize;
+        int[][] offsets = {
+            {  2,  0 }, { -2,  0 }, {  0,  2 }, {  0, -2 },
+            {  2,  2 }, { -2,  2 }, {  2, -2 }, { -2, -2 },
+            {  3,  0 }, { -3,  0 }, {  0,  3 }, {  0, -3 }
+        };
+        for (int[] off : offsets) {
+            int cx = spawn.x + off[0] * ts;
+            int cy = spawn.y + off[1] * ts;
+            if (!isLandPatch(cx, cy, ts)) continue;
+            resources.domain.object.Chest chest =
+                new resources.domain.object.Chest(panel, cx, cy);
+            if (panel.world.placeEntity(chest)) return;
+        }
     }
 
 

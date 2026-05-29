@@ -73,6 +73,48 @@ public final class ObjectCatalog {
         // can walk along the back/top edge instead of bonking on empty pixels.
         registerBaseAnchored("stone",      (int)(T * 0.9), (int)(T * 0.8), T - 16, T - 20, true);
 
+        // Hand-authored plant pack (sliced from plants_green.png).
+        // Trees use a narrow base-band hitbox so canopies overlap freely;
+        // bushes/decor are non-solid and shorter than the player.
+        // Ground decor — small, non-solid.
+        registerCentered     ("plant_clover",            (int)(T * 0.55), (int)(T * 0.5),  T - 24, T - 28, false);
+        registerCentered     ("plant_fern",              (int)(T * 0.85), (int)(T * 0.8),  T - 18, T - 20, false);
+        registerCentered     ("plant_grass_tuft",        (int)(T * 0.75), (int)(T * 0.8),  T - 18, T - 20, false);
+        registerCentered     ("plant_bush_small",        (int)(T * 0.75), (int)(T * 0.75), T - 18, T - 22, false);
+        registerCentered     ("plant_bush_leafy",        (int)(T * 1.25), (int)(T * 0.75), T - 12, T - 22, false);
+        registerCentered     ("plant_bush_berry",        (int)(T * 0.95), (int)(T * 0.85), T - 16, T - 20, false);
+        registerCentered     ("plant_palm_frond",        (int)(T * 0.95), (int)(T * 0.85), T - 16, T - 20, false);
+        // Small/medium trees — solid trunks.
+        registerBaseAnchored ("plant_sapling",           (int)(T * 0.7),  (int)(T * 1.05), T / 3,           T / 4,           true);
+        registerBaseAnchored ("plant_oak_round",         (int)(T * 1.55), (int)(T * 1.85), T / 2,           T / 3,           true);
+        registerBaseAnchored ("plant_conifer",           (int)(T * 1.35), (int)(T * 2.25), T / 2,           T / 3,           true);
+        registerBaseAnchored ("plant_oak_large",         (int)(T * 1.85), (int)(T * 2.05), (int)(T * 0.6),  T / 3,           true);
+        registerBaseAnchored ("plant_palm_tree",         (int)(T * 1.55), (int)(T * 2.2),  T / 2,           T / 3,           true);
+        // Large showcase trees — base hitbox wider for thick trunks.
+        registerBaseAnchored ("plant_bonsai",            (int)(T * 1.95), (int)(T * 2.6),  (int)(T * 0.7),  T / 2,           true);
+        registerBaseAnchored ("plant_willow_large",      (int)(T * 2.6),  (int)(T * 3.1),  T,               (int)(T * 0.55), true);
+        registerBaseAnchored ("plant_oak_mega",          (int)(T * 3.8),  (int)(T * 3.4),  (int)(T * 1.4),  (int)(T * 0.7),  true);
+        // Misc ground items — non-solid clutter.
+        registerCentered     ("plant_mushroom_red",      (int)(T * 0.55), (int)(T * 0.65), T - 24, T - 28, false);
+        registerCentered     ("plant_mushroom_tall",     (int)(T * 0.65), (int)(T * 1.1),  T - 20, T - 14, false);
+        registerCentered     ("plant_mushroom_cluster",  (int)(T * 1.0),  (int)(T * 0.95), T - 14, T - 16, false);
+        registerCentered     ("plant_log_short",         (int)(T * 1.3),  (int)(T * 0.7),  T - 10, T - 24, false);
+        registerCentered     ("plant_log_long",          (int)(T * 2.5),  (int)(T * 0.75), (int)(T * 2.1),  T - 24, false);
+
+        // Rock variant pack — same handling pattern as "stone" but scaled
+        // across pebble → boulder. Hitbox a touch narrower than the sprite so
+        // the player can hug the silhouette without bonking on outline pixels.
+        registerBaseAnchored("rock_cluster_S",     (int)(T * 0.7), (int)(T * 0.6), (int)(T * 0.55), (int)(T * 0.45), false);
+        registerBaseAnchored("rock_boulder_S",     (int)(T * 1.1), (int)(T * 0.85),T - 14,          T - 22,          true);
+        registerBaseAnchored("rock_boulder_M",     (int)(T * 0.9), (int)(T * 0.75),T - 16,          T - 22,          true);
+        registerBaseAnchored("rock_boulder_L",     (int)(T * 1.3), (int)(T * 1.05),(int)(T * 1.1),  T - 12,          true);
+        registerBaseAnchored("rock_spire",         (int)(T * 1.0), (int)(T * 1.4), (int)(T * 0.75), (int)(T * 0.5),  true);
+        registerBaseAnchored("rock_mossy",         (int)(T * 1.0), (int)(T * 0.85),T - 14,          T - 20,          true);
+        registerBaseAnchored("rock_cracked",       (int)(T * 1.1), (int)(T * 0.85),T - 12,          T - 20,          true);
+        registerBaseAnchored("rock_crystal",       (int)(T * 1.0), (int)(T * 0.9), T - 16,          T - 18,          true);
+        registerBaseAnchored("rock_iron_ore",      (int)(T * 1.0), (int)(T * 0.9), T - 16,          T - 18,          true);
+        registerBaseAnchored("rock_river_smooth",  (int)(T * 1.1), (int)(T * 0.7), T - 12,          T - 24,          true);
+
         // Driftwood — non-solid beach debris, sprite is roughly square so
         // centre the hitbox.
         registerCentered("driftwood",      (int)(T * 1.0), (int)(T * 0.5), T - 16, T - 28, false);
@@ -84,9 +126,11 @@ public final class ObjectCatalog {
         return s;
     }
 
-    /** Hitbox centred horizontally, anchored to the bottom of the sprite. */
-    private static void registerBaseAnchored(String name, int width, int height,
-                                             int hitBoxWidth, int hitBoxHeight, boolean solid) {
+    /** Hitbox centred horizontally, anchored to the bottom of the sprite.
+     *  Public so procedural systems (see resources.generation.plant) can publish
+     *  new object kinds at startup without editing this file. */
+    public static void registerBaseAnchored(String name, int width, int height,
+                                            int hitBoxWidth, int hitBoxHeight, boolean solid) {
         int offX = (width  - hitBoxWidth)  / 2;
         int offY =  height - hitBoxHeight;
         SPECS.put(name, new ObjectSpec(name, width, height,
@@ -94,8 +138,8 @@ public final class ObjectCatalog {
     }
 
     /** Hitbox centred horizontally and vertically. */
-    private static void registerCentered(String name, int width, int height,
-                                         int hitBoxWidth, int hitBoxHeight, boolean solid) {
+    public static void registerCentered(String name, int width, int height,
+                                        int hitBoxWidth, int hitBoxHeight, boolean solid) {
         int offX = (width  - hitBoxWidth)  / 2;
         int offY = (height - hitBoxHeight) / 2;
         SPECS.put(name, new ObjectSpec(name, width, height,

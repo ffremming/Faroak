@@ -6,7 +6,7 @@ import java.util.Set;
 
 import resources.app.GameContext;
 import resources.core.event.DimensionChangeEvent;
-import resources.domain.tile.CaveWallTile;
+import resources.domain.tile.MountainTile;
 import resources.domain.tile.Tile;
 import resources.generation.dimension.DimensionRegistry;
 import resources.testing.Logger;
@@ -61,7 +61,7 @@ public final class CaveWallVariantProbe implements Probe {
             for (Tile t : ctx.world().getTiles()) {
                 if (t == null) continue;
                 totalTiles++;
-                if (!(t instanceof CaveWallTile)) continue;
+                if (!(t instanceof MountainTile)) continue;
                 wallCount++;
                 int openMask = openSidesMask(t);
                 masks.add(openMask);
@@ -92,10 +92,10 @@ public final class CaveWallVariantProbe implements Probe {
     private static int openSidesMask(Tile t) {
         Tile[] n = t.getNeighbors();
         int mask = 0;
-        if (n[0] == null || !(n[0] instanceof CaveWallTile)) mask |= 1; // N open
-        if (n[1] == null || !(n[1] instanceof CaveWallTile)) mask |= 2; // E open
-        if (n[2] == null || !(n[2] instanceof CaveWallTile)) mask |= 4; // S open
-        if (n[3] == null || !(n[3] instanceof CaveWallTile)) mask |= 8; // W open
+        if (n[0] == null || !(n[0] instanceof MountainTile)) mask |= 1; // N open
+        if (n[1] == null || !(n[1] instanceof MountainTile)) mask |= 2; // E open
+        if (n[2] == null || !(n[2] instanceof MountainTile)) mask |= 4; // S open
+        if (n[3] == null || !(n[3] instanceof MountainTile)) mask |= 8; // W open
         return mask;
     }
 }

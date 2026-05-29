@@ -184,6 +184,9 @@ public class WorkingMemory implements WorldRuntime {
     @Override public ArrayList<BaseEntity> getEntitiesCollidedWith(HitBox hb) { return interaction.entitiesCollidedWith(hb); }
     @Override public ArrayList<BaseEntity> getEntitiesCollidedWith(Point p)   { return interaction.entitiesCollidedWith(p); }
     @Override public boolean        placeEntity(BaseEntity e)            { return interaction.placeEntity(e); }
+    @Override public boolean        placeEntityIgnoringTerrainCollision(BaseEntity e) {
+        return interaction.placeEntityIgnoringTerrainCollision(e);
+    }
     @Override public void           removeEntity(BaseEntity e)           { interaction.removeEntity(e); }
     @Override public void           addToRemovalQueue(BaseEntity e)      { interaction.addToRemovalQueue(e); }
     @Override public BaseEntity     getHoveredEntity()                   { return interaction.getHoveredEntity(); }
@@ -192,6 +195,8 @@ public class WorkingMemory implements WorldRuntime {
     // Convenience / legacy surface
     public boolean tryPlaceEntity(Stack equipped)       { return interaction.tryPlaceEntity(equipped); }
     public void    addObjectPreview(Stack equipped)     { interaction.addObjectPreview(equipped); }
+    public boolean tryHarvestAtMouse(resources.domain.player.Playable player,
+                                     resources.app.GameContext ctx)        { return interaction.tryHarvestAtMouse(player, ctx); }
     public ArrayList<Vector> getPath(Entity baseE, Point p) {
         ArrayList<Vector> path = new ArrayList<>();
         path.add(new Vector(p.x - baseE.getHitBox().getWorldX(), p.y - baseE.getHitBox().getWorldY()));

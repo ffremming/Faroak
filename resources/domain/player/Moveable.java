@@ -91,6 +91,17 @@ public class Moveable extends Entity {
             hb.width, hb.height);
     }
 
+    /** Cardinal facing used by combat/input when no explicit aim key is held. */
+    public Vector getFacingVector() {
+        switch (directionIndex) {
+            case ANIM_FRAME_DOWN:  return new Vector(0, -1); // up
+            case ANIM_FRAME_RIGHT: return new Vector(1, 0);
+            case ANIM_FRAME_UP:    return new Vector(0, 1);  // down
+            case ANIM_FRAME_LEFT:  return new Vector(-1, 0);
+            default:               return new Vector(1, 0);
+        }
+    }
+
     private HitBox computeInteractionHitBox() {
         HitBox hb = getHitBox();
         hb.updateCoords();

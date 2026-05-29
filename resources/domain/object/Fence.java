@@ -1,5 +1,7 @@
 package resources.domain.object;
 
+import java.awt.image.BufferedImage;
+
 import resources.app.GamePanel;
 import resources.domain.entity.BaseEntity;
 
@@ -34,6 +36,37 @@ public class Fence extends GameObject {
     @Override
     public GameObject placementCandidate(GamePanel targetPanel) {
         return new Fence(targetPanel, (int) getWorldX(), (int) getWorldY());
+    }
+
+    /**
+     * Preview clone is a real Fence so the variant-resolving {@link #getImage}
+     * fires for the ghost too. The preview is drawn at full opacity (the
+     * stored sprite already encodes the auto-connect choice); validity is
+     * conveyed by the camera's invalid-overlay tint rather than a faded
+     * sprite, matching the boat preview's behaviour.
+     */
+    @Override
+    public GameObject getPreviewObject(GamePanel targetPanel) {
+        return new Fence(targetPanel, (int) getWorldX(), (int) getWorldY());
+    }
+
+    /**
+     * Resolve the variant sprite each frame by recomputing the neighbour
+     * mask and routing the lookup name through the
+     * {@code fence_v...} flat-folder hook in
+     * {@link resources.presentation.image.ObjectImageLoader}.
+     *
+     * Recomputing on every draw is simple and self-correcting: place,
+     * remove, or chunk-load events all reach this path naturally without
+     * extra event plumbing. Cost is one O(N) scan per visible fence per
+     * frame, which is fine at expected fence counts.
+     */
+    @Override
+    public BufferedImage getImage() {
+        if (panel != null && panel.world != null) {
+            this.name = "fence_v" + FenceVariants.fileForMask(connectionMask(panel));
+        }
+        return super.getImage();
     }
 
     /**

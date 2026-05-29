@@ -5,7 +5,9 @@ import java.util.ArrayList;
 
 import resources.app.GamePanel;
 import resources.domain.ai.AIBehavior;
+import resources.domain.entity.Tickable;
 import resources.domain.entity.component.AIComponent;
+import resources.domain.entity.component.EntityComponent;
 import resources.domain.entity.component.HealthComponent;
 import resources.domain.player.Moveable;
 
@@ -16,10 +18,9 @@ import resources.domain.player.Moveable;
  * particular mob.
  *
  * Deliberately doesn't subclass anything player-specific — a Mob has no
- * inventory or input wiring; combat happens through the harvest pipeline
- * (sword as the required "tool"). Override {@link #getImages()} to pull
- * sprites via {@code getObjectImages}, since the playable-directory loader
- * won't find mob sprites.
+ * inventory or input wiring; combat is delegated to behavior + combat systems.
+ * Override {@link #getImages()} to pull sprites via {@code getObjectImages},
+ * since the playable-directory loader won't find mob sprites.
  */
 public class Mob extends Moveable {
 
@@ -41,6 +42,14 @@ public class Mob extends Moveable {
 
     public HealthComponent health() { return getComponent(HealthComponent.class); }
     public AIComponent     ai()     { return getComponent(AIComponent.class); }
+
+    @Override
+    public void update() {
+        for (EntityComponent c : components().all()) {
+            if (c instanceof Tickable) ((Tickable) c).update();
+        }
+        super.update();
+    }
 
     @Override
     public ArrayList<BufferedImage> getImages() {

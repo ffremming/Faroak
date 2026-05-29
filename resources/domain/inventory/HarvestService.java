@@ -5,6 +5,7 @@ import java.util.Random;
 import resources.app.GameContext;
 import resources.domain.entity.BaseEntity;
 import resources.domain.entity.component.HarvestableComponent;
+import resources.domain.entity.component.HealthComponent;
 import resources.domain.object.GameObject;
 import resources.domain.player.Playable;
 import resources.geometry.HitBox;
@@ -33,14 +34,23 @@ public final class HarvestService {
      */
     public BaseEntity attack(Playable player, GameContext ctx) {
         HitBox reach = player.getInteractionHitBox();
-        String tool  = equippedToolName(player);
-
         // Resolve to the NEAREST harvestable in the interaction box so the
         // player swings at the visible target rather than whichever entity
         // the chunk happened to add first.
-        BaseEntity target = nearestHarvestable(player, ctx, reach);
+        return attackEntity(player, ctx, nearestHarvestable(player, ctx, reach));
+    }
+
+    /**
+     * Targeted variant: apply one harvest hit to a specific entity. Used by
+     * the mouse-driven harvest path where the player clicked a particular
+     * tree/stone/crop. Same authorisation, event publishing, drop-table,
+     * and removal-queue semantics as {@link #attack(Playable, GameContext)}.
+     */
+    public BaseEntity attackEntity(Playable player, GameContext ctx, BaseEntity target) {
         if (target == null) return null;
         HarvestableComponent h = target.getComponent(HarvestableComponent.class);
+        if (h == null) return null;
+        String tool = equippedToolName(player);
 
         HarvestIntentEvent intent = new HarvestIntentEvent(
             player.getName(), target.getName(), tool);
@@ -64,6 +74,7 @@ public final class HarvestService {
         for (BaseEntity ent : ctx.world().getEntities()) {
             if (!(ent instanceof GameObject)) continue;
             if (ent.getComponent(HarvestableComponent.class) == null) continue;
+            if (ent.getComponent(HealthComponent.class) != null) continue;
             if (!ent.getHitBox().intersects(reach)) continue;
             double ex = ent.getWorldX() + ent.getWidth()  / 2.0;
             double ey = ent.getWorldY() + ent.getHeight() / 2.0;

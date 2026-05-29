@@ -38,7 +38,7 @@ public final class EntityVisibility {
     public ArrayList<Entity> visibleEntities(Camera camera, ArrayList<Entity> candidates) {
         ArrayList<Entity> out = new ArrayList<>();
         if (camera == null) return out;
-        HitBox camHB = camera.getImageHitbox();
+        HitBox camHB = camera.cullBounds();
         for (Entity e : candidates) {
             if (e.getImageHitbox().collision(camHB) || e.getHitBox().collision(camHB)) {
                 out.add(e);
@@ -49,7 +49,7 @@ public final class EntityVisibility {
 
     public ArrayList<BaseEntity> visibleTiles(Camera camera) {
         ArrayList<BaseEntity> out = new ArrayList<>();
-        HitBox camHB = camera.getHitBox();
+        HitBox camHB = camera.cullBounds();
         for (Chunk chunk : index.chunks()) {
             collectVisibleTiles(chunk, camHB, out);
         }

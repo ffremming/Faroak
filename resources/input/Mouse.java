@@ -2,7 +2,9 @@ package resources.input;
 
 import resources.app.GamePanel;
 import resources.domain.entity.BaseEntity;
+import resources.domain.inventory.Stack;
 import resources.domain.object.Boat;
+import resources.world.placement.PlacementRegistry;
 
 import java.awt.Point;
 import java.awt.event.MouseEvent;
@@ -38,7 +40,7 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
         // Cycling through the hotbar while the player is browsing the full
         // inventory grid was visually confusing and the UI also wanted the
         // wheel event for its own scrolling.
-        if (panel.userInterface != null && panel.userInterface.isEnabled()) {
+        if (panel.userInterface != null && panel.userInterface.isModalUIOpen()) {
             panel.userInterface.mouseWheelMoved(e);
             return;
         }
@@ -71,9 +73,15 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
 
     @Override
     public void mousePressed(MouseEvent e) {
-        // UI takes precedence: if any modal UI is open (inventory, menu), the
-        // click belongs to the UI and never reaches the world.
-        if (panel.userInterface.isEnabled()) {
+        // Clicking the game area reclaims keyboard focus so Escape / WASD keep
+        // working even if focus drifted to the window chrome or another component.
+        panel.requestFocusInWindow();
+
+        // UI takes precedence: if a modal UI is open (inventory, menu), the
+        // click belongs to the UI and never reaches the world. Must be the modal
+        // check, not isEnabled() — the UI container is enabled for the whole
+        // session, which would swallow every world click.
+        if (panel.userInterface.isModalUIOpen()) {
             panel.userInterface.mousePressed(e);
             return;
         }
@@ -97,11 +105,40 @@ public class Mouse implements MouseListener, MouseMotionListener,MouseWheelListe
         // server intent doesn't open the door to rapid-fire retries that
         // would saturate the link.
         if (offline) {
-            if (panel.world.tryPlaceEntity(panel.player.getEquipped())) {
-                lastPlaceMs = now;
-            }
+            handleOfflineLeftClick(now);
         } else {
             panel.inputHandlingSystem.enqueueAction(InputAction.PLACE);
+            lastPlaceMs = now;
+        }
+    }
+
+    /**
+     * Offline left-click routing tree:
+     *   1. If the equipped item is registered as placeable (fence, farmland,
+     *      seed, etc.) → attempt placement at the snapped/free position.
+     *      Don't fall through on failure; the player's intent was to place.
+     *   2. Otherwise → attempt harvest of the entity directly under the
+     *      cursor. Tools (axe, pickaxe) fall through to this branch because
+     *      they're deliberately not in the placement registry.
+     *   3. Otherwise → no-op.
+     */
+    private void handleOfflineLeftClick(long now) {
+        Stack equipped = panel.player == null ? null : panel.player.getEquipped();
+        String itemName = (equipped != null && !equipped.isEmpty()) ? equipped.getName() : null;
+
+        if (itemName != null && PlacementRegistry.isPlaceable(itemName)) {
+            if (panel.world.tryPlaceEntity(equipped)) lastPlaceMs = now;
+            return;
+        }
+        if (panel.world.tryHarvestAtMouse(panel.player, panel)) {
+            lastPlaceMs = now;
+            return;
+        }
+        // No placeable equipped and nothing harvestable under the cursor:
+        // legacy fallback for items whose physical representation exists in
+        // ItemManager but isn't registered (e.g. "hammer"/"demoHouse"/"block"
+        // until they migrate). Preserves the old behaviour.
+        if (itemName != null && panel.world.tryPlaceEntity(equipped)) {
             lastPlaceMs = now;
         }
     }

@@ -17,15 +17,18 @@ import java.util.Random;
 
 import javax.imageio.ImageIO;
 
+import resources.app.AudioSettings;
 import resources.app.GamePanel;
 
 /**
  * In-game pause / escape menu. Visually matches the intro screen's wooden
  * board buttons so the player gets one consistent menu aesthetic. Buttons:
  *
- *   - Resume        → close the menu
- *   - Respawn       → revive at spawn point (via PlayerLifecycle)
- *   - Save and Quit → System.exit
+ *   - Resume            → close the menu
+ *   - Music: N%         → cycle music volume
+ *   - Sound: N%         → cycle SFX volume
+ *   - Respawn           → revive at spawn point (via PlayerLifecycle)
+ *   - Exit Game         → System.exit
  *
  * Mouse handling is self-contained — the menu intercepts presses inside its
  * panel and dispatches to the relevant button. Outside the panel, presses
@@ -46,6 +49,8 @@ public final class EscapeMenu extends Component {
     private final GamePanel panel;
     private final long startNanos = System.nanoTime();
     private final List<WoodenButton> buttons = new ArrayList<>();
+    private final WoodenButton musicButton;
+    private final WoodenButton soundButton;
 
     public EscapeMenu(GamePanel panel) {
         super(panel);
@@ -53,8 +58,13 @@ public final class EscapeMenu extends Component {
         Random rng = new Random(0xCAFEBABEL);
         List<BufferedImage> boards = loadBoards();
         buttons.add(new WoodenButton("Resume",        randomBoard(boards, rng), this::actionResume));
+        musicButton = new WoodenButton("", randomBoard(boards, rng), this::actionMusic);
+        soundButton = new WoodenButton("", randomBoard(boards, rng), this::actionSound);
+        buttons.add(musicButton);
+        buttons.add(soundButton);
         buttons.add(new WoodenButton("Respawn",       randomBoard(boards, rng), this::actionRespawn));
-        buttons.add(new WoodenButton("Save and Quit", randomBoard(boards, rng), this::actionQuit));
+        buttons.add(new WoodenButton("Exit Game",     randomBoard(boards, rng), this::actionQuit));
+        refreshAudioLabels();
     }
 
     /**
@@ -158,6 +168,18 @@ public final class EscapeMenu extends Component {
 
     private void actionResume() { hide(); }
 
+    private void actionMusic() {
+        panel.audioSettings().cycleMusicVolume();
+        panel.syncAudio();
+        refreshAudioLabels();
+    }
+
+    private void actionSound() {
+        panel.audioSettings().cycleSoundVolume();
+        panel.syncAudio();
+        refreshAudioLabels();
+    }
+
     private void actionRespawn() {
         if (panel.player != null && panel.player.lifecycle() != null) {
             panel.player.lifecycle().respawn();
@@ -167,6 +189,12 @@ public final class EscapeMenu extends Component {
 
     private void actionQuit() {
         System.exit(0);
+    }
+
+    private void refreshAudioLabels() {
+        AudioSettings audio = panel.audioSettings();
+        musicButton.setLabel("Music: " + audio.musicVolume() + "%");
+        soundButton.setLabel("Sound: " + audio.soundVolume() + "%");
     }
 
     // ---- assets ----
@@ -196,7 +224,7 @@ public final class EscapeMenu extends Component {
     // ---- nested wooden button (mirrors IntroScreen.IntroButton) ----
 
     private static final class WoodenButton {
-        final String label;
+        String label;
         final BufferedImage board;
         final Runnable action;
         int x, y, w, h;
@@ -206,6 +234,10 @@ public final class EscapeMenu extends Component {
             this.label  = label;
             this.board  = board;
             this.action = action;
+        }
+
+        void setLabel(String label) {
+            this.label = label;
         }
 
         void setBounds(int x, int y, int w, int h) {

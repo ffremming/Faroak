@@ -18,7 +18,9 @@ import javax.imageio.ImageIO;
 import resources.app.GameContext;
 import resources.app.GamePanel;
 import resources.domain.ai.BoatPatrolBehavior;
+import resources.domain.entity.Tickable;
 import resources.domain.entity.component.AIComponent;
+import resources.domain.entity.component.EntityComponent;
 import resources.domain.entity.component.TerrainSpeedComponent;
 import resources.domain.player.Moveable;
 import resources.domain.player.Playable;
@@ -30,8 +32,8 @@ import resources.input.InputHandlingSystem;
  * Self-propelled vessel that drifts across water tiles. Logically a
  * {@link Moveable}, but rendering bypasses the playable sheet — the boat has
  * its own 8-direction sprite set (N, NE, E, SE, S, SW, W, NW) loaded from
- * resources/images/objects/boat/<dir>.png with procedural fallbacks when no
- * art exists yet.
+ * resources/images/objects/vehicles/watercraft/boat/<dir>.png with procedural
+ * fallbacks when no art exists yet.
  *
  * Two operating modes:
  *   - Unmanned: {@link AIComponent} runs {@link BoatPatrolBehavior}, which
@@ -72,15 +74,26 @@ public final class Boat extends Moveable {
     private static final double DIAGONAL_FACTOR   = 0.7071; // 1/sqrt(2)
     private static final double BOARDING_RADIUS   = 192.0;  // pixels — "close proximity" for clicks
     private static final String[] DIR_NAMES       = {"e","se","s","sw","w","nw","n","ne"};
+    // Direction vectors aligned to DIR_NAMES (x right+, y down+).
+    private static final int[][] DIR_VECTORS = {
+        { 1,  0}, // e
+        { 1,  1}, // se
+        { 0,  1}, // s
+        {-1,  1}, // sw
+        {-1,  0}, // w
+        {-1, -1}, // nw
+        { 0, -1}, // n
+        { 1, -1}  // ne
+    };
 
     /**
      * Mapping from compass direction → starter-ship filename in
-     * resources/images/objects/ships/starterShip/. Numbers correspond to the
+     * resources/images/objects/vehicles/watercraft/ships/starterShip/. Numbers correspond to the
      * "(N).png" suffix on the ChatGPT-generated sprites. South and SW have no
      * dedicated art, so the loader derives them by vertically flipping the
      * north / NE variants — see {@link #loadDirectionalImages()}.
      */
-    private static final String SHIP_DIR = "resources/images/objects/ships/starterShip/";
+    private static final String SHIP_DIR = "resources/images/objects/vehicles/watercraft/ships/starterShip/";
     private static final String[] SHIP_FILES = {
         "ChatGPT Image 26. mai 2026, 20_35_01 (3).png", // 0 e
         "ChatGPT Image 26. mai 2026, 20_35_04 (7).png", // 1 se
@@ -126,6 +139,7 @@ public final class Boat extends Moveable {
         this.images = directionalImages;
 
         addComponent(new TerrainSpeedComponent(buildTerrainTable()));
+        addComponent(new BoatCombatComponent());
         if (autoPatrol) {
             addComponent(new AIComponent((GameContext) panel, new BoatPatrolBehavior(System.nanoTime())));
         }
@@ -216,7 +230,10 @@ public final class Boat extends Moveable {
     }
 
     private static BufferedImage readBoatImage(String dir) {
-        File f = new File("resources/images/objects/boat/" + dir + ".png");
+        // Optional legacy fallback set: resources/images/objects/.../boat/<dir>.png.
+        // No such folder ships today, so this resolves to null and the
+        // procedural placeholder is used — left in place for future hand art.
+        File f = new File("resources/images/objects/vehicles/watercraft/boat/" + dir + ".png");
         if (!f.exists()) return null;
         try { return ImageIO.read(f); }
         catch (Exception e) { return null; }
@@ -289,16 +306,23 @@ public final class Boat extends Moveable {
     /**
      * Per-tick boat update. While ridden, we read input keys, compute the
      * 8-direction step, refuse to enter non-water, and drag the rider with us.
-     * While unmanned, defer to the AI behavior (handled by AIComponent).
+     * While unmanned, AI patrol is ticked from attached components.
      */
     @Override
     public void update() {
+        if (isDestroyed()) return;
+        tickComponents();
         if (rider != null) {
             steerByInput();
         }
-        // Skip Moveable.update(): the boat does not use the velocity/path pipeline.
-        // AIComponent (when attached) ticks via the component update path.
+        // Skip Moveable.update(): boats bypass the velocity/path pipeline.
         getHitBox().updateCoords();
+    }
+
+    private void tickComponents() {
+        for (EntityComponent c : components().all()) {
+            if (c instanceof Tickable) ((Tickable) c).update();
+        }
     }
 
     private void steerByInput() {
@@ -351,6 +375,34 @@ public final class Boat extends Moveable {
         return 0;
     }
 
+    public boolean fireBroadside() {
+        BoatCombatComponent combat = combat();
+        return combat != null && combat.fireBroadside();
+    }
+
+    public void takeBoatDamage(int amount, double hitX, double hitY) {
+        BoatCombatComponent combat = combat();
+        if (combat != null) combat.takeDamage(amount, hitX, hitY);
+    }
+
+    public boolean isDestroyed() {
+        BoatCombatComponent combat = combat();
+        return combat != null && combat.isDestroyed();
+    }
+
+    /** Direction vector for one of the 8 facing slots in {@link #DIR_NAMES}. */
+    static int[] directionVectorForIndex(int index) {
+        return DIR_VECTORS[Math.floorMod(index, DIR_VECTORS.length)];
+    }
+
+    int facingIndex() { return facingIndex; }
+
+    void clearRiderForSink() { rider = null; }
+
+    private BoatCombatComponent combat() {
+        return getComponent(BoatCombatComponent.class);
+    }
+
     /** Boat may enter a cell iff every hitbox corner sits on a water tile. */
     private boolean canEnter(double newWorldX, double newWorldY) {
         HitBox candidate = new HitBox(
@@ -389,7 +441,7 @@ public final class Boat extends Moveable {
      * If the boat is already being ridden by this player, the call dismounts.
      */
     public void interact(Playable player) {
-        if (player == null) return;
+        if (player == null || isDestroyed()) return;
         if (rider == player) { dismount(); return; }
         if (rider != null) return; // someone else is steering
         if (!withinBoardingRange(player)) return;
@@ -398,7 +450,7 @@ public final class Boat extends Moveable {
 
     /** Click-to-board entry point; called from Mouse when the click lands on this boat. */
     public boolean tryBoardFromClick(Playable player) {
-        if (player == null || rider != null) return false;
+        if (player == null || rider != null || isDestroyed()) return false;
         if (!withinBoardingRange(player)) return false;
         board(player);
         return true;
@@ -413,6 +465,7 @@ public final class Boat extends Moveable {
     }
 
     private void board(Playable player) {
+        if (isDestroyed()) return;
         this.rider = player;
         // Zero any residual walking velocity so the player doesn't slide off
         // the deck during the first few ticks after boarding.
@@ -448,6 +501,7 @@ public final class Boat extends Moveable {
      */
     public void forceDetachRider() {
         rider = null;
+        if (isDestroyed()) return;
         if (!hasComponent(AIComponent.class)) {
             addComponent(new AIComponent((GameContext) panel, new BoatPatrolBehavior(System.nanoTime())));
         }

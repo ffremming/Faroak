@@ -72,6 +72,8 @@ public class GamePanel extends JPanel implements GameContext {
     private final ServerAuthority  authority = new AllowAllServerAuthority();
     private final AnimationLibrary animations = new AnimationLibrary();
     private final LightField       lighting   = new LightField();
+    private final AudioSettings    audio      = new AudioSettings();
+    private final BackgroundMusicPlayer music  = new BackgroundMusicPlayer(audio);
     private DimensionService       dimensions;
     private MultiplayerRuntime     multiplayer;
 
@@ -91,6 +93,10 @@ public class GamePanel extends JPanel implements GameContext {
         setPreferredSize(new Dimension(screenWidth, screenHeight));
         setBackground(Color.black);
         setDoubleBuffered(true);
+        // The scene is fully repainted every frame (camera draws over the whole
+        // panel before any UI). Marking opaque lets Swing skip the cleared
+        // background fill that would otherwise happen in super.paintComponent.
+        setOpaque(true);
         setFocusable(true);
         requestFocus();
 
@@ -130,9 +136,23 @@ public class GamePanel extends JPanel implements GameContext {
         addMouseListener(mouse);
         addMouseMotionListener(mouse);
         addMouseWheelListener(mouse);
+
+        // Escape is bound through Swing's InputMap/ActionMap with WHEN_IN_FOCUSED_WINDOW
+        // scope rather than relying on the KeyListener. A KeyListener only fires when this
+        // exact panel holds keyboard focus; if focus drifts (or never lands here after the
+        // window is shown) Escape falls through to the platform default and the app loses
+        // focus / closes. A window-scoped binding always reaches the menu toggle.
+        javax.swing.InputMap im = getInputMap(javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW);
+        im.put(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0), "toggleEscapeMenu");
+        getActionMap().put("toggleEscapeMenu", new javax.swing.AbstractAction() {
+            @Override public void actionPerformed(java.awt.event.ActionEvent e) {
+                if (userInterface != null) userInterface.toggleMenu();
+            }
+        });
     }
 
     public void startGameThread() {
+        music.startLoop();
         loop = new GameLoop(this);
         loopThread = new Thread(loop, "game-loop");
         loopThread.start();
@@ -141,6 +161,7 @@ public class GamePanel extends JPanel implements GameContext {
     public void stopGameThread() {
         if (loop != null) loop.stop();
         if (multiplayer != null) multiplayer.close();
+        music.close();
     }
 
     /** One simulation step. Called by {@link GameLoop} from the EDT. */
@@ -148,6 +169,7 @@ public class GamePanel extends JPanel implements GameContext {
         environmentM.updateTicks();
         inputHandlingSystem.update(delta);
         if (multiplayer != null) multiplayer.update(delta);
+        music.syncSettings();
         world.simulate();
         clock.tick();
     }
@@ -188,6 +210,8 @@ public class GamePanel extends JPanel implements GameContext {
     @Override public ImageContainer      images()        { return imageContainer; }
     @Override public AnimationLibrary    animations()    { return animations; }
     @Override public LightField          lighting()      { return lighting; }
+    public AudioSettings                 audioSettings() { return audio; }
+    public void                          syncAudio()     { music.syncSettings(); }
     @Override public UserInterface       userInterface() { return userInterface; }
     @Override public Keys                keys()          { return keys; }
     @Override public Mouse               mouse()         { return mouse; }

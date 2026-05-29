@@ -64,6 +64,9 @@ the requested object/item type.
 -Dgame.multiplayer.sqlitePath=multiplayer.db
 -Dgame.multiplayer.gateway.enabled=true
 -Dgame.multiplayer.gatewayPort=8080
+-Dgame.multiplayer.reconnect.enabled=true
+-Dgame.multiplayer.reconnectDelayMs=1000
+-Dgame.multiplayer.connectionTimeoutMs=15000
 ```
 
 ## Switching server backend

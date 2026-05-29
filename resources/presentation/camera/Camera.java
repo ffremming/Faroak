@@ -4,12 +4,15 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.RenderingHints;
 import java.util.ArrayList;
 
 import resources.app.GamePanel;
 import resources.domain.entity.BaseEntity;
 import resources.domain.entity.PrimitiveEntity;
+import resources.domain.player.Moveable;
 import resources.geometry.HitBox;
+import resources.geometry.Vector;
 import resources.presentation.lighting.LightingPass;
 
 /**
@@ -95,6 +98,15 @@ public class Camera extends PrimitiveEntity {
 
         Graphics2D g2 = (Graphics2D) g;
         g2.setFont(OVERLAY_FONT);
+        // Pixel-art sprites: nearest-neighbour beats the default bilinear (no
+        // blur on upscale + faster blits). AA off on the bulk scene pass since
+        // every sprite is axis-aligned and pre-pixeled.
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+            RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+            RenderingHints.VALUE_ANTIALIAS_OFF);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING,
+            RenderingHints.VALUE_RENDER_SPEED);
 
         renderer.drawScene(g2);
         if (previewObject != null) {
@@ -147,6 +159,39 @@ public class Camera extends PrimitiveEntity {
     public void moveY(int v) { worldY += v; }
     public void setWidth(int i)  { width  = (short) i; }
     public void setHeight(int i) { height = (short) i; }
+
+    /**
+     * Rectangle (world-space) used for visibility culling. Sized from
+     * {@code worldX,worldY,width,height} so it actually matches what the
+     * renderer can paint — the inherited {@link #getHitBox()} is sized off the
+     * 50×50 stub used at Camera construction and would only catch tiles right
+     * under the camera origin. Includes:
+     *   - a one-tile margin in every direction (prevents partial sprites at
+     *     the edge from popping in/out between frames)
+     *   - extra padding in the followed entity's movement direction (when the
+     *     player moves right we briefly need to include tiles a bit further
+     *     right than where the camera currently sits, otherwise the leading
+     *     edge of the screen is unpainted for a frame).
+     */
+    public HitBox cullBounds() {
+        int tile = panel.tileSize;
+        int padX = tile;
+        int padY = tile;
+        int biasX = 0, biasY = 0;
+        if (followed instanceof Moveable) {
+            Vector v = ((Moveable) followed).getVelocity();
+            int bias = tile;
+            if (v.x >  0) biasX =  bias;
+            if (v.x <  0) biasX = -bias;
+            if (v.y >  0) biasY =  bias;
+            if (v.y <  0) biasY = -bias;
+        }
+        int x = (int) worldX - padX + Math.min(0, biasX);
+        int y = (int) worldY - padY + Math.min(0, biasY);
+        int w = width  + padX * 2 + Math.abs(biasX);
+        int h = height + padY * 2 + Math.abs(biasY);
+        return new HitBox(x, y, w, h);
+    }
 
     public void toggleTestData() { testData = !testData; }
 

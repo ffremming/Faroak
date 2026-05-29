@@ -9,11 +9,14 @@ import java.util.HashMap;
 import resources.domain.entity.BaseEntity;
 import resources.domain.object.Barrel;
 import resources.domain.object.Boat;
+import resources.domain.object.Chest;
+import resources.domain.object.CraftingTable;
 import resources.domain.object.Fence;
 import resources.domain.object.PlaceAble;
 import resources.domain.object.Torch;
 import resources.domain.farming.Farmland;
 import resources.app.GamePanel;
+import resources.world.placement.PlacementRegistry;
 
 public class ItemManager {
 
@@ -25,6 +28,7 @@ public class ItemManager {
     public ItemManager(GamePanel panel) {
         this.panel = panel;
         setupPR();
+        PlacementRegistry.registerDefaults(panel);
         seedItemIcons();
     }
 
@@ -44,6 +48,16 @@ public class ItemManager {
                 panel.imageContainer.itemImages.put("boat", imgs.get(0));
             }
         }
+        // Chest: no dedicated item sprite ships with the game — reuse the
+        // world-object icon so the hotbar shows the chest art instead of
+        // the placeholder.
+        BaseEntity chestRep = physicalRepresentations.get("chest");
+        if (chestRep != null) {
+            java.util.ArrayList<java.awt.image.BufferedImage> imgs = chestRep.getImages();
+            if (!imgs.isEmpty()) {
+                panel.imageContainer.itemImages.put("chest", imgs.get(0));
+            }
+        }
     }
 
 
@@ -57,6 +71,8 @@ public class ItemManager {
         physicalRepresentations.put("fence",    new Fence(panel, 0, 0));
         physicalRepresentations.put("torch",    new Torch(panel, 0, 0));
         physicalRepresentations.put("barrel",   new Barrel(panel, 0, 0));
+        physicalRepresentations.put("chest",    new Chest(panel, 0, 0));
+        physicalRepresentations.put("crafting_table", new CraftingTable(panel, 0, 0));
         physicalRepresentations.put("farmland", new Farmland(panel, 0, 0));
 
         // Seeds resolve to a placeable Farmland-target hint — the actual planting

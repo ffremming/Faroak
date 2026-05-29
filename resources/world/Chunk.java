@@ -6,7 +6,6 @@ import java.util.ArrayList;
 
 import resources.domain.entity.BaseEntity;
 import resources.domain.entity.Entity;
-import resources.domain.player.Moveable;
 import resources.domain.tile.Tile;
 import resources.geometry.HitBox;
 
@@ -147,11 +146,11 @@ public class Chunk extends TreeNode {
         connected = true;
     }
 
-    /** Move out any Moveable entity that has left this chunk's bounds. */
+    /** Move out any entity that has left this chunk's bounds. */
     void flush() {
         ArrayList<BaseEntity> toRemove = new ArrayList<>();
         for (BaseEntity be : entities) {
-            if (be instanceof Moveable && !this.collision(be.getHitBox())) toRemove.add(be);
+            if (!this.collision(be.getHitBox())) toRemove.add(be);
         }
         for (BaseEntity be : toRemove) {
             entities.remove(be);

@@ -27,14 +27,21 @@ import resources.net.multiplayer.message.ServerWelcomeMessage;
  */
 public final class MultiplayerRuntime {
 
+    private static final long DEFAULT_RECONNECT_DELAY_MS = 1000L;
+
     private final GameContext ctx;
     private final MultiplayerConfig config;
     private final MultiplayerServerAdapter adapter;
     private final RemotePlayerDirectory remotes;
     private final ReplicatedObjectDirectory worldObjects;
+    private final boolean reconnectEnabled;
+    private final long reconnectDelayMs;
 
     private long sequence;
     private boolean started;
+    private boolean joined;
+    private boolean closed;
+    private long nextReconnectAttemptAtMs;
     private long lastMovementMask = -1L;
     private long pingCounter;
     private long lastAckedSeq;
@@ -46,6 +53,10 @@ public final class MultiplayerRuntime {
         this.adapter = adapter;
         this.remotes = new RemotePlayerDirectory(ctx);
         this.worldObjects = new ReplicatedObjectDirectory(ctx);
+        this.reconnectEnabled = parseBoolean(
+            "game.multiplayer.reconnect.enabled", true);
+        this.reconnectDelayMs = parseLong(
+            "game.multiplayer.reconnectDelayMs", DEFAULT_RECONNECT_DELAY_MS, 0L, 60_000L);
     }
 
     public static MultiplayerRuntime createDefault(GameContext ctx) {
@@ -65,24 +76,33 @@ public final class MultiplayerRuntime {
     }
 
     public void update(double delta) {
-        if (!config.online()) return;
+        if (closed || !config.online()) return;
         ensureStarted();
         adapter.tick();
+        consume(adapter.poll());
+        if (!adapter.isConnected()) {
+            reconnectIfDue();
+            return;
+        }
+        if (!joined) return;
         publishMovement();
         publishActions();
-        consume(adapter.poll());
         remotes.interpolate(config.interpolationDelayMs(), config.snapshotRate());
     }
 
     public void close() {
+        if (closed) return;
+        closed = true;
         if (!started) return;
         adapter.submit(new ClientLeaveMessage(config.playerId()));
         adapter.disconnect(config.playerId());
         started = false;
+        joined = false;
+        nextReconnectAttemptAtMs = 0L;
     }
 
     private void ensureStarted() {
-        if (started) return;
+        if (started || closed) return;
         if (config.mode() == MultiplayerMode.HOST && isWebSocketBackend(config.backend())) {
             int port = parsePort(System.getProperty("game.multiplayer.gatewayPort", "8080"));
             if (System.getProperty("game.multiplayer.serverUrl", "").isBlank()) {
@@ -90,9 +110,28 @@ public final class MultiplayerRuntime {
             }
             EmbeddedWebSocketHost.ensureStarted(config, port);
         }
-        adapter.connect(config.playerId());
-        adapter.submit(new ClientJoinMessage(config.playerId()));
         started = true;
+        connectAndJoin();
+    }
+
+    private void reconnectIfDue() {
+        if (!started || closed || !reconnectEnabled) return;
+        long now = System.currentTimeMillis();
+        if (now < nextReconnectAttemptAtMs) return;
+        connectAndJoin();
+        if (!adapter.isConnected()) {
+            nextReconnectAttemptAtMs = now + reconnectDelayMs;
+        }
+    }
+
+    private void connectAndJoin() {
+        adapter.connect(config.playerId());
+        if (!adapter.isConnected()) return;
+        joined = false;
+        adapter.submit(new ClientJoinMessage(config.playerId()));
+        pendingInputs.clear();
+        lastMovementMask = -1L;
+        nextReconnectAttemptAtMs = 0L;
     }
 
     private void publishMovement() {
@@ -153,6 +192,13 @@ public final class MultiplayerRuntime {
         if (!welcome.accepted()) {
             close();
             System.out.println("multiplayer join rejected: " + welcome.reason());
+            return;
+        }
+        joined = true;
+        long acknowledged = welcome.acknowledgedSequence();
+        if (acknowledged > 0L) {
+            onAck(new ServerAckMessage(config.playerId(), acknowledged, 0L));
+            sequence = Math.max(sequence, acknowledged);
         }
     }
 
@@ -204,6 +250,25 @@ public final class MultiplayerRuntime {
         if (raw == null || raw.isBlank()) return 8080;
         try { return Integer.parseInt(raw.trim()); }
         catch (NumberFormatException ignored) { return 8080; }
+    }
+
+    private static boolean parseBoolean(String key, boolean fallback) {
+        String raw = System.getProperty(key);
+        if (raw == null || raw.isBlank()) return fallback;
+        if ("true".equalsIgnoreCase(raw.trim())) return true;
+        if ("false".equalsIgnoreCase(raw.trim())) return false;
+        return fallback;
+    }
+
+    private static long parseLong(String key, long fallback, long min, long max) {
+        String raw = System.getProperty(key);
+        if (raw == null || raw.isBlank()) return fallback;
+        try {
+            long value = Long.parseLong(raw.trim());
+            return Math.max(min, Math.min(max, value));
+        } catch (NumberFormatException ignored) {
+            return fallback;
+        }
     }
 
     private static final class PredictedInput {

@@ -95,6 +95,9 @@ public class UserInterface extends Container{
             menu.hide();
         } else {
             cleanUI();
+            if (panel.inputHandlingSystem != null) {
+                panel.inputHandlingSystem.clearHeldInput();
+            }
             menu.show();
         }
     }
@@ -172,6 +175,18 @@ public class UserInterface extends Container{
 
     /** True when the escape menu is currently shown — used to pause input. */
     public boolean isMenuOpen() { return menu.isOpen(); }
+
+    /**
+     * True when a modal UI that wants the mouse wheel for its own scrolling is
+     * open (the full inventory grid, or the escape menu). The hotbar wheel-cycle
+     * is suppressed only in these cases — {@link #isEnabled()} can't be used for
+     * this because the UI container is enabled for the whole session, which would
+     * permanently swallow hotbar scrolling.
+     */
+    public boolean isModalUIOpen() {
+        if (menu.isOpen()) return true;
+        return inventoryUI != null && inventoryUI.visible;
+    }
 
     public boolean isEnabled(){
         for (Component comp:content){

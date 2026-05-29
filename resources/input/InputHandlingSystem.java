@@ -12,6 +12,7 @@ import resources.geometry.Vector;
 public class InputHandlingSystem {
     
     boolean up,left,down,right = false;
+    boolean aimUp,aimLeft,aimDown,aimRight = false;
     GamePanel panel;
     private final ArrayDeque<InputAction> actionQueue = new ArrayDeque<>();
 
@@ -66,6 +67,58 @@ public class InputHandlingSystem {
     public boolean isLeft()  { return left; }
     public boolean isDown()  { return down; }
     public boolean isRight() { return right; }
+    public boolean isAimUp()    { return aimUp; }
+    public boolean isAimLeft()  { return aimLeft; }
+    public boolean isAimDown()  { return aimDown; }
+    public boolean isAimRight() { return aimRight; }
+
+    public void setAimUp(boolean val)    { aimUp = val; }
+    public void setAimLeft(boolean val)  { aimLeft = val; }
+    public void setAimDown(boolean val)  { aimDown = val; }
+    public void setAimRight(boolean val) { aimRight = val; }
+
+    /** Drop all currently-held movement/aim keys (used when opening modal UI). */
+    public void clearHeldInput() {
+        up = false;
+        left = false;
+        down = false;
+        right = false;
+        aimUp = false;
+        aimLeft = false;
+        aimDown = false;
+        aimRight = false;
+    }
+
+    /**
+     * Combat aim is keyboard-first:
+     * 1) explicit I/J/K/L aim keys
+     * 2) current movement keys
+     * 3) player's facing direction
+     */
+    public Vector combatAimVector() {
+        double ax = 0;
+        double ay = 0;
+        if (aimUp) ay -= 1;
+        if (aimDown) ay += 1;
+        if (aimLeft) ax -= 1;
+        if (aimRight) ax += 1;
+
+        if (ax == 0 && ay == 0) {
+            if (up) ay -= 1;
+            if (down) ay += 1;
+            if (left) ax -= 1;
+            if (right) ax += 1;
+        }
+
+        if (ax == 0 && ay == 0 && panel.player != null) {
+            Vector facing = panel.player.getFacingVector();
+            if (facing != null) return facing.normalize(1.0);
+        }
+
+        Vector aim = new Vector(ax, ay);
+        if (aim.hasNoVelocity()) return new Vector(1, 0);
+        return aim.normalize(1.0);
+    }
 
     /** Hard cap on the action queue so a stuck consumer (e.g. running offline
      *  while a producer keeps enqueueing) doesn't grow memory unbounded. The

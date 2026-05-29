@@ -13,7 +13,11 @@ import resources.domain.entity.Entity;
 import resources.domain.entity.component.AnimationComponent;
 import resources.domain.entity.component.LabelComponent;
 import resources.domain.object.BoatRideComponent;
+import resources.domain.combat.CombatProjectile;
+import resources.domain.combat.WeaponSwingEffect;
 import resources.domain.tile.Tile;
+import resources.geometry.HitBox;
+import resources.world.Chunk;
 
 /**
  * Draws the visible scene (tiles + entities) for a {@link Camera}.
@@ -28,22 +32,59 @@ public final class CameraSceneRenderer {
 
     private final GamePanel panel;
     private final Camera camera;
+    private final ChunkTileCache chunkBakes = new ChunkTileCache();
 
     public CameraSceneRenderer(GamePanel panel, Camera camera) {
         this.panel  = panel;
         this.camera = camera;
     }
 
+    /** Expose the chunk bake so external code (tile mutations) can invalidate. */
+    public ChunkTileCache chunkBakes() { return chunkBakes; }
+
     /** Paint visible tiles and entities relative to the camera. */
     public void drawScene(Graphics2D g2) {
         ArrayList<Entity> entities = panel.world.getVisibleEntities(camera);
         ArrayList<BaseEntity> tiles = panel.world.getVisibleTiles(camera);
 
-        for (BaseEntity tile : tiles)    drawRelative(g2, tile);
+        drawStaticChunkLayer(g2);
+
+        // After the chunk bake we only need to draw tiles whose appearance
+        // changes frame-to-frame (animated water etc) — the rest is already
+        // baked under the entities below.
+        int animatedTiles = 0;
+        for (BaseEntity tile : tiles) {
+            if (!tile.hasComponent(AnimationComponent.class)) continue;
+            drawRelative(g2, tile);
+            animatedTiles++;
+        }
         for (Entity entity : entities)   drawRelative(g2, entity);
 
         camera.addbackendPrintData("amount entities visible: " + entities.size());
         camera.addbackendPrintData("amount tiles visible: " + tiles.size());
+        camera.addbackendPrintData("animated tiles drawn: " + animatedTiles);
+    }
+
+    /**
+     * Blit the pre-composited static layer of every visible chunk. The bake
+     * holds all non-animated tiles for that chunk; one drawImage per chunk
+     * replaces N×N per-tile draws.
+     */
+    private void drawStaticChunkLayer(Graphics2D g2) {
+        ArrayList<Chunk> live = panel.world.getChunks();
+        chunkBakes.pruneTo(live);
+        HitBox cull = camera.cullBounds();
+        int camX = (int) camera.getWorldX();
+        int camY = (int) camera.getWorldY();
+        int chunksDrawn = 0;
+        for (Chunk chunk : live) {
+            if (!chunk.collision(cull)) continue;
+            BufferedImage bake = chunkBakes.getOrBuild(chunk);
+            if (bake == null) continue;
+            g2.drawImage(bake, chunk.x - camX, chunk.y - camY, null);
+            chunksDrawn++;
+        }
+        camera.addbackendPrintData("chunk bakes drawn: " + chunksDrawn);
     }
 
     /** Draw one entity in camera space, including its shadow if non-Tile. */
@@ -58,7 +99,9 @@ public final class CameraSceneRenderer {
         int x = (int) (entity.getWorldX() - camX);
         int y = (int) (entity.getWorldY() - camY);
 
-        if (!(entity instanceof Tile)) {
+        if (!(entity instanceof Tile)
+            && !(entity instanceof WeaponSwingEffect)
+            && !(entity instanceof CombatProjectile)) {
             drawShadow(g2, entity, camX, camY);
         }
 

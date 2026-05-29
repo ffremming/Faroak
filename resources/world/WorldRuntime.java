@@ -42,6 +42,12 @@ public interface WorldRuntime {
 
     // ---- placement / collision ----
     boolean placeEntity(BaseEntity entity);
+    /**
+     * Insert a transient entity (projectiles/VFX) without the blanket
+     * solid-collision gate used by {@link #placeEntity(BaseEntity)}.
+     * Implementations may reject non-transient entities.
+     */
+    boolean placeEntityIgnoringTerrainCollision(BaseEntity entity);
     void removeEntity(BaseEntity entity);
     boolean solidCollision(HitBox hitbox);
     boolean solidCollision(HitBox hitbox, BaseEntity mover);

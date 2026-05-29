@@ -20,18 +20,24 @@ import resources.net.multiplayer.protocol.ProtocolEnvelope;
  */
 public final class WebSocketServerAdapter implements MultiplayerServerAdapter {
 
+    private static final long DEFAULT_CONNECTION_TIMEOUT_MS = 15_000L;
+
     private final MultiplayerConfig config;
     private final ProtocolMessageTranslator translator;
     private final BinaryEnvelopeCodec codec = new BinaryEnvelopeCodec();
     private final ConcurrentLinkedQueue<ServerMessage> inbound = new ConcurrentLinkedQueue<>();
     private final ByteArrayOutputStream partial = new ByteArrayOutputStream();
+    private final long connectionTimeoutMs;
 
     private WebSocket socket;
     private boolean connected;
+    private volatile long lastInboundAtMs;
 
     public WebSocketServerAdapter(MultiplayerConfig config) {
         this.config = config;
         this.translator = new ProtocolMessageTranslator(config.protocolVersion());
+        this.connectionTimeoutMs = parseLong(
+            "game.multiplayer.connectionTimeoutMs", DEFAULT_CONNECTION_TIMEOUT_MS, 0L, 120_000L);
     }
 
     @Override
@@ -45,14 +51,17 @@ public final class WebSocketServerAdapter implements MultiplayerServerAdapter {
                 .buildAsync(URI.create(url), new Listener())
                 .join();
             connected = true;
+            lastInboundAtMs = System.currentTimeMillis();
         } catch (Exception ex) {
             connected = false;
+            lastInboundAtMs = 0L;
         }
     }
 
     @Override
     public void disconnect(String playerId) {
         connected = false;
+        lastInboundAtMs = 0L;
         if (socket != null) {
             try { socket.sendClose(WebSocket.NORMAL_CLOSURE, "bye").join(); }
             catch (Exception ignored) {}
@@ -78,7 +87,14 @@ public final class WebSocketServerAdapter implements MultiplayerServerAdapter {
         return out;
     }
 
-    @Override public void tick() {}
+    @Override
+    public void tick() {
+        if (!connected || connectionTimeoutMs <= 0L) return;
+        long now = System.currentTimeMillis();
+        if ((now - lastInboundAtMs) > connectionTimeoutMs) {
+            disconnect(config.playerId());
+        }
+    }
 
     private final class Listener implements WebSocket.Listener {
         @Override
@@ -92,18 +108,21 @@ public final class WebSocketServerAdapter implements MultiplayerServerAdapter {
                 ServerMessage message = translator.fromEnvelope(envelope);
                 if (message != null) inbound.add(message);
             }
+            lastInboundAtMs = System.currentTimeMillis();
             webSocket.request(1);
             return null;
         }
 
         @Override
         public void onOpen(WebSocket webSocket) {
+            lastInboundAtMs = System.currentTimeMillis();
             webSocket.request(1);
         }
 
         @Override
         public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
             connected = false;
+            lastInboundAtMs = 0L;
             partial.reset();
             return null;
         }
@@ -111,7 +130,19 @@ public final class WebSocketServerAdapter implements MultiplayerServerAdapter {
         @Override
         public void onError(WebSocket webSocket, Throwable error) {
             connected = false;
+            lastInboundAtMs = 0L;
             partial.reset();
+        }
+    }
+
+    private static long parseLong(String key, long fallback, long min, long max) {
+        String raw = System.getProperty(key);
+        if (raw == null || raw.isBlank()) return fallback;
+        try {
+            long value = Long.parseLong(raw.trim());
+            return Math.max(min, Math.min(max, value));
+        } catch (NumberFormatException ignored) {
+            return fallback;
         }
     }
 }

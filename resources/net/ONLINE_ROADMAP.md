@@ -34,7 +34,7 @@
    - send deltas for changed entities only
 6. **Stability**:
    - packet loss simulation in tests
-   - connection timeout/reconnect flow
+   - connection timeout/reconnect flow (client reconnect + websocket idle timeout implemented; probe: `mp-reconnect`)
    - anti-cheat validation on server authority rules
 
 ## Initial tuning defaults

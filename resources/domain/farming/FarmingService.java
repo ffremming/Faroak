@@ -8,6 +8,7 @@ import resources.domain.inventory.Stack;
 import resources.domain.player.Playable;
 import resources.domain.tile.Tile;
 import resources.geometry.HitBox;
+import resources.world.placement.TileRules;
 
 /**
  * Stateless helpers for hoeing tiles into {@link Farmland} and planting seeds
@@ -76,11 +77,10 @@ public final class FarmingService {
         return ctx.world().placeEntity(fl);
     }
 
+    /** Single-source-of-truth via {@link TileRules#isTillable(String)} so
+     *  this service and {@code SurfaceRule.TILLABLE} can't drift. */
     private static boolean isTillable(String tileName) {
-        if (tileName == null) return false;
-        return tileName.startsWith("plains")
-            || tileName.startsWith("forest")
-            || tileName.startsWith("savanna");
+        return TileRules.isTillable(tileName);
     }
 
     private FarmingService() {}

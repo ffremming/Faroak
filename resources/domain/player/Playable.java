@@ -4,6 +4,8 @@ import java.awt.Point;
 import java.util.ArrayList;
 
 import resources.app.GamePanel;
+import resources.domain.combat.CombatService;
+import resources.domain.combat.WeaponProfile;
 import resources.domain.entity.BaseEntity;
 import resources.domain.entity.component.HealthComponent;
 import resources.domain.farming.FarmingService;
@@ -13,13 +15,25 @@ import resources.domain.inventory.Item;
 import resources.domain.inventory.Stack;
 import resources.domain.object.GameObject;
 import resources.geometry.HitBox;
+import resources.geometry.Vector;
 
 public class Playable extends Moveable {
 
     private Inventory inventory;
     private Stack tempInHand;
     private final HarvestService harvest = new HarvestService();
+    private final CombatService combat = new CombatService();
     private PlayerLifecycle lifecycle;
+
+    private static final int COMBO_WINDOW_TICKS = 14;
+    private static final int INPUT_BUFFER_TICKS = 4;
+
+    private int lightCooldownTicks;
+    private int heavyCooldownTicks;
+    private int rangedCooldownTicks;
+    private int comboWindowTicks;
+    private int comboStep;
+    private int bufferedLightTicks;
 
     public Playable(GamePanel panel, String name, int worldX, int worldY, short width, short height,
                     short hitBoxWidth, short hitBoxHeight, short relativeXPlus, short relativeYPlus) {
@@ -60,6 +74,7 @@ public class Playable extends Moveable {
         // While dead, freeze movement and pause the placement preview so the
         // world stops responding until the player respawns via the ESC menu.
         if (lifecycle != null && lifecycle.isDead()) return;
+        tickCombatTimers();
         super.update();
         // Suppress the placement ghost whenever the inventory or a menu is
         // open. Without this, the preview tracks the cursor under the UI and
@@ -69,6 +84,19 @@ public class Playable extends Moveable {
             panel.world.addObjectPreview(null);
         } else {
             panel.world.addObjectPreview(getEquipped());
+        }
+    }
+
+    private void tickCombatTimers() {
+        if (lightCooldownTicks > 0) lightCooldownTicks--;
+        if (heavyCooldownTicks > 0) heavyCooldownTicks--;
+        if (rangedCooldownTicks > 0) rangedCooldownTicks--;
+        if (comboWindowTicks > 0) comboWindowTicks--;
+        if (bufferedLightTicks > 0) bufferedLightTicks--;
+
+        if (bufferedLightTicks > 0 && lightCooldownTicks == 0) {
+            bufferedLightTicks = 0;
+            performLightAttack(true);
         }
     }
 
@@ -112,12 +140,90 @@ public class Playable extends Moveable {
     }
 
     /**
-     * Swing the equipped tool at whatever harvestable sits inside the
-     * interaction box.
+     * Legacy attack entry-point used by probes. Performs an immediate melee
+     * strike and falls back to harvest logic if no health target was hit.
      */
     public void attack() {
         if (lifecycle != null && lifecycle.isDead()) return;
-        harvest.attack(this, panel);
+        BaseEntity harvested = harvest.attack(this, panel);
+        if (harvested == null) performLightAttack(false);
+    }
+
+    /** Keyboard: fast combo-able short-range strike. */
+    public void requestLightAttack() {
+        if (lifecycle != null && lifecycle.isDead()) return;
+        performLightAttack(true);
+    }
+
+    /** Keyboard: slower high-damage close strike. */
+    public void requestHeavyAttack() {
+        if (lifecycle != null && lifecycle.isDead()) return;
+        if (heavyCooldownTicks > 0) return;
+        WeaponProfile weapon = equippedWeaponProfile();
+        Vector aim = panel.inputHandlingSystem.combatAimVector();
+        int hits = combat.meleeAttack(this, panel, aim,
+            weapon.heavyDamage,
+            weapon.heavyRangePx,
+            weapon.heavyArcDegrees,
+            3,
+            weapon.swingSpriteName,
+            weapon.swingDurationTicks + 2,
+            weapon.swingArcDegrees + 10.0,
+            weapon.swingRadiusPx);
+        if (hits == 0) harvest.attack(this, panel);
+        heavyCooldownTicks = weapon.heavyCooldownTicks;
+        lightCooldownTicks = Math.max(lightCooldownTicks, weapon.lightCooldownTicks / 2);
+        comboWindowTicks = 0;
+        comboStep = 0;
+    }
+
+    /** Keyboard: projectile attack. */
+    public void requestRangedAttack() {
+        if (lifecycle != null && lifecycle.isDead()) return;
+        if (rangedCooldownTicks > 0) return;
+        WeaponProfile weapon = equippedWeaponProfile();
+        Vector aim = panel.inputHandlingSystem.combatAimVector();
+        boolean fired = combat.fireProjectile(this, panel, aim,
+            weapon.rangedDamage,
+            weapon.projectileSpeedPxPerTick,
+            weapon.projectileLifeTicks,
+            weapon.projectileSpriteName);
+        if (!fired) return;
+        rangedCooldownTicks = weapon.rangedCooldownTicks;
+    }
+
+    private int performLightAttack(boolean obeyCooldown) {
+        WeaponProfile weapon = equippedWeaponProfile();
+        if (obeyCooldown && lightCooldownTicks > 0) {
+            if (lightCooldownTicks <= INPUT_BUFFER_TICKS) {
+                bufferedLightTicks = INPUT_BUFFER_TICKS;
+            }
+            return 0;
+        }
+
+        comboStep = (comboWindowTicks > 0) ? Math.min(3, comboStep + 1) : 1;
+        comboWindowTicks = COMBO_WINDOW_TICKS;
+
+        Vector aim = panel.inputHandlingSystem.combatAimVector();
+        int hits = combat.meleeAttack(this, panel, aim,
+            weapon.comboDamage(comboStep),
+            weapon.comboRange(comboStep),
+            weapon.comboArc(comboStep),
+            3,
+            weapon.swingSpriteName,
+            weapon.swingDurationTicks,
+            weapon.swingArcDegrees + (comboStep - 1) * 8.0,
+            weapon.swingRadiusPx);
+
+        if (hits == 0) harvest.attack(this, panel);
+        lightCooldownTicks = weapon.lightCooldownTicks;
+        return hits;
+    }
+
+    private WeaponProfile equippedWeaponProfile() {
+        Stack eq = getEquipped();
+        String itemName = (eq == null || eq.isEmpty()) ? null : eq.getName();
+        return WeaponProfile.forItem(itemName);
     }
 
     public void nullPath() {
@@ -153,6 +259,14 @@ public class Playable extends Moveable {
      *  cached field to keep in sync. */
     public Stack getEquipped() {
         return inventory.getHotbarStack(inventory.getIndex());
+    }
+
+    /** Exposed so external callers (e.g. mouse-driven harvest in
+     *  {@link resources.world.WorldInteraction#tryHarvestAtMouse}) can route
+     *  through this player's own service instance, keeping RNG and any
+     *  future per-player tuning consistent with the F-key path. */
+    public HarvestService harvestService() {
+        return harvest;
     }
 
     public Stack getTempInHand() {

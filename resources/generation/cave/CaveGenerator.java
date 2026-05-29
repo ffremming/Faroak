@@ -6,7 +6,7 @@ import resources.app.GamePanel;
 import resources.domain.entity.BaseEntity;
 import resources.domain.object.GameObject;
 import resources.domain.object.Portal;
-import resources.domain.tile.CaveWallTile;
+import resources.domain.tile.MountainTile;
 import resources.domain.tile.Tile;
 import resources.generation.WorldGenerator;
 import resources.generation.dimension.DimensionRegistry;
@@ -27,10 +27,12 @@ import resources.generation.noise.ProceduralGen;
  *   3. A small disc around the cave spawn (0,0) is always floor so the player
  *      lands in open space when they portal in.
  *
- * Walls are {@link CliffTile} instances so they pick up the existing
- * cliff connecting-sprite system automatically — proper visual walls without
- * any new art. Floors stay vanilla {@link Tile} so they can show dirt/stone
- * variation.
+ * Walls are {@link MountainTile} instances — the 8-bit auto-tiler reads the
+ * full neighbour mask and picks proper outer corners, inner concave corners,
+ * edges, and varied interior body sprites from the rockCliff atlas. Floors
+ * are vanilla {@link Tile}s painted with a winner-take-all blend over three
+ * stone variants (see {@link #pickStoneVariant}), giving large organic blobs
+ * with hard, height-driven borders between adjacent stones.
  */
 public final class CaveGenerator implements WorldGenerator {
 
@@ -38,9 +40,6 @@ public final class CaveGenerator implements WorldGenerator {
 
     /** Anything below this in the height channel becomes cave floor. */
     private static final double FLOOR_THRESHOLD = 0.05;
-
-    /** Floor variant biased toward dirt above this humidity. */
-    private static final double DIRT_THRESHOLD  = 0.15;
 
     /** Tile-units. Below this distance from cave spawn (0,0), force floor. */
     private static final int SPAWN_CLEARING_TILES = 4;
@@ -52,8 +51,27 @@ public final class CaveGenerator implements WorldGenerator {
     private static final int FLOOR_ALTITUDE = 100;
     private static final int WALL_ALTITUDE  = 600;
 
+    /**
+     * Stone variants painted across the cave floor as large blobs. These are
+     * cave-specific sprites (warm cobblestone, cool flagstone slab, mossy
+     * fitted brick) with soft low-contrast B1/C0 overlays so neighbour
+     * blobs cross-fade instead of slamming together with a cliff edge.
+     * TileManager registers distinct tileHeights (101/102/103) so two
+     * adjacent variants still get an ordered border via the overlay.
+     */
+    private static final String[] FLOOR_STONE_VARIANTS = {
+        "caveCobble", "caveSlab", "caveMossStone"
+    };
+
+    /**
+     * Patch frequency for stone-variant selection. Halved from the previous
+     * 0.0018 so each stone blob covers roughly 2x the area — large calm
+     * regions instead of frequent variant swaps in the cramped cavern space.
+     */
+    private static final double STONE_PATCH_FREQ = 0.0009;
+
     // Salts keep independent decisions independent under the same seed.
-    private static final long SALT_DIRT       = 11;
+    private static final long SALT_STONE_VARIANT = 11; // base; +i*977 per variant
     private static final long SALT_DECOR      = 21;
     private static final long SALT_DECOR_PICK = 22;
     private static final long SALT_PORTAL     = 31;
@@ -80,13 +98,31 @@ public final class CaveGenerator implements WorldGenerator {
     @Override
     public Tile getTile(int worldX, int worldY) {
         if (isFloor(worldX, worldY)) {
-            String name = isDirtPatch(worldX, worldY) ? "cave_dirt" : "cave_stone";
+            String name = FLOOR_STONE_VARIANTS[pickStoneVariant(worldX, worldY)];
             return new Tile(panel, name, worldX, worldY, FLOOR_ALTITUDE);
         }
-        // Walls: CaveWallTile picks a rockCliff variant from the neighbour
-        // bitmask, so the cavern gets proper corner / edge pieces (uses the
-        // existing rockCliff0..rockCliff9 atlas).
-        return new CaveWallTile(panel, worldX, worldY, WALL_ALTITUDE);
+        // Walls: MountainTile auto-tiles against the 8-neighbour mask so the
+        // cavern gets proper outer corners, edges, inner concave corners, and
+        // a varied interior body — uses the rockCliff atlas already shipped.
+        return new MountainTile(panel, worldX, worldY, WALL_ALTITUDE);
+    }
+
+    /**
+     * Winner-take-all over one independent low-frequency noise field per stone
+     * variant. The variant whose field samples highest at (x,y) wins, giving
+     * each stone roughly equal coverage and crisp organic blob boundaries
+     * where two fields cross — never tiny scatter. Same shape used by the
+     * overworld EntityFactory for biome tile variants.
+     */
+    private int pickStoneVariant(int worldX, int worldY) {
+        int bestIdx = 0;
+        double bestVal = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < FLOOR_STONE_VARIANTS.length; i++) {
+            double v = proceduralGen.patchNoise(worldX, worldY,
+                    SALT_STONE_VARIANT + (long) i * 977L, STONE_PATCH_FREQ);
+            if (v > bestVal) { bestVal = v; bestIdx = i; }
+        }
+        return bestIdx;
     }
 
     @Override
@@ -142,11 +178,6 @@ public final class CaveGenerator implements WorldGenerator {
         int localY = Math.floorMod(ty, TUNNEL_PITCH_TILES);
         int localX = Math.floorMod(tx, TUNNEL_PITCH_TILES);
         return localY == chosenRow || localX == chosenCol;
-    }
-
-    private boolean isDirtPatch(int worldX, int worldY) {
-        if (proceduralGen.humidity(worldX, worldY) <= DIRT_THRESHOLD) return false;
-        return proceduralGen.rollAt(worldX, worldY, SALT_DIRT) < 0.55;
     }
 
     /** Sparse exit portals; never inside the spawn clearing. */

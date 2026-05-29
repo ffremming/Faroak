@@ -100,8 +100,13 @@ public class LoadingScreen extends JPanel {
                 frame.setSize(gamePanel.screenWidth, gamePanel.screenHeight);
                 frame.revalidate();
                 frame.repaint();
-                gamePanel.requestFocusInWindow();
                 gamePanel.startGameThread();
+                // Defer the focus grab to a second EDT cycle: requesting focus in
+                // the same cycle as add()/revalidate() runs before the panel is
+                // realized, so the request is silently dropped and keyboard input
+                // (Escape, WASD) never reaches it. By the next cycle the panel is
+                // displayable and the request sticks.
+                SwingUtilities.invokeLater(gamePanel::requestFocusInWindow);
             });
         }, "game-init").start();
     }

@@ -21,6 +21,15 @@ public class Keys implements KeyListener{
     @Override
     public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
+        // Escape is handled by a window-scoped Swing key binding in GamePanel.wireInput()
+        // so it works regardless of which component holds focus. Handling it here too would
+        // double-toggle the menu (open then close) whenever this panel has focus.
+
+        // Escape menu is modal: gameplay keys are ignored until resumed.
+        if (panel.userInterface != null && panel.userInterface.isMenuOpen()) {
+            return;
+        }
+
         if (code == KeyEvent.VK_W){
            panel.inputHandlingSystem.setUp(true);
            panel.player.nullPath();
@@ -42,6 +51,22 @@ public class Keys implements KeyListener{
             panel.player.nullPath();
         }
 
+        if (code == KeyEvent.VK_I){
+            panel.inputHandlingSystem.setAimUp(true);
+        }
+
+        if (code == KeyEvent.VK_J){
+            panel.inputHandlingSystem.setAimLeft(true);
+        }
+
+        if (code == KeyEvent.VK_K){
+            panel.inputHandlingSystem.setAimDown(true);
+        }
+
+        if (code == KeyEvent.VK_L){
+            panel.inputHandlingSystem.setAimRight(true);
+        }
+
         
         if (code == KeyEvent.VK_SPACE){
             if (panel.multiplayer() == null || !panel.multiplayer().isOnline()) {
@@ -61,11 +86,15 @@ public class Keys implements KeyListener{
         }
 
         if (code == KeyEvent.VK_F){
-            if (panel.multiplayer() == null || !panel.multiplayer().isOnline()) {
-                panel.player.attack();
-            } else {
-                panel.inputHandlingSystem.enqueueAction(InputAction.ATTACK);
-            }
+            handleLightAttack();
+        }
+
+        if (code == KeyEvent.VK_G){
+            handleHeavyAttack();
+        }
+
+        if (code == KeyEvent.VK_R){
+            handleRangedAttack();
         }
 
         if (code == KeyEvent.VK_T){
@@ -85,11 +114,6 @@ public class Keys implements KeyListener{
         }
             
 
-        if (code == KeyEvent.VK_ESCAPE){
-            panel.userInterface.toggleMenu();
-        }
-        
-        
     }
 
     @Override
@@ -111,6 +135,85 @@ public class Keys implements KeyListener{
         if (code == KeyEvent.VK_D){
             panel.inputHandlingSystem.setRight(false);
         }
+
+        if (code == KeyEvent.VK_I){
+            panel.inputHandlingSystem.setAimUp(false);
+        }
+
+        if (code == KeyEvent.VK_J){
+            panel.inputHandlingSystem.setAimLeft(false);
+        }
+
+        if (code == KeyEvent.VK_K){
+            panel.inputHandlingSystem.setAimDown(false);
+        }
+
+        if (code == KeyEvent.VK_L){
+            panel.inputHandlingSystem.setAimRight(false);
+        }
     } 
+
+    private void handleLightAttack() {
+        BoatRideComponent ride = activeRide();
+        if (isOnline()) {
+            if (ride != null) {
+                showOnlineBoatCombatToast();
+                return;
+            }
+            panel.inputHandlingSystem.enqueueAction(InputAction.ATTACK);
+            return;
+        }
+        if (ride != null && ride.boat() != null) {
+            ride.boat().fireBroadside();
+            return;
+        }
+        panel.player.requestLightAttack();
+    }
+
+    private void handleHeavyAttack() {
+        BoatRideComponent ride = activeRide();
+        if (isOnline()) {
+            if (ride != null) {
+                showOnlineBoatCombatToast();
+                return;
+            }
+            panel.inputHandlingSystem.enqueueAction(InputAction.ATTACK);
+            return;
+        }
+        if (ride == null || ride.boat() == null) {
+            panel.player.requestHeavyAttack();
+        }
+    }
+
+    private void handleRangedAttack() {
+        BoatRideComponent ride = activeRide();
+        if (isOnline()) {
+            if (ride != null) {
+                showOnlineBoatCombatToast();
+                return;
+            }
+            panel.inputHandlingSystem.enqueueAction(InputAction.ATTACK);
+            return;
+        }
+        if (ride == null || ride.boat() == null) {
+            panel.player.requestRangedAttack();
+        }
+    }
+
+    private BoatRideComponent activeRide() {
+        if (panel.player == null) return null;
+        BoatRideComponent ride = panel.player.getComponent(BoatRideComponent.class);
+        return (ride != null && ride.boat() != null) ? ride : null;
+    }
+
+    private boolean isOnline() {
+        return panel.multiplayer() != null && panel.multiplayer().isOnline();
+    }
+
+    private void showOnlineBoatCombatToast() {
+        if (panel.userInterface != null) {
+            panel.userInterface.showToast("Boat combat is offline-only for now", 1500);
+        }
+    }
     
 }

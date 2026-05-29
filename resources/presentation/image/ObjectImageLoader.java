@@ -14,6 +14,19 @@ import javax.imageio.ImageIO;
  * Loads and caches the sprites for placeable game objects, inventory items,
  * and the player's directional sprite set.
  *
+ * Object sprite convention: each object name maps to a folder named
+ * {@code <name>/} somewhere under {@code resources/images/objects/} that
+ * contains a single PNG named {@code <name>.png}. The objects tree is
+ * organised into nested categories (nature/plants/trees/oak_M/oak_M.png,
+ * nature/rocks/ores/rock_crystal/rock_crystal.png, …) purely for human
+ * findability; the loader discovers the canonical PNG by scanning the tree
+ * once at first use, so an object's name is decoupled from its folder depth.
+ * Re-categorising an asset is a pure file move — no code change. Folders
+ * missing their canonical PNG resolve to a shared "?" placeholder.
+ *
+ * Directories whose name starts with "_" (e.g. {@code _spritesheets}) hold
+ * source art rather than per-object sprites and are skipped by the scan.
+ *
  * Object names may carry a comma-suffix tag ("oak_M,preview") which signals
  * "draw the source object with reduced transparency"; that branch is handled
  * here so callers don't have to.
@@ -62,29 +75,78 @@ public final class ObjectImageLoader {
 
     private ArrayList<BufferedImage> loadObjectFolder(String name) {
         ArrayList<BufferedImage> images = new ArrayList<>();
-        File folder = new File(OBJECTS_DIR + name);
-        if (folder.isDirectory()) {
-            File[] files = folder.listFiles();
-            if (files != null) {
-                for (File f : files) {
-                    if (f.isFile()) tryAdd(images, f);
-                }
-            }
-        }
-        if (images.isEmpty()) images.add(fallbackSwatch(name));
+        File png = resolveObjectPng(name);
+        if (png.isFile()) tryAdd(images, png);
+        if (images.isEmpty()) images.add(PLACEHOLDER);
         objectCache.put(name, images);
         return images;
     }
 
     /**
+     * Resolve an object name to its PNG file on disk. The standard convention
+     * is a folder {@code <name>/} containing {@code <name>.png}, located
+     * anywhere in the nested {@code objects/} category tree; its location is
+     * discovered by {@link #objectIndex()}. Some asset sets (notably the fence
+     * variant pack) instead share one folder across many named sprites: names
+     * of the form {@code fence_v<basename>} resolve to the fence folder's
+     * {@code <basename>.png} so the 20-PNG fence pack stays in one place.
+     */
+    private File resolveObjectPng(String name) {
+        if (name != null && name.startsWith(FENCE_VARIANT_PREFIX)) {
+            String remainder = name.substring(FENCE_VARIANT_PREFIX.length());
+            File fenceDir = objectIndex().get(FENCE_FOLDER);
+            if (fenceDir != null) return new File(fenceDir, remainder + ".png");
+            return new File(OBJECTS_DIR + "structures/walls/" + FENCE_FOLDER + "/" + remainder + ".png");
+        }
+        File dir = name == null ? null : objectIndex().get(name);
+        if (dir != null) return new File(dir, name + ".png");
+        // Fall back to the flat convention so a freshly added top-level folder
+        // works before the (cached) index is rebuilt.
+        return new File(OBJECTS_DIR + name + "/" + name + ".png");
+    }
+
+    private static final String FENCE_VARIANT_PREFIX = "fence_v";
+    /** Folder name for the shared fence variant pack (under structures/walls/). */
+    private static final String FENCE_FOLDER = "fences";
+
+    /**
+     * Lazily-built map from object-folder name → that folder on disk, found by
+     * walking the {@code objects/} category tree once. Directories starting
+     * with "_" (source-art holders like {@code _spritesheets}) are skipped.
+     * The first matching folder for a given name wins; names are unique in
+     * practice so depth doesn't matter.
+     */
+    private static volatile Map<String, File> OBJECT_INDEX;
+
+    private static Map<String, File> objectIndex() {
+        Map<String, File> idx = OBJECT_INDEX;
+        if (idx == null) {
+            synchronized (ObjectImageLoader.class) {
+                idx = OBJECT_INDEX;
+                if (idx == null) {
+                    idx = new java.util.HashMap<>();
+                    indexFolders(new File(OBJECTS_DIR), idx);
+                    OBJECT_INDEX = idx;
+                }
+            }
+        }
+        return idx;
+    }
+
+    private static void indexFolders(File dir, Map<String, File> sink) {
+        File[] children = dir.listFiles(File::isDirectory);
+        if (children == null) return;
+        for (File child : children) {
+            if (child.getName().startsWith("_")) continue;
+            sink.putIfAbsent(child.getName(), child);
+            indexFolders(child, sink);
+        }
+    }
+
+    /**
      * Single shared neutral placeholder for any asset name with no PNG on
-     * disk. Previously we hashed the name into RGB; that produced rainbow
-     * swatches (often blueish) scattered across the inventory and the world
-     * for every missing asset. A single dark-grey "?" tile is visually
-     * unobtrusive and immediately recognisable as "art pending".
-     *
-     * Cached: the same BufferedImage is returned for every miss so we don't
-     * re-allocate on each call.
+     * disk. A dark-grey "?" tile is visually unobtrusive and immediately
+     * recognisable as "art pending".
      */
     private static BufferedImage fallbackSwatch(String name) {
         return PLACEHOLDER;
@@ -122,18 +184,42 @@ public final class ObjectImageLoader {
     }
 
     private BufferedImage loadItem(String name) {
+        BufferedImage fromSheet = CombatSpriteSheet.itemSprite(name);
+        if (fromSheet != null) {
+            itemCache.put(name, fromSheet);
+            return fromSheet;
+        }
+
         File file = new File(ITEMS_DIR + name + ".png");
         BufferedImage image = null;
         if (file.exists()) {
             try { image = ImageIO.read(file); }
             catch (IOException e) { System.out.println("error reading item " + name); }
         } else {
+            String alias = fallbackAlias(name);
+            if (alias != null && !alias.equals(name)) {
+                image = itemImage(alias);
+            }
             ArrayList<BufferedImage> potential = objectImages(name);
-            if (!potential.isEmpty()) image = potential.get(0);
+            if ((image == null) && !potential.isEmpty()) image = potential.get(0);
         }
         if (image == null) image = fallbackSwatch(name);
         itemCache.put(name, image);
         return image;
+    }
+
+    private static String fallbackAlias(String name) {
+        if (name == null) return null;
+        switch (name) {
+            case "sword":       return "axe";
+            case "pickaxe":     return "axe";
+            case "hoe":         return "hammer";
+            case "shovel":      return "hammer";
+            case "combat_bolt":
+            case "projectile_bolt":
+            case "bolt":        return "block";
+            default:            return null;
+        }
     }
 
     // ---- player sprite set ----

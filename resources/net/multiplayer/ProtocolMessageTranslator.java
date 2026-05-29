@@ -60,11 +60,13 @@ final class ProtocolMessageTranslator {
         if (envelope == null || envelope.messageType() == null) return null;
         ProtocolMessageType type = envelope.messageType();
         if (ProtocolMessageType.WELCOME.equals(type)) {
-            return new ServerWelcomeMessage(envelope.playerId(), true, "");
+            return new ServerWelcomeMessage(
+                envelope.playerId(), true, "", envelope.ackSequence());
         }
         if (ProtocolMessageType.REJECT.equals(type)) {
             ProtocolPayloads.Reject reject = payloadCodec.decodeReject(envelope.payload());
-            return new ServerWelcomeMessage(envelope.playerId(), false, reject.reason);
+            return new ServerWelcomeMessage(
+                envelope.playerId(), false, reject.reason, envelope.ackSequence());
         }
         if (ProtocolMessageType.ACK.equals(type)) {
             ProtocolPayloads.Ack ack = payloadCodec.decodeAck(envelope.payload());

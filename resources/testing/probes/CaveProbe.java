@@ -74,8 +74,10 @@ public final class CaveProbe implements Probe {
 
     private static Set<String> caveTiles() {
         Set<String> s = new LinkedHashSet<>();
-        s.add("cave_stone");
-        s.add("cave_dirt");
+        // Floor: stone variants painted as winner-take-all blobs by CaveGenerator.
+        s.add("caveCobble");
+        s.add("caveSlab");
+        s.add("caveMossStone");
         // Walls are CaveWallTile instances whose base sprite key is
         // "rockCliff0". CaveWallTile may swap to other rockCliff variants per
         // neighbour bitmask, but getName() reflects the construction name.

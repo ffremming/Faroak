@@ -2,17 +2,27 @@ package resources.world;
 
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.List;
 
+import resources.app.GameContext;
 import resources.app.GamePanel;
 import resources.domain.entity.BaseEntity;
+import resources.domain.entity.Entity;
+import resources.domain.entity.component.HarvestableComponent;
+import resources.domain.entity.component.HealthComponent;
 import resources.domain.inventory.Item;
 import resources.domain.inventory.Stack;
 import resources.domain.object.Boat;
 import resources.domain.object.GameObject;
+import resources.domain.combat.TransientWorldEntity;
+import resources.domain.player.Playable;
 import resources.domain.tile.Tile;
 import resources.geometry.HitBox;
 import resources.net.event.PlaceEntityIntentEvent;
 import resources.net.event.RemoveEntityIntentEvent;
+import resources.world.placement.PlacementAction;
+import resources.world.placement.PlacementRegistry;
+import resources.world.placement.PlacementSpec;
 
 /**
  * Placement, collision, hover, removal. The "what the player can do with the
@@ -100,6 +110,17 @@ public final class WorldInteraction {
         return true;
     }
 
+    /**
+     * Place an entity while skipping the generic solid-collision gate. Use
+     * only for short-lived runtime actors (projectiles/VFX) that may occupy
+     * water tiles or other solid terrain by design. Enforced via the
+     * {@link TransientWorldEntity} marker.
+     */
+    public boolean placeEntityIgnoringTerrainCollision(BaseEntity entity) {
+        if (!(entity instanceof TransientWorldEntity)) return false;
+        return placeEntityNoSolidCheck(entity);
+    }
+
     public void removeEntity(BaseEntity entity) {
         if (entity == null) return;
         if (!panel.authority().canRemove(entity)) return;
@@ -121,10 +142,61 @@ public final class WorldInteraction {
         BaseEntity item = equipped.getItem();
         if (item == null) return false;
         if (!withinPlacementReach()) return false;
+
+        // Boats keep their dedicated water-only path; the surface rule is too
+        // specialised to express cleanly via SurfaceRule.
         BaseEntity representation = ((Item) item).getPhysicalRepresentation();
         if (representation instanceof Boat) {
             return tryPlaceBoat((Boat) representation, equipped);
         }
+
+        // Everything else flows through the placement registry: factory +
+        // surface rule + snap policy + click action.
+        PlacementSpec spec = PlacementRegistry.get(equipped.getName());
+        if (spec == null) return legacyPlaceFromRepresentation(representation, equipped);
+
+        GameContext ctx = panel;
+        double mx = panel.mouse.getMouseWorldX();
+        double my = panel.mouse.getMouseWorldY();
+
+        // PLANT_SEED short-circuits: FarmingService handles entity-spawn and
+        // seed consumption itself; we must NOT decrement the stack here.
+        if (spec.action == PlacementAction.PLANT_SEED) {
+            return spec.action.execute(ctx, panel.player, spec, new Point((int) mx, (int) my));
+        }
+
+        BaseEntity candidate = spec.factory.apply(panel);
+        if (!(candidate instanceof GameObject)) return false;
+        GameObject placed = (GameObject) candidate;
+
+        int px, py;
+        if (spec.snap == PlacementSpec.SnapPolicy.TILE) {
+            Point snap = WorldCoord.snapToTile(mx, my, panel.tileSize);
+            px = snap.x; py = snap.y;
+        } else {
+            px = (int) (mx - placed.getWidth()  / 2.0);
+            py = (int) (my - placed.getHeight() / 2.0);
+        }
+        placed.setWorldX(px);
+        placed.setWorldY(py);
+        placed.getHitBox().updateCoords();
+
+        if (!spec.surface.allows(ctx, px, py, placed.getHitBox())) return false;
+        if (solidCollision(placed.getHitBox())) return false;
+        if (!placeEntity(placed)) return false;
+        equipped.removeOneItem();
+        return true;
+    }
+
+    /**
+     * Legacy fallback for items not in the {@link PlacementRegistry}: place
+     * the equipped item's physical representation free-positioned at the
+     * cursor, preserving the pre-registry behaviour. Kept so items like
+     * "hammer"/"demoHouse"/"block" continue to work via their existing
+     * physicalRepresentations entries without forcing every legacy item
+     * into the registry up front.
+     */
+    private boolean legacyPlaceFromRepresentation(BaseEntity representation, Stack equipped) {
         if (!(representation instanceof GameObject)) return false;
         GameObject source = (GameObject) representation;
         GameObject placed = source.placementCandidate(panel);
@@ -134,6 +206,41 @@ public final class WorldInteraction {
         if (!placeEntity(placed)) return false;
         equipped.removeOneItem();
         return true;
+    }
+
+    /**
+     * Mouse-targeted harvest: chop/mine/harvest the topmost harvestable
+     * entity under the cursor (within the player's interaction reach).
+     * Tool gating still applies via {@link HarvestableComponent#hit}, so
+     * an axe-equipped click on a stone has no effect.
+     */
+    public boolean tryHarvestAtMouse(Playable player, GameContext ctx) {
+        if (player == null) return false;
+        int wx = (int) panel.camera.getWorldX() + panel.mouse.getX();
+        int wy = (int) panel.camera.getWorldY() + panel.mouse.getY();
+        BaseEntity target = harvestableAtPoint(new Point(wx, wy), player.getInteractionHitBox());
+        if (target == null) return false;
+        return player.harvestService().attackEntity(player, ctx, target) != null;
+    }
+
+    /**
+     * Topmost harvestable entity (skipping mobs, which route via
+     * CombatService) whose hitbox contains {@code worldPt} AND intersects
+     * the player's {@code reach}. Walks the sorted-visible list back to
+     * front so overlapping sprites resolve to the one drawn on top.
+     */
+    public BaseEntity harvestableAtPoint(Point worldPt, HitBox reach) {
+        List<Entity> sorted = index.sortedVisible();
+        for (int i = sorted.size() - 1; i >= 0; i--) {
+            BaseEntity e = sorted.get(i);
+            if (!(e instanceof GameObject)) continue;
+            if (e.getComponent(HarvestableComponent.class) == null) continue;
+            if (e.getComponent(HealthComponent.class) != null) continue;
+            if (!e.getHitBox().contains(worldPt)) continue;
+            if (!e.getHitBox().intersects(reach)) continue;
+            return e;
+        }
+        return null;
     }
 
     private boolean withinPlacementReach() {
@@ -219,13 +326,40 @@ public final class WorldInteraction {
             clearPreviewObject();
             return;
         }
+
+        // Items routed through the registry (seeds, plant-on-farmland, future
+        // showGhost=false actions) suppress the ghost entirely. The placement
+        // call site explains via its own UX (e.g. hover-highlight) what's
+        // about to happen.
+        PlacementSpec spec = PlacementRegistry.get(equipped.getName());
+        if (spec != null && !spec.showGhost) {
+            clearPreviewObject();
+            return;
+        }
+
         GameObject source = (GameObject) representation;
         refreshPreviewObject(source);
 
-        previewObject.setWorldX(panel.mouse.getMouseWorldX() - previewObject.getWidth() / 2);
-        previewObject.setWorldY(panel.mouse.getMouseWorldY() - previewObject.getHeight() / 2);
-        previewValid = withinPlacementReach()
-                    && !solidCollision(previewObject.getHitBox());
+        double mx = panel.mouse.getMouseWorldX();
+        double my = panel.mouse.getMouseWorldY();
+        int px, py;
+        if (spec != null && spec.snap == PlacementSpec.SnapPolicy.TILE) {
+            Point snap = WorldCoord.snapToTile(mx, my, panel.tileSize);
+            px = snap.x; py = snap.y;
+        } else {
+            px = (int) (mx - previewObject.getWidth()  / 2.0);
+            py = (int) (my - previewObject.getHeight() / 2.0);
+        }
+        previewObject.setWorldX(px);
+        previewObject.setWorldY(py);
+        previewObject.getHitBox().updateCoords();
+
+        boolean reachable    = withinPlacementReach();
+        boolean surfaceOk    = spec == null
+                            || spec.surface.allows(panel, px, py, previewObject.getHitBox());
+        boolean collisionOk  = !solidCollision(previewObject.getHitBox());
+        previewValid = reachable && surfaceOk && collisionOk;
+
         if (panel.camera != null) {
             panel.camera.setPreviewObject(previewObject);
             panel.camera.setPreviewValid(previewValid);
@@ -306,10 +440,24 @@ public final class WorldInteraction {
             RemoveEntityIntentEvent intent = new RemoveEntityIntentEvent(
                 ent.getName(), ent.getPoint());
             if (!panel.authority().authorize(intent)) continue;
+            boolean removed = chunkSystem.removeEntity(ent);
+            if (!removed) removed = removeFromLoadedChunks(ent);
             index.sortedVisible().remove(ent);
-            chunkSystem.removeEntity(ent);
-            panel.events().publish(intent);
+            index.entities().remove(ent);
+            if (removed) panel.events().publish(intent);
         }
         index.removalQueue().clear();
+    }
+
+    /**
+     * Fallback for entities whose world position moved out of their stored chunk
+     * before a chunk flush ran. Removes by object identity from loaded chunks.
+     */
+    private boolean removeFromLoadedChunks(BaseEntity entity) {
+        boolean removed = false;
+        for (Chunk chunk : index.chunks()) {
+            if (chunk.removeEntity(entity)) removed = true;
+        }
+        return removed;
     }
 }

@@ -2,7 +2,9 @@ package resources.generation.biome;
 
 /**
  * One spawn entry for a biome: which object asset to drop, how often, and how big.
- * Object name must match a folder under resources/images/objects/.
+ * Object name must match a folder named {@code <objectName>/} somewhere in the
+ * nested resources/images/objects/ category tree (the loader finds it by name,
+ * regardless of which category it lives under).
  */
 public class VegetationRule {
 
