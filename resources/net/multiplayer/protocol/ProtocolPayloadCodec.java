@@ -23,7 +23,8 @@ public final class ProtocolPayloadCodec {
             out.writeDouble((join == null) ? 0.0 : join.spawnY);
             out.flush();
             return baos.toByteArray();
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] encodeJoinRequest failed: " + e);
             return new byte[0];
         }
     }
@@ -35,7 +36,8 @@ public final class ProtocolPayloadCodec {
                 in.readBoolean(),
                 in.readDouble(),
                 in.readDouble());
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] decodeJoinRequest failed: " + e);
             return new ProtocolPayloads.JoinRequest(false, 0.0, 0.0);
         }
     }
@@ -50,7 +52,8 @@ public final class ProtocolPayloadCodec {
             out.writeBoolean(input != null && input.right);
             out.flush();
             return baos.toByteArray();
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] encodeInputState failed: " + e);
             return new byte[0];
         }
     }
@@ -59,7 +62,8 @@ public final class ProtocolPayloadCodec {
         try {
             DataInputStream in = stream(payload);
             return new ProtocolPayloads.InputState(in.readBoolean(), in.readBoolean(), in.readBoolean(), in.readBoolean());
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] decodeInputState failed: " + e);
             return new ProtocolPayloads.InputState(false, false, false, false);
         }
     }
@@ -76,7 +80,8 @@ public final class ProtocolPayloadCodec {
             BinaryEnvelopeCodec.writeString(out, (action == null) ? "" : action.argument);
             out.flush();
             return baos.toByteArray();
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] encodeAction failed: " + e);
             return new byte[0];
         }
     }
@@ -89,10 +94,12 @@ public final class ProtocolPayloadCodec {
             double x = in.readDouble();
             double y = in.readDouble();
             String argument = "";
+            // expected: trailing argument string is optional for backward-compatible payloads
             try { argument = BinaryEnvelopeCodec.readString(in); }
             catch (IOException ignored) {}
             return new ProtocolPayloads.ActionRequest(action, hasTarget, x, y, argument);
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] decodeAction failed: " + e);
             return new ProtocolPayloads.ActionRequest(null, false, 0.0, 0.0, "");
         }
     }
@@ -107,7 +114,8 @@ public final class ProtocolPayloadCodec {
             out.writeLong((ack == null) ? 0L : ack.acknowledgedSequence);
             out.flush();
             return baos.toByteArray();
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] encodeAck failed: " + e);
             return new byte[0];
         }
     }
@@ -115,7 +123,8 @@ public final class ProtocolPayloadCodec {
     public ProtocolPayloads.Ack decodeAck(byte[] payload) {
         try {
             return new ProtocolPayloads.Ack(stream(payload).readLong());
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] decodeAck failed: " + e);
             return new ProtocolPayloads.Ack(0L);
         }
     }
@@ -128,7 +137,8 @@ public final class ProtocolPayloadCodec {
             out.writeBoolean(presence != null && presence.joined);
             out.flush();
             return baos.toByteArray();
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] encodePresence failed: " + e);
             return new byte[0];
         }
     }
@@ -137,7 +147,8 @@ public final class ProtocolPayloadCodec {
         try {
             DataInputStream in = stream(payload);
             return new ProtocolPayloads.Presence(BinaryEnvelopeCodec.readString(in), in.readBoolean());
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] decodePresence failed: " + e);
             return new ProtocolPayloads.Presence("", false);
         }
     }
@@ -172,7 +183,8 @@ public final class ProtocolPayloadCodec {
             }
             out.flush();
             return baos.toByteArray();
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] encodeSnapshot failed: " + e);
             return new byte[0];
         }
     }
@@ -207,11 +219,12 @@ public final class ProtocolPayloadCodec {
                         objectId, objectType, worldX, worldY, removed, revision));
                 }
             } catch (IOException ignored) {
-                // Optional trailing section for backward compatibility with
+                // expected: optional trailing section for backward compatibility with
                 // older payloads that only included player states.
             }
             return new ProtocolPayloads.Snapshot(baseline, ack, players, worldObjects);
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] decodeSnapshot failed: " + e);
             return new ProtocolPayloads.Snapshot(false, 0L, new ArrayList<>(), new ArrayList<>());
         }
     }
@@ -223,7 +236,8 @@ public final class ProtocolPayloadCodec {
             BinaryEnvelopeCodec.writeString(out, value);
             out.flush();
             return baos.toByteArray();
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] encodeString failed: " + e);
             return new byte[0];
         }
     }
@@ -231,7 +245,8 @@ public final class ProtocolPayloadCodec {
     private String decodeString(byte[] payload) {
         try {
             return BinaryEnvelopeCodec.readString(stream(payload));
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] decodeString failed: " + e);
             return "";
         }
     }

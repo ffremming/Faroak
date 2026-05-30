@@ -99,7 +99,7 @@ public final class ObjectImageLoader {
         try {
             return FenceSpriteSheet.tile(Integer.parseInt(suffix));
         } catch (NumberFormatException notNumericMask) {
-            return null; // legacy named variant (e.g. "fence_vBfenceStandard")
+            return null; // expected: legacy named variant (e.g. "fence_vBfenceStandard")
         }
     }
 
@@ -193,7 +193,7 @@ public final class ObjectImageLoader {
         try {
             BufferedImage img = ImageIO.read(f);
             if (img != null) sink.add(img);
-        } catch (IOException ignored) { /* skip unreadable file */ }
+        } catch (IOException e) { System.err.println("[ObjectImageLoader] skipping unreadable file " + f + ": " + e); }
     }
 
     // ---- item sprites ----
@@ -215,7 +215,7 @@ public final class ObjectImageLoader {
         BufferedImage image = null;
         if (file.exists()) {
             try { image = ImageIO.read(file); }
-            catch (IOException e) { System.out.println("error reading item " + name); }
+            catch (IOException e) { System.err.println("[ObjectImageLoader] error reading item " + name + " (" + file + "): " + e); }
         } else {
             String alias = fallbackAlias(name);
             if (alias != null && !alias.equals(name)) {
@@ -252,7 +252,7 @@ public final class ObjectImageLoader {
         for (String dir : directions) {
             for (int frame = 1; frame <= 3; frame++) {
                 try { out.add(ImageIO.read(new File(PLAYABLE_DIR + name + "/" + dir + frame + ".png"))); }
-                catch (IOException e) { System.out.println(name + " missing " + dir + frame); }
+                catch (IOException e) { System.err.println("[ObjectImageLoader] " + name + " missing frame " + dir + frame + ": " + e); }
             }
         }
         return out;

@@ -60,7 +60,7 @@ public final class MultiplayerRuntime {
         this.reconnectDelayMs = parseLong(
             "game.multiplayer.reconnectDelayMs", DEFAULT_RECONNECT_DELAY_MS, 0L, 60_000L);
         this.localReconcileEnabled = parseBoolean(
-            "game.multiplayer.reconcileLocal", false);
+            "game.multiplayer.reconcileLocal", true);
     }
 
     public static MultiplayerRuntime createDefault(GameContext ctx) {
@@ -295,7 +295,7 @@ public final class MultiplayerRuntime {
     private static int parsePort(String raw) {
         if (raw == null || raw.isBlank()) return 8080;
         try { return Integer.parseInt(raw.trim()); }
-        catch (NumberFormatException ignored) { return 8080; }
+        catch (NumberFormatException ignored) { return 8080; } // expected: non-numeric port falls back to default
     }
 
     private static boolean parseBoolean(String key, boolean fallback) {
@@ -313,7 +313,7 @@ public final class MultiplayerRuntime {
             long value = Long.parseLong(raw.trim());
             return Math.max(min, Math.min(max, value));
         } catch (NumberFormatException ignored) {
-            return fallback;
+            return fallback; // expected: non-numeric config value falls back to default
         }
     }
 

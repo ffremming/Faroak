@@ -293,7 +293,7 @@ public class GenerationManager {
         String configured = System.getProperty("game.world.seed", "").trim();
         if (!configured.isBlank()) {
             try { return Long.parseLong(configured); }
-            catch (NumberFormatException ignored) {}
+            catch (NumberFormatException ignored) {} // expected: non-numeric seed config falls through to default
         }
         String mode = System.getProperty("game.multiplayer.mode", "offline");
         boolean online = mode != null && !"offline".equalsIgnoreCase(mode.trim());

@@ -32,6 +32,6 @@ public final class WebSocketGatewayMain {
 
     private static int parsePort(String raw) {
         try { return Integer.parseInt(raw); }
-        catch (Exception ignored) { return 8080; }
+        catch (Exception ignored) { return 8080; } // expected: non-numeric port falls back to default
     }
 }

@@ -28,8 +28,11 @@ public class Camera extends PrimitiveEntity {
 
     private static final Font OVERLAY_FONT = new Font("Arial", Font.PLAIN, 7);
 
+    private static final long NANOS_PER_SECOND = 1_000_000_000L;
+    private static final long NANOS_PER_MILLI  = 1_000_000L;
+
     public  int  FPS = 60;
-    public  long splitTime    = 1000000000L / FPS;
+    public  long splitTime    = NANOS_PER_SECOND / FPS;
     public  long nextDrawTime = System.nanoTime() + splitTime;
 
     public boolean testData = false;
@@ -133,11 +136,11 @@ public class Camera extends PrimitiveEntity {
     }
 
     private void recordFrameStats(long startTime, long endTime) {
-        long durationMs = (endTime - startTime) / 1_000_000L;
+        long durationMs = (endTime - startTime) / NANOS_PER_MILLI;
         addbackendPrintData("drawtime ms: " + durationMs);
         addbackendPrintData("FPS: " + observedFPS);
         addbackendPrintData("sort time: " + (observedSortTime / 1000) + " us");
-        addbackendPrintData("chunk update time: " + (observedChunkUpdateTime / 1_000_000) + " ms");
+        addbackendPrintData("chunk update time: " + (observedChunkUpdateTime / NANOS_PER_MILLI) + " ms");
     }
 
     // ---- viewport + follow ----

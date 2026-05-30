@@ -74,14 +74,14 @@ public final class MultiplayerConfig {
         String raw = System.getProperty(key);
         if (raw == null || raw.isBlank()) return fallback;
         try { return Integer.parseInt(raw.trim()); }
-        catch (NumberFormatException ignored) { return fallback; }
+        catch (NumberFormatException ignored) { return fallback; } // expected: non-numeric config value falls back to default
     }
 
     private static double parseDouble(String key, double fallback) {
         String raw = System.getProperty(key);
         if (raw == null || raw.isBlank()) return fallback;
         try { return Double.parseDouble(raw.trim()); }
-        catch (NumberFormatException ignored) { return fallback; }
+        catch (NumberFormatException ignored) { return fallback; } // expected: non-numeric config value falls back to default
     }
 
     private static String newPlayerId() {

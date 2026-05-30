@@ -44,7 +44,8 @@ public final class SqlitePersistenceStore implements PersistenceStore {
                 return Optional.of(new PersistedPlayer(playerId,
                     rs.getDouble(1), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getLong(5)));
             }
-        } catch (SQLException ignored) {
+        } catch (SQLException e) {
+            System.err.println("[SqlitePersistenceStore] loadPlayer failed for " + playerId + ": " + e);
             return Optional.empty();
         }
     }
@@ -64,7 +65,9 @@ public final class SqlitePersistenceStore implements PersistenceStore {
             ps.setDouble(5, player.velocityY);
             ps.setLong(6, player.lastSequence);
             ps.executeUpdate();
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("[SqlitePersistenceStore] savePlayer failed for " + player.playerId + ": " + e);
+        }
     }
 
     @Override
@@ -76,7 +79,8 @@ public final class SqlitePersistenceStore implements PersistenceStore {
                 if (!rs.next()) return Optional.empty();
                 return Optional.ofNullable(rs.getBytes(1));
             }
-        } catch (SQLException ignored) {
+        } catch (SQLException e) {
+            System.err.println("[SqlitePersistenceStore] loadWorldChunk failed for key " + chunkKey + ": " + e);
             return Optional.empty();
         }
     }
@@ -89,7 +93,9 @@ public final class SqlitePersistenceStore implements PersistenceStore {
             ps.setLong(1, chunkKey);
             ps.setBytes(2, snapshotBytes == null ? new byte[0] : snapshotBytes);
             ps.executeUpdate();
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("[SqlitePersistenceStore] saveWorldChunk failed for key " + chunkKey + ": " + e);
+        }
     }
 
     @Override
@@ -101,7 +107,9 @@ public final class SqlitePersistenceStore implements PersistenceStore {
             ps.setString(1, key);
             ps.setString(2, value == null ? "" : value);
             ps.executeUpdate();
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("[SqlitePersistenceStore] putMeta failed for key " + key + ": " + e);
+        }
     }
 
     @Override
@@ -113,7 +121,8 @@ public final class SqlitePersistenceStore implements PersistenceStore {
                 if (!rs.next()) return fallback;
                 return rs.getString(1);
             }
-        } catch (SQLException ignored) {
+        } catch (SQLException e) {
+            System.err.println("[SqlitePersistenceStore] getMeta failed for key " + key + ": " + e);
             return fallback;
         }
     }
@@ -127,19 +136,25 @@ public final class SqlitePersistenceStore implements PersistenceStore {
             ps.setString(3, eventType == null ? "" : eventType);
             ps.setString(4, payload == null ? "" : payload);
             ps.executeUpdate();
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("[SqlitePersistenceStore] appendSessionEvent failed for player " + playerId + " event " + eventType + ": " + e);
+        }
     }
 
     @Override
     public synchronized void checkpoint() {
         try (Statement st = conn.createStatement()) {
             st.execute("PRAGMA wal_checkpoint(TRUNCATE)");
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("[SqlitePersistenceStore] checkpoint failed: " + e);
+        }
     }
 
     @Override
     public synchronized void close() {
         try { conn.close(); }
-        catch (SQLException ignored) {}
+        catch (SQLException e) {
+            System.err.println("[SqlitePersistenceStore] close failed: " + e);
+        }
     }
 }

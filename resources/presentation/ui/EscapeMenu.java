@@ -45,6 +45,25 @@ public final class EscapeMenu extends Component {
 
     private static final Color PANEL_BG = new Color(0, 0, 0, 140);
 
+    // ---- title / sign palette + fonts ----
+    private static final Color TITLE_SHADOW_DARK  = new Color(40, 22, 8, 220);
+    private static final Color TITLE_LIGHT        = new Color(250, 235, 205);
+    private static final Color TITLE_SHADOW_BLACK = new Color(0, 0, 0, 200);
+    private static final Font  SIGN_TITLE_FONT     = new Font("Serif", Font.BOLD, 44);
+    private static final Font  FALLBACK_TITLE_FONT = new Font("Serif", Font.BOLD, 56);
+
+    // ---- wooden button palette + font ----
+    private static final Color BTN_SHADOW      = new Color(0, 0, 0, 130);
+    private static final Color WOOD_LIGHT      = new Color(149, 102, 60);
+    private static final Color WOOD_DARK       = new Color(70, 44, 22);
+    private static final Color GLOW_RGB        = new Color(255, 170, 80);
+    private static final Color GLOW_TRANSPARENT = new Color(255, 170, 80, 0);
+    private static final Color LABEL_SHADOW    = new Color(20, 10, 4, 220);
+    private static final Color LABEL_HIGHLIGHT = new Color(255, 220, 160, 130);
+    private static final Color LABEL_HOVER     = new Color(255, 235, 190);
+    private static final Color LABEL_NORMAL    = new Color(248, 220, 165);
+    private static final Font  BUTTON_FONT     = new Font("Serif", Font.BOLD, 26);
+
     private static final int BTN_W = 320;
     private static final int BTN_H = 70;
     private static final int BTN_GAP = 14;
@@ -146,28 +165,28 @@ public final class EscapeMenu extends Component {
 
             // Title sits on the plank face, below the ropes. The board art
             // reserves roughly the top third for the ropes/nails.
-            Font f = new Font("Serif", Font.BOLD, 44);
+            Font f = SIGN_TITLE_FONT;
             g2.setFont(f);
             int tw = g2.getFontMetrics().stringWidth(title);
             int lh = g2.getFontMetrics().getAscent();
             int tx = sx + (w - tw) / 2;
             int ty = sy + (int) (h * 0.42f) + lh / 2;
-            g2.setColor(new Color(40, 22, 8, 220));
+            g2.setColor(TITLE_SHADOW_DARK);
             g2.drawString(title, tx + 2, ty + 2);
-            g2.setColor(new Color(250, 235, 205));
+            g2.setColor(TITLE_LIGHT);
             g2.drawString(title, tx, ty);
             return;
         }
 
         // Fallback: no sign art — keep a plain floating title.
-        Font titleFont = new Font("Serif", Font.BOLD, 56);
+        Font titleFont = FALLBACK_TITLE_FONT;
         g2.setFont(titleFont);
         int tw = g2.getFontMetrics().stringWidth(title);
         int tx = (panel.width - tw) / 2;
         int ty = panel.height / 2 - (buttons.size() * (BTN_H + BTN_GAP)) / 2 - 50;
-        g2.setColor(new Color(0, 0, 0, 200));
+        g2.setColor(TITLE_SHADOW_BLACK);
         g2.drawString(title, tx + 3, ty + 3);
-        g2.setColor(new Color(250, 235, 205));
+        g2.setColor(TITLE_LIGHT);
         g2.drawString(title, tx, ty);
     }
 
@@ -315,15 +334,15 @@ public final class EscapeMenu extends Component {
         }
 
         void draw(Graphics2D g2, float t) {
-            g2.setColor(new Color(0, 0, 0, 130));
+            g2.setColor(BTN_SHADOW);
             g2.fillRoundRect(x + 4, y + 6, w, h, 14, 14);
 
             if (board != null) {
                 g2.drawImage(board, x, y, w, h, null);
             } else {
                 Paint old = g2.getPaint();
-                g2.setPaint(new GradientPaint(x, y, new Color(149, 102, 60),
-                                              x, y + h, new Color(70, 44, 22)));
+                g2.setPaint(new GradientPaint(x, y, WOOD_LIGHT,
+                                              x, y + h, WOOD_DARK));
                 g2.fillRoundRect(x, y, w, h, 12, 12);
                 g2.setPaint(old);
             }
@@ -337,25 +356,25 @@ public final class EscapeMenu extends Component {
                     Math.max(w, h) * 0.7f,
                     new float[] { 0f, 1f },
                     new Color[] {
-                        new Color(255, 170, 80, glowA),
-                        new Color(255, 170, 80, 0)
+                        new Color(GLOW_RGB.getRed(), GLOW_RGB.getGreen(), GLOW_RGB.getBlue(), glowA),
+                        GLOW_TRANSPARENT
                     }));
                 g2.fillRoundRect(x, y, w, h, 12, 12);
                 g2.setPaint(old);
             }
 
-            Font f = new Font("Serif", Font.BOLD, 26);
+            Font f = BUTTON_FONT;
             g2.setFont(f);
             int lw = g2.getFontMetrics().stringWidth(label);
             int lh = g2.getFontMetrics().getAscent();
             int tx = x + (w - lw) / 2;
             int ty = y + (h + lh) / 2 - 4;
 
-            g2.setColor(new Color(20, 10, 4, 220));
+            g2.setColor(LABEL_SHADOW);
             g2.drawString(label, tx + 1, ty + 2);
-            g2.setColor(new Color(255, 220, 160, 130));
+            g2.setColor(LABEL_HIGHLIGHT);
             g2.drawString(label, tx, ty - 1);
-            g2.setColor(hover ? new Color(255, 235, 190) : new Color(248, 220, 165));
+            g2.setColor(hover ? LABEL_HOVER : LABEL_NORMAL);
             g2.drawString(label, tx, ty);
         }
     }

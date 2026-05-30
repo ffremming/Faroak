@@ -94,7 +94,7 @@ public class BaseEntity implements Tickable, Drawable {
 
     public BufferedImage getImage() {
         try { return panel.imageContainer.getTileImage(name); }
-        catch (Exception e) { e.printStackTrace(); return null; }
+        catch (Exception e) { System.err.println("[BaseEntity] getImage failed for '" + name + "': " + e); return null; }
     }
 
     @Override

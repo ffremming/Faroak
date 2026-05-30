@@ -125,7 +125,8 @@ public final class BoatCombatSpriteSheet {
                     sheet = img;
                     return sheet;
                 }
-            } catch (IOException ignored) {
+            } catch (IOException e) {
+                System.err.println("[BoatCombatSpriteSheet] failed reading sheet candidate " + file + ": " + e);
                 // Try next path.
             }
         }

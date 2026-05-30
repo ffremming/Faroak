@@ -47,6 +47,6 @@ public final class ServerMain {
 
     private static int gatewayPort() {
         try { return Integer.parseInt(System.getProperty("game.multiplayer.gatewayPort", "8080")); }
-        catch (Exception ignored) { return 8080; }
+        catch (Exception ignored) { return 8080; } // expected: non-numeric port falls back to default
     }
 }

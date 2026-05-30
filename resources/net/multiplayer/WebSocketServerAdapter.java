@@ -214,7 +214,7 @@ public final class WebSocketServerAdapter implements MultiplayerServerAdapter {
     private void safeClose(WebSocket ws, String reason) {
         if (ws == null) return;
         try { ws.sendClose(WebSocket.NORMAL_CLOSURE, reason == null ? "bye" : reason); }
-        catch (Exception ignored) {}
+        catch (Exception e) { System.err.println("[WebSocketServerAdapter] safeClose failed (reason=" + reason + "): " + e); }
     }
 
     private static long parseLong(String key, long fallback, long min, long max) {
@@ -224,7 +224,7 @@ public final class WebSocketServerAdapter implements MultiplayerServerAdapter {
             long value = Long.parseLong(raw.trim());
             return Math.max(min, Math.min(max, value));
         } catch (NumberFormatException ignored) {
-            return fallback;
+            return fallback; // expected: non-numeric config value falls back to default
         }
     }
 }

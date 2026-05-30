@@ -50,8 +50,9 @@ public final class WebSocketGatewayServer implements AutoCloseable {
                 Socket socket = server.accept();
                 ClientConnection client = new ClientConnection(socket);
                 client.start();
-            } catch (IOException ignored) {
+            } catch (IOException e) {
                 if (!running) break;
+                System.err.println("[WebSocketGatewayServer] accept failed: " + e);
             }
         }
     }
@@ -59,7 +60,7 @@ public final class WebSocketGatewayServer implements AutoCloseable {
     @Override
     public synchronized void close() {
         running = false;
-        try { if (server != null) server.close(); } catch (IOException ignored) {}
+        try { if (server != null) server.close(); } catch (IOException e) { System.err.println("[WebSocketGatewayServer] server close failed: " + e); }
         List<ClientConnection> snapshot = new ArrayList<>(clients.values());
         clients.clear();
         for (ClientConnection c : snapshot) c.close();
@@ -93,7 +94,8 @@ public final class WebSocketGatewayServer implements AutoCloseable {
                 if (replaced != null && replaced != this) replaced.close();
                 lobby.onConnect(playerId);
                 loop();
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                System.err.println("[WebSocketGatewayServer] client connection failed (playerId=" + playerId + "): " + e);
             } finally {
                 close();
             }
@@ -119,7 +121,7 @@ public final class WebSocketGatewayServer implements AutoCloseable {
                         decoded.serverTick(), decoded.messageType(), decoded.payload());
                     lobby.receive(normalized);
                 } catch (SocketTimeoutException ignored) {
-                    // heartbeat loop: send pending messages even when idle.
+                    // expected: heartbeat loop; send pending messages even when idle.
                 }
             }
         }
@@ -138,6 +140,7 @@ public final class WebSocketGatewayServer implements AutoCloseable {
                 clients.remove(playerId);
             }
             if (playerId != null) lobby.onDisconnect(playerId);
+            // best-effort teardown; socket may already be gone, so failures here are not actionable
             try { frames.writeClose(socket.getOutputStream()); } catch (Exception ignored) {}
             try { socket.close(); } catch (IOException ignored) {}
         }

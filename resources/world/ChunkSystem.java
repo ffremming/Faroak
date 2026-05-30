@@ -96,7 +96,7 @@ public class ChunkSystem {
             parent.addEntity(entity);
             return true;
         } catch (OutOfChunkBounds ignored) {
-            return false;
+            return false; // expected: target chunk not loaded yet; caller retries after world expands
         }
     }
 

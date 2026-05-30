@@ -449,7 +449,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
     private long parseLong(String value, long fallback) {
         if (value == null || value.isBlank()) return fallback;
         try { return Long.parseLong(value.trim()); }
-        catch (NumberFormatException ignored) { return fallback; }
+        catch (NumberFormatException ignored) { return fallback; } // expected: non-numeric config value falls back to default
     }
 
     private void event(String playerId, String type, String payload) {

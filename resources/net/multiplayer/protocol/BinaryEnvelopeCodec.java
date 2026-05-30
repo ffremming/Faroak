@@ -30,7 +30,8 @@ public final class BinaryEnvelopeCodec {
             out.write(payload);
             out.flush();
             return baos.toByteArray();
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[BinaryEnvelopeCodec] encode failed for " + envelope.messageType() + ": " + e);
             return new byte[0];
         }
     }
@@ -51,7 +52,8 @@ public final class BinaryEnvelopeCodec {
             in.readFully(payload);
             if (type == null) return null;
             return new ProtocolEnvelope(version, playerId, sequence, ackSequence, serverTick, type, payload);
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            System.err.println("[BinaryEnvelopeCodec] decode failed for " + bytes.length + "-byte frame: " + e);
             return null;
         }
     }

@@ -99,7 +99,7 @@ public class IntroScreen extends JPanel {
         try {
             File f = new File(path);
             if (f.exists()) return ImageIO.read(f);
-        } catch (IOException ignored) {}
+        } catch (IOException e) { System.err.println("[IntroScreen] tryLoad failed for " + path + ": " + e); }
         return null;
     }
 

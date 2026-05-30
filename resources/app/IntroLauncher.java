@@ -59,7 +59,7 @@ public class IntroLauncher {
             frame.setLocation(Integer.parseInt(sx), Integer.parseInt(sy));
             return true;
         } catch (NumberFormatException ignored) {
-            return false;
+            return false; // expected: non-numeric window position config is ignored
         }
     }
 

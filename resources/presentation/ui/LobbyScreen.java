@@ -160,7 +160,7 @@ public class LobbyScreen extends JPanel {
         try {
             File f = new File(path);
             if (f.exists()) return ImageIO.read(f);
-        } catch (IOException ignored) {}
+        } catch (IOException e) { System.err.println("[LobbyScreen] tryLoad failed for " + path + ": " + e); }
         return null;
     }
 
@@ -193,7 +193,7 @@ public class LobbyScreen extends JPanel {
         System.setProperty("game.multiplayer.playerId", playerName);
         System.setProperty("game.multiplayer.backend", DEFAULT_BACKEND);
         System.setProperty("game.multiplayer.gateway.enabled", "true");
-        System.setProperty("game.multiplayer.reconcileLocal", "false");
+        System.setProperty("game.multiplayer.reconcileLocal", "true");
         // Match local player movement so remote avatars don't appear to move
         // in slow motion relative to what each client controls.
         System.setProperty("game.multiplayer.serverMoveSpeedPerTick", "10.0");

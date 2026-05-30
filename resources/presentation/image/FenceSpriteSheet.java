@@ -70,7 +70,8 @@ public final class FenceSpriteSheet {
                     sheet = img;
                     return sheet;
                 }
-            } catch (IOException ignored) {
+            } catch (IOException e) {
+                System.err.println("[FenceSpriteSheet] failed reading sheet candidate " + f + ": " + e);
                 // try next candidate path
             }
         }

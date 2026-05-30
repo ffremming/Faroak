@@ -90,7 +90,7 @@ public class LoadingScreen extends JPanel {
             long elapsed = System.currentTimeMillis() - startMs;
             long remaining = MIN_DISPLAY_MS - elapsed;
             if (remaining > 0) {
-                try { Thread.sleep(remaining); } catch (InterruptedException ignored) {}
+                try { Thread.sleep(remaining); } catch (InterruptedException ignored) {} // expected: benign interrupt of minimum-display delay
             }
 
             SwingUtilities.invokeLater(() -> {
@@ -131,7 +131,7 @@ public class LoadingScreen extends JPanel {
         try {
             File f = new File(ASSETS + name);
             if (f.exists()) return ImageIO.read(f);
-        } catch (IOException ignored) {}
+        } catch (IOException e) { System.err.println("[LoadingScreen] tryLoad failed for " + name + ": " + e); }
         return null;
     }
 

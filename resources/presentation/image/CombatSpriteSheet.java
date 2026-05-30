@@ -101,7 +101,8 @@ public final class CombatSpriteSheet {
                     sheet = img;
                     return sheet;
                 }
-            } catch (IOException ignored) {
+            } catch (IOException e) {
+                System.err.println("[CombatSpriteSheet] failed reading sheet candidate " + f + ": " + e);
                 // try next candidate path
             }
         }
