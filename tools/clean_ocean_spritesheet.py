@@ -46,6 +46,14 @@ ROW_GROUPS = {
     7: "details",  # foam edges/corners, bubbles, sparkles, ripples, drift
 }
 
+TILE_OUT = os.path.join(ROOT, "resources/images/tile")
+
+# Per-tier alpha so the seabed shows through. Deep stays opaque.
+TIER_ALPHA = {"shallow": 0.55, "medium": 0.78, "deep": 1.0}
+
+# How many animation frames the engine expects per water tier (resolver uses 0..2).
+FRAMES_PER_TIER = 3
+
 
 def is_magenta(arr):
     """Boolean mask of magenta-keyed pixels. Robust to the gradient in the key
@@ -95,6 +103,15 @@ def fit_into(cell, size):
     return canvas
 
 
+def apply_alpha(cell, factor):
+    """Multiply the alpha channel by factor (keeps already-transparent pixels)."""
+    if factor >= 0.999:
+        return cell
+    a = np.array(cell.convert("RGBA"))
+    a[:, :, 3] = (a[:, :, 3].astype(float) * factor).round().astype("uint8")
+    return Image.fromarray(a, "RGBA")
+
+
 def main():
     src = Image.open(SRC).convert("RGBA")
     ncols, nrows = len(COLS), len(ROWS)
@@ -139,6 +156,41 @@ def main():
         print("OK: all purple removed.")
     else:
         raise SystemExit(f"FAIL: {opaque_magenta} opaque magenta pixels remain")
+
+    # --- Emit engine-facing tile sprites with baked per-tier alpha. ---
+    os.makedirs(TILE_OUT, exist_ok=True)
+
+    def cleaned_cell(ri, ci, alpha=1.0, fit=False):
+        (y0, y1) = ROWS[ri]
+        (x0, x1) = COLS[ci]
+        c = clean_cell(src.crop((x0, y0, x1 + 1, y1 + 1)))
+        c = fit_into(c, TILE) if fit else c.resize((TILE, TILE), Image.NEAREST)
+        return apply_alpha(c, alpha)
+
+    # Water animation frames from each tier's primary row, first 3 columns.
+    tier_rows = {"deep": 5, "medium": 4, "shallow": 2}
+    tier_name = {"deep": "ocean", "medium": "mediumWater", "shallow": "shallowWater"}
+    for tier, row in tier_rows.items():
+        for f in range(FRAMES_PER_TIER):
+            cleaned_cell(row, f, TIER_ALPHA[tier]).save(
+                os.path.join(TILE_OUT, f"{tier_name[tier]}{f}.png"))
+
+    # Seabed variants: row 0 (light), first 8 columns -> seabed0..7.
+    for i in range(8):
+        cleaned_cell(0, i, 1.0).save(os.path.join(TILE_OUT, f"seabed{i}.png"))
+
+    # Foam border + corner from detail row 7. The loader's rotation logic derives
+    # the other sides/corners, so B1 must be a VERTICAL (west-facing) edge to match
+    # the existing wetBeachB1 convention; C0 is one corner.
+    cleaned_cell(7, 2, 1.0, fit=True).save(os.path.join(TILE_OUT, "oceanFoamB1.png"))
+    cleaned_cell(7, 4, 1.0, fit=True).save(os.path.join(TILE_OUT, "oceanFoamC0.png"))
+
+    # Detail overlays: bubbles, sparkle, ripple ring.
+    cleaned_cell(7, 10, 1.0, fit=True).save(os.path.join(TILE_OUT, "oceanDetail0.png"))
+    cleaned_cell(7, 12, 1.0, fit=True).save(os.path.join(TILE_OUT, "oceanDetail1.png"))
+    cleaned_cell(7, 14, 1.0, fit=True).save(os.path.join(TILE_OUT, "oceanDetail2.png"))
+
+    print("Emitted engine tile sprites into", TILE_OUT)
 
 
 if __name__ == "__main__":
