@@ -63,6 +63,11 @@ public final class CraftingOutputSlot extends Component {
      * Commit the recipe: produce the result and merge it onto the player's
      * cursor. If the cursor already holds the same item, top it up; if it
      * holds something else, refuse rather than overwrite (Minecraft rule).
+     *
+     * Pre-flight capacity check: if the produced stack cannot fit entirely
+     * into hand + inventory, the craft is refused (no ingredient consumption,
+     * no item loss). Without this, calling addStack() twice could silently
+     * destroy any overflow that exceeded both destinations.
      */
     private void takeOutput() {
         Stack hand = panel.player.getTempInHand();
@@ -72,6 +77,10 @@ public final class CraftingOutputSlot extends Component {
         boolean handEmpty = (hand == null) || hand.isEmpty();
         if (!handEmpty && !hand.getName().equals(preview.getName())) return;
 
+        int needed = preview.getAmount();
+        int capacity = freeCapacityFor(preview.getName(), hand);
+        if (capacity < needed) return; // refuse rather than destroy items
+
         Stack produced = service.craft();
         if (produced == null || produced.isEmpty()) return;
 
@@ -79,11 +88,44 @@ public final class CraftingOutputSlot extends Component {
             panel.player.setTempInHand(produced);
         } else {
             hand.addStack(produced);
-            // any overflow remains in `produced`; drop it into the player's
-            // main inventory so we never destroy items.
+            // capacity check above guarantees the inventory can absorb any
+            // overflow — but assert it anyway so a future change to addStack
+            // can't silently regress to item loss.
             if (!produced.isEmpty()) {
                 panel.player.getInventory().addStack(produced);
             }
         }
+    }
+
+    /**
+     * Total slots-worth-of-room for an item named {@code itemName} across
+     * the cursor stack (if it matches) and the main inventory. Counts:
+     *  - the empty cursor: stackLimit (if hand is empty/null)
+     *  - the same-name cursor: stackLimit - amount
+     *  - each "empty" slot in the inventory: stackLimit
+     *  - each same-name slot: stackLimit - amount
+     */
+    private int freeCapacityFor(String itemName, Stack hand) {
+        int capacity = 0;
+        boolean handEmpty = (hand == null) || hand.isEmpty();
+        if (handEmpty) {
+            // Cursor can carry up to stackLimit of anything when empty. Use the
+            // limit from the preview itself (same type) so we don't need an
+            // ItemType lookup here.
+            capacity += service.output().getStackLimit();
+        } else if (itemName.equals(hand.getName())) {
+            capacity += hand.getStackLimit() - hand.getAmount();
+        }
+        var inv = panel.player.getInventory();
+        for (int i = 0; i < inv.getSize(); i++) {
+            Stack s = inv.getStack(i);
+            if (s == null) continue;
+            if (s.isEmpty() || "empty".equals(s.getName())) {
+                capacity += service.output().getStackLimit();
+            } else if (itemName.equals(s.getName())) {
+                capacity += s.getStackLimit() - s.getAmount();
+            }
+        }
+        return capacity;
     }
 }

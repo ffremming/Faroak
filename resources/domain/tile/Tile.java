@@ -103,6 +103,20 @@ public class Tile extends BaseEntity {
         borderResolver.resolveInto(images, frame);
     }
 
+    /**
+     * Swap this tile's sprite in place: change the name and force the image
+     * stack to re-resolve from the new name on the next draw. Used by in-place
+     * tile mutation (e.g. hoeing grass into farmland). Callers that mutate a
+     * tile inside a loaded chunk must also invalidate that chunk's render bake
+     * (see {@link resources.world.WorldInteraction}) — the static tile layer is
+     * cached per chunk and won't pick up the change otherwise.
+     */
+    public void retexture(String newName) {
+        setName(newName);
+        images.clear();
+        lastBuiltFrame = -1;
+    }
+
     // ---- neighbours ----
 
     public Tile[] getNeighbors() { return new Tile[]{north, east, south, west}; }

@@ -179,6 +179,8 @@ public class WorkingMemory implements WorldRuntime {
     @Override public ArrayList<BaseEntity> getVisibleTiles(Camera c)    { return visibility.visibleTiles(c); }
 
     @Override public Tile           getTile(Point p)                     { return interaction.tileAt(p); }
+    @Override public resources.domain.farming.FarmTile tillTileAt(Point p) { return interaction.tillTileAt(p); }
+    @Override public resources.domain.farming.FarmTile farmTileAt(Point p) { return interaction.farmTileAt(p); }
     @Override public boolean        solidCollision(HitBox hb)            { return interaction.solidCollision(hb); }
     @Override public boolean        solidCollision(HitBox hb, BaseEntity mover) { return interaction.solidCollision(hb, mover); }
     @Override public ArrayList<BaseEntity> getEntitiesCollidedWith(HitBox hb) { return interaction.entitiesCollidedWith(hb); }

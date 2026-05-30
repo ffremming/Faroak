@@ -6,8 +6,7 @@ import resources.app.GameContext;
 import resources.domain.entity.BaseEntity;
 import resources.domain.entity.component.GrowableComponent;
 import resources.domain.farming.Crop;
-import resources.domain.farming.Farmland;
-import resources.domain.farming.FarmingService;
+import resources.domain.farming.FarmTile;
 import resources.domain.inventory.Inventory;
 import resources.domain.inventory.Item;
 import resources.domain.inventory.Stack;
@@ -17,11 +16,13 @@ import resources.testing.Logger;
 import resources.testing.Probe;
 import resources.testing.ProbeResult;
 import resources.testing.TestHarness;
+import resources.world.placement.TileRules;
 
 /**
- * Drives the full farming flow:
- *   1. Equip a hoe and till the tile under the player into Farmland.
- *   2. Swap to seeds_wheat and plant on that Farmland.
+ * Drives the full tile-layer farming flow:
+ *   1. Equip a hoe and till the tile under the player into a {@link FarmTile}
+ *      (in place on the tile layer — no Farmland object is spawned).
+ *   2. Swap to seeds and plant on that FarmTile.
  *   3. Tick enough times to mature the crop (stages * ticks-per-stage).
  *
  * Skips cleanly if the player isn't standing on a tillable tile — the default
@@ -33,10 +34,9 @@ public final class FarmingProbe implements Probe {
     private static final Logger LOG = Logger.forClass(FarmingProbe.class);
 
     private static final String HOE   = "hoe";
-    // FarmingService.tryPlantOnFarmland matches items prefixed "crop_" (the
-    // crop registry key). The inventory's "seeds_wheat" item is a placeable
-    // alias only, not a seed for the planting service.
-    private static final String SEEDS = "crop_wheat";
+    // FarmingService matches items prefixed "seeds_" / "crop_". Plant the
+    // inventory seed item directly.
+    private static final String SEEDS = "seeds_wheat";
     /** {@code Crop.STAGES * Crop.TICKS_PER_STAGE = 4 * 600 = 2400} */
     private static final int GROWTH_TICKS = 2400;
 
@@ -50,29 +50,28 @@ public final class FarmingProbe implements Probe {
 
         // --- hoe ---
         equipItem(player, HOE, 1);
-        int farmlandBefore = countOf(ctx, Farmland.class);
         if (!relocateToTillable(ctx, player)) {
             return ProbeResult.skip(name() + " no tillable tile within scan radius");
         }
-        boolean hoed = FarmingService.tryHoeTile(player, ctx);
-        if (!hoed) {
+        Point at = player.getPoint();
+        FarmTile tilled = ctx.world().tillTileAt(at);
+        if (tilled == null) {
             return ProbeResult.skip(name() + " could not till tile under player (non-tillable terrain)");
         }
-        ctx.world().update(player.getPoint());
-        int farmlandAfter = countOf(ctx, Farmland.class);
-        if (farmlandAfter <= farmlandBefore) {
-            return ProbeResult.fail(name() + " hoe succeeded but no Farmland appeared",
-                String.format("before=%d, after=%d", farmlandBefore, farmlandAfter));
+        ctx.world().update(at);
+        if (!(ctx.world().getTile(at) instanceof FarmTile)) {
+            return ProbeResult.fail(name() + " hoe succeeded but tile is not a FarmTile",
+                "tile=" + describe(ctx, at));
         }
 
         // --- plant ---
         equipItem(player, SEEDS, 4);
         int cropsBefore = countOf(ctx, Crop.class);
-        boolean planted = FarmingService.tryPlantOnFarmland(player, ctx);
+        boolean planted = resources.domain.farming.FarmingService.plantSeedAt(player, ctx, at);
         if (!planted) {
-            return ProbeResult.fail(name() + " plant failed despite farmland present");
+            return ProbeResult.fail(name() + " plant failed despite FarmTile present");
         }
-        ctx.world().update(player.getPoint());
+        ctx.world().update(at);
         int cropsAfter = countOf(ctx, Crop.class);
         if (cropsAfter <= cropsBefore) {
             return ProbeResult.fail(name() + " plant succeeded but no Crop appeared",
@@ -88,19 +87,17 @@ public final class FarmingProbe implements Probe {
         int stage = g == null ? -1 : g.currentStage();
 
         String detail = String.format(
-            "farmland-added=%d, crop-added=%d, ticks=%d, final-stage=%d, mature=%s",
-            farmlandAfter - farmlandBefore, cropsAfter - cropsBefore,
-            GROWTH_TICKS, stage, mature);
+            "crop-added=%d, ticks=%d, final-stage=%d, mature=%s",
+            cropsAfter - cropsBefore, GROWTH_TICKS, stage, mature);
         LOG.info(detail);
         if (!mature) return ProbeResult.fail(name() + " crop did not mature", detail);
         return ProbeResult.pass(name(), detail);
     }
 
     /**
-     * Scan a spiral of nearby tile centres for plains/forest/savanna terrain
-     * and teleport the player onto one if found. Earlier probes may have
-     * shifted the player onto water/mountain, so we re-anchor on solid farm
-     * ground before driving the hoe service.
+     * Scan a spiral of nearby tile centres for tillable terrain and teleport the
+     * player onto one if found. Earlier probes may have shifted the player onto
+     * water/mountain, so we re-anchor on solid farm ground before hoeing.
      */
     private static boolean relocateToTillable(GameContext ctx, Playable player) {
         int ts = ctx.tileSize();
@@ -113,7 +110,7 @@ public final class FarmingProbe implements Probe {
                     Point p = new Point(cx + dx * ts, cy + dy * ts);
                     Tile t = ctx.world().getTile(p);
                     if (t == null) continue;
-                    if (isTillable(t.getName())) {
+                    if (TileRules.isTillable(t.getName())) {
                         player.setWorldX(p.x);
                         player.setWorldY(p.y);
                         player.resetInteractionHitBox();
@@ -126,9 +123,9 @@ public final class FarmingProbe implements Probe {
         return false;
     }
 
-    private static boolean isTillable(String name) {
-        return name != null
-            && (name.startsWith("plains") || name.startsWith("forest") || name.startsWith("savanna"));
+    private static String describe(GameContext ctx, Point p) {
+        Tile t = ctx.world().getTile(p);
+        return t == null ? "null" : t.getName();
     }
 
     private static void equipItem(Playable player, String itemName, int amount) {

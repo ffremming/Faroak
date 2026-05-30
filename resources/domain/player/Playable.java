@@ -8,7 +8,6 @@ import resources.domain.combat.CombatService;
 import resources.domain.combat.WeaponProfile;
 import resources.domain.entity.BaseEntity;
 import resources.domain.entity.component.HealthComponent;
-import resources.domain.farming.FarmingService;
 import resources.domain.inventory.HarvestService;
 import resources.domain.inventory.Inventory;
 import resources.domain.inventory.Item;
@@ -71,6 +70,7 @@ public class Playable extends Moveable {
         addItem(new Item(panel, "seeds_glowcap"), 16);
         addItem(new Item(panel, "seeds_manaberry"), 16);
         addItem(new Item(panel, "seeds_sungourd"), 16);
+        seedHotbarForTests();
 
         // Health + spawn tracking. Spawn point captured here so respawn returns
         // the player to where they entered the world.
@@ -157,11 +157,10 @@ public class Playable extends Moveable {
      */
     public void interact() {
         if (lifecycle != null && lifecycle.isDead()) return;
-        // Tool-aware fast paths first; if no handler claims the action, fall back
-        // to generic GameObject.interact() so portals, barrels, etc., still work.
-        if (FarmingService.tryHoeTile(this, panel))           return;
-        if (FarmingService.tryPlantOnFarmland(this, panel))   return;
-
+        // Spacebar handles only NON-targeted interactions: open/use the nearest
+        // GameObject in reach (chest, crafting table, barrel, portal, ...).
+        // All cursor-targeted actions (hoe, plant, place, harvest) are driven by
+        // the mouse click chain instead.
         HitBox reach = getInteractionHitBox();
         // Snapshot first — interact() can swap the world (portals fire a
         // DimensionChangeEvent that replaces the entity list).
@@ -333,5 +332,15 @@ public class Playable extends Moveable {
 
     public void setTempInHand(Stack tempInHand) {
         this.tempInHand = tempInHand;
+    }
+
+    private void seedHotbarForTests() {
+        String testItem = System.getProperty("game.test.hotbarItem", "").trim();
+        if (testItem.isBlank() || "empty".equalsIgnoreCase(testItem)) return;
+        if (!"true".equalsIgnoreCase(System.getProperty("game.test.autostart", "false"))) return;
+        Stack slot = inventory.getHotbarStack(0);
+        if (slot != null && !slot.isEmpty()) return;
+        inventory.setStack(Inventory.HOTBAR_OFFSET, new Stack(panel, new Item(panel, testItem), 64));
+        inventory.setIndex(0);
     }
 }

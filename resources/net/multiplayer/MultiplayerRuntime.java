@@ -36,6 +36,7 @@ public final class MultiplayerRuntime {
     private final ReplicatedObjectDirectory worldObjects;
     private final boolean reconnectEnabled;
     private final long reconnectDelayMs;
+    private final boolean localReconcileEnabled;
 
     private long sequence;
     private boolean started;
@@ -58,6 +59,8 @@ public final class MultiplayerRuntime {
             "game.multiplayer.reconnect.enabled", true);
         this.reconnectDelayMs = parseLong(
             "game.multiplayer.reconnectDelayMs", DEFAULT_RECONNECT_DELAY_MS, 0L, 60_000L);
+        this.localReconcileEnabled = parseBoolean(
+            "game.multiplayer.reconcileLocal", false);
     }
 
     public static MultiplayerRuntime createDefault(GameContext ctx) {
@@ -74,6 +77,34 @@ public final class MultiplayerRuntime {
 
     public boolean isOnline() {
         return config.online();
+    }
+
+    public boolean isJoined() {
+        return joined;
+    }
+
+    public int remotePlayerCount() {
+        return remotes.size();
+    }
+
+    public int replicatedObjectCount() {
+        return worldObjects.size();
+    }
+
+    public double remotePlayersMeanX() {
+        return remotes.meanX();
+    }
+
+    public double remotePlayersMeanY() {
+        return remotes.meanY();
+    }
+
+    public long lastAckedSequence() {
+        return lastAckedSeq;
+    }
+
+    public long localSequence() {
+        return sequence;
     }
 
     public void update(double delta) {
@@ -139,7 +170,10 @@ public final class MultiplayerRuntime {
 
     private void sendJoinIfPossible() {
         if (closed || joined || joinSent || !adapter.isConnected()) return;
-        adapter.submit(new ClientJoinMessage(config.playerId()));
+        boolean hasSpawn = ctx.player() != null;
+        double spawnX = hasSpawn ? ctx.player().getWorldX() : 0.0;
+        double spawnY = hasSpawn ? ctx.player().getWorldY() : 0.0;
+        adapter.submit(new ClientJoinMessage(config.playerId(), hasSpawn, spawnX, spawnY));
         joinSent = true;
     }
 
@@ -186,7 +220,9 @@ public final class MultiplayerRuntime {
                 ServerSnapshotMessage snapshot = (ServerSnapshotMessage) message;
                 remotes.applySnapshot(snapshot.tick(), snapshot.baseline(), snapshot.players(), config.playerId());
                 worldObjects.applySnapshot(snapshot.baseline(), snapshot.worldObjects());
-                reconcileLocal(snapshot.players(), snapshot.acknowledgedSequence());
+                if (localReconcileEnabled) {
+                    reconcileLocal(snapshot.players(), snapshot.acknowledgedSequence());
+                }
             } else if (message instanceof ServerAckMessage) {
                 onAck((ServerAckMessage) message);
             } else if (message instanceof ServerPlayerPresenceMessage) {

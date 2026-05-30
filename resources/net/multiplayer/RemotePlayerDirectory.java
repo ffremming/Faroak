@@ -67,4 +67,26 @@ final class RemotePlayerDirectory {
             if (avatar != null) ctx.world().removeEntity(avatar);
         }
     }
+
+    int size() {
+        return byPlayerId.size();
+    }
+
+    double meanX() {
+        if (byPlayerId.isEmpty()) return 0.0;
+        double sum = 0.0;
+        for (RemotePlayerAvatar avatar : byPlayerId.values()) {
+            sum += avatar.getWorldX();
+        }
+        return sum / byPlayerId.size();
+    }
+
+    double meanY() {
+        if (byPlayerId.isEmpty()) return 0.0;
+        double sum = 0.0;
+        for (RemotePlayerAvatar avatar : byPlayerId.values()) {
+            sum += avatar.getWorldY();
+        }
+        return sum / byPlayerId.size();
+    }
 }

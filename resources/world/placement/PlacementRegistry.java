@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import resources.app.GamePanel;
-import resources.domain.farming.Farmland;
 import resources.domain.object.Barrel;
 import resources.domain.object.CraftingTable;
 import resources.domain.object.Fence;
@@ -56,14 +55,21 @@ public final class PlacementRegistry {
             null,
             true));
 
+        // Hoe + legacy "farmland" item: both till the tile under the cursor into
+        // FarmTile soil, in place on the tile layer. No ghost (the tile itself
+        // changes), no entity factory.
+        register(tillerSpec("hoe"));
+        register(tillerSpec("farmland"));
+
+        // Watering can: waters the FarmTile under the cursor.
         register(new PlacementSpec(
-            "farmland",
-            p -> new Farmland(p, 0, 0),
-            SurfaceRule.TILLABLE,
+            "watering_can",
+            p -> null,
+            SurfaceRule.ANY,
             SnapPolicy.TILE,
-            PlacementAction.PLACE_ENTITY,
+            PlacementAction.WATER_TILE,
             null,
-            true));
+            false));
 
         register(new PlacementSpec(
             "torch",
@@ -92,36 +98,38 @@ public final class PlacementRegistry {
             null,
             true));
 
-        register(new PlacementSpec(
-            "seeds_wheat",
-            p -> null,
-            SurfaceRule.ON_FARMLAND_UNPLANTED,
-            SnapPolicy.TILE,
-            PlacementAction.PLANT_SEED,
-            null,
-            false));
-
-        register(new PlacementSpec(
-            "seeds_carrot",
-            p -> null,
-            SurfaceRule.ON_FARMLAND_UNPLANTED,
-            SnapPolicy.TILE,
-            PlacementAction.PLANT_SEED,
-            null,
-            false));
+        register(seedSpec("seeds_wheat"));
+        register(seedSpec("seeds_carrot"));
 
         // Fantasy crop seeds (see FARM_CROPS.md) — same PLANT_SEED behaviour.
         for (String c : new String[]{"emberwheat","frostbloom","glowcap","manaberry",
                                      "ironvine","sungourd","bloodroot","stardrop"}) {
-            register(new PlacementSpec(
-                "seeds_" + c,
-                p -> null,
-                SurfaceRule.ON_FARMLAND_UNPLANTED,
-                SnapPolicy.TILE,
-                PlacementAction.PLANT_SEED,
-                null,
-                false));
+            register(seedSpec("seeds_" + c));
         }
+    }
+
+    /** A tool that tills the tillable tile under the cursor; no ghost. */
+    private static PlacementSpec tillerSpec(String itemName) {
+        return new PlacementSpec(
+            itemName,
+            p -> null,
+            SurfaceRule.TILLABLE,
+            SnapPolicy.TILE,
+            PlacementAction.TILL_TILE,
+            null,
+            false);
+    }
+
+    /** A seed item plants on an unplanted FarmTile at the cursor; no ghost. */
+    private static PlacementSpec seedSpec(String itemName) {
+        return new PlacementSpec(
+            itemName,
+            p -> null,
+            SurfaceRule.ON_FARMTILE_UNPLANTED,
+            SnapPolicy.TILE,
+            PlacementAction.PLANT_SEED,
+            null,
+            false);
     }
 
     private PlacementRegistry() {}

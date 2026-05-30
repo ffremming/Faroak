@@ -27,6 +27,7 @@ public final class Crop extends GameObject {
 
     private final String baseName;
     private int currentStage = 0;
+    private Runnable onRemoved;
 
     public Crop(GamePanel panel, String cropName, int worldX, int worldY) {
         super(panel,
@@ -55,6 +56,15 @@ public final class Crop extends GameObject {
         currentStage = newStage;
         setName(baseName + "_stage" + newStage);
         getImage(); // refresh sprite stack from the image container
+    }
+
+    /** Register a callback fired when this crop is removed from the world
+     *  (harvested). Used by {@link FarmTile} to free the tile for replanting. */
+    public void onRemoved(Runnable callback) { this.onRemoved = callback; }
+
+    @Override
+    public void remove() {
+        if (onRemoved != null) onRemoved.run();
     }
 
     /** Current stage (0..stageCount-1). */

@@ -58,7 +58,8 @@ public class UserInterface extends Container{
         
 
         inventoryUI = new PlayerInventory(panel,rows,cols,400,300,inventory);
-        inventoryUI.setPadding(20);
+        // Padding inherited from ItemContainer.PANEL_PADDING so the player
+        // inventory matches the chest baseline; no per-call override.
         add(inventoryUI);
         
         

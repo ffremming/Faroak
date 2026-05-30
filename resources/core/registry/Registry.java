@@ -54,6 +54,9 @@ public class Registry<T> {
 
     public Collection<Identifier> ids() { return Collections.unmodifiableCollection(entries.keySet()); }
 
+    /** Clear all entries. Intended for full runtime re-bootstrap in tests/menus. */
+    public void clear() { entries.clear(); }
+
     public int size() { return entries.size(); }
 
     public String name() { return name; }

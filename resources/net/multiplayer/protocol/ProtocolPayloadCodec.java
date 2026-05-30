@@ -14,6 +14,32 @@ import resources.net.multiplayer.MultiplayerAction;
  */
 public final class ProtocolPayloadCodec {
 
+    public byte[] encodeJoinRequest(ProtocolPayloads.JoinRequest join) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DataOutputStream out = new DataOutputStream(baos);
+            out.writeBoolean(join != null && join.hasSpawn);
+            out.writeDouble((join == null) ? 0.0 : join.spawnX);
+            out.writeDouble((join == null) ? 0.0 : join.spawnY);
+            out.flush();
+            return baos.toByteArray();
+        } catch (IOException ignored) {
+            return new byte[0];
+        }
+    }
+
+    public ProtocolPayloads.JoinRequest decodeJoinRequest(byte[] payload) {
+        try {
+            DataInputStream in = stream(payload);
+            return new ProtocolPayloads.JoinRequest(
+                in.readBoolean(),
+                in.readDouble(),
+                in.readDouble());
+        } catch (IOException ignored) {
+            return new ProtocolPayloads.JoinRequest(false, 0.0, 0.0);
+        }
+    }
+
     public byte[] encodeInputState(ProtocolPayloads.InputState input) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();

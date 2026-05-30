@@ -193,6 +193,10 @@ public class LobbyScreen extends JPanel {
         System.setProperty("game.multiplayer.playerId", playerName);
         System.setProperty("game.multiplayer.backend", DEFAULT_BACKEND);
         System.setProperty("game.multiplayer.gateway.enabled", "true");
+        System.setProperty("game.multiplayer.reconcileLocal", "false");
+        // Match local player movement so remote avatars don't appear to move
+        // in slow motion relative to what each client controls.
+        System.setProperty("game.multiplayer.serverMoveSpeedPerTick", "10.0");
 
         if (mode == Mode.HOST) {
             System.setProperty("game.multiplayer.mode", "host");

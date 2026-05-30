@@ -28,8 +28,10 @@ public final class CraftingTableUI extends Container {
     private static final int GUTTER    = 10;
     private static final int OUTPUT_GAP = 40;
 
-    private static final Color BG = new Color(60, 45, 30, 235);
-    private static final Color FG = new Color(150, 120, 70);
+    // Shared chest house style — keeps the crafting panel visually consistent
+    // with the chest / barrel / player inventory.
+    private static final Color BG = ItemContainer.PANEL_BG;
+    private static final Color FG = ItemContainer.PANEL_FG;
 
     private final ItemContainer inputGrid;
     private final CraftingOutputSlot outputSlot;

@@ -76,6 +76,7 @@ public class GamePanel extends JPanel implements GameContext {
     private final BackgroundMusicPlayer music  = new BackgroundMusicPlayer(audio);
     private DimensionService       dimensions;
     private MultiplayerRuntime     multiplayer;
+    private TestTelemetryServer    telemetry;
 
     public final JFrame frame;
     final boolean newGame;
@@ -128,6 +129,7 @@ public class GamePanel extends JPanel implements GameContext {
             (short) (screenWidth + 400), (short) (screenHeight + 400));
         resources.presentation.ui.LoadingScreen.setStatus("Initializing multiplayer");
         multiplayer = MultiplayerRuntime.createDefault(this);
+        telemetry = TestTelemetryServer.startIfConfigured(this);
         resources.presentation.ui.LoadingScreen.setStatus("Finalizing");
     }
 
@@ -166,6 +168,7 @@ public class GamePanel extends JPanel implements GameContext {
     public void stopGameThread() {
         if (loop != null) loop.stop();
         if (multiplayer != null) multiplayer.close();
+        if (telemetry != null) telemetry.close();
         music.close();
     }
 
@@ -176,8 +179,10 @@ public class GamePanel extends JPanel implements GameContext {
         if (multiplayer != null) multiplayer.update(delta);
         music.syncSettings();
         world.simulate();
-        // Time-of-day frozen for now (light changes disabled). Re-enable to resume the day-night cycle.
-        // clock.tick();
+        // Clock drives water-wave animation, plant growth, and day-night mob spawning.
+        // The day-night LIGHT cycle stays frozen independently in LightingPass.ambientAlpha()
+        // (it hard-returns 0 = full daylight), so ticking here does not darken the scene.
+        clock.tick();
     }
 
     @Override

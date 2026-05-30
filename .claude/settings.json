@@ -10,7 +10,21 @@
       "Bash(java -cp out resources.testing.probes.ChestPairProbe)",
       "Bash(sips -g pixelWidth -g pixelHeight /tmp/chest_paired.png)",
       "Bash(cd resources/images)",
-      "Bash([ -f \"items/$n.png\" ])"
+      "Bash([ -f \"items/$n.png\" ])",
+      "Bash(javac -d out -cp out resources/testing/probes/InvLookProbe.java)",
+      "Bash(java -cp out resources.testing.probes.InvLookProbe)",
+      "Bash(javac -d out resources/app/GamePanel.java)",
+      "Bash(python3 -c \"from PIL import Image; print\\('PIL OK'\\)\")",
+      "Bash(/bin/echo \"direct binary echo test\")",
+      "Bash(/bin/ls /)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(awk '{printf \"%d\\\\t%s\\\\n\", NR, $0}' /Users/ferdinandfremming/Documents/prosjekter/survivalGame2D/gameDev2D/resources/domain/farming/Farmland.java)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(python3 -c \"print\\(open\\('/Users/ferdinandfremming/Documents/prosjekter/survivalGame2D/gameDev2D/resources/domain/tile/Tile.java'\\).read\\(\\)\\)\")",
+      "Bash([ -f \"$d/$f\" ])",
+      "Bash(java -Djava.awt.headless=true -cp out resources.testing.TestRunner verbose)",
+      "Bash(echo \"RUNNER EXIT=$?\")",
+      "Bash(echo \"BASELINE RUNNER EXIT=$?\")"
     ]
   }
 }

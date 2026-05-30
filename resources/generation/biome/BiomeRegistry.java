@@ -30,13 +30,13 @@ public final class BiomeRegistry {
 
     // Vegetation rules — only density lives here; everything else (size, hitbox,
     // solid) is read from the catalog by name.
-    private static final VegetationRule OAK    = density("oak_M",          0.08);
-    private static final VegetationRule BIRCH  = density("birch_M",        0.06);
+    private static final VegetationRule OAK    = density("oak_M",          0.04);
+    private static final VegetationRule BIRCH  = density("birch_M",        0.03);
     // Half-density birch for plains — scattered trees, not a forest.
-    private static final VegetationRule PLAINS_BIRCH = density("birch_M",   0.03);
-    private static final VegetationRule SPRUCE = density("spruce_M",       0.12);
+    private static final VegetationRule PLAINS_BIRCH = density("birch_M",   0.015);
+    private static final VegetationRule SPRUCE = density("spruce_M",       0.06);
     // Reduced-density spruce for plains — 3/4 of the standard rate, scattered not clustered.
-    private static final VegetationRule PLAINS_SPRUCE = density("spruce_M", 0.09);
+    private static final VegetationRule PLAINS_SPRUCE = density("spruce_M", 0.045);
     // Palms now come from the plant pack (plant_palm_tree / plant_palm_frond);
     // the old standalone "palm_M" sprite was removed, like driftwood below.
 
@@ -76,14 +76,14 @@ public final class BiomeRegistry {
     private static final VegetationRule P_BUSH_LEAFY       = density("plant_bush_leafy",       0.05);
     private static final VegetationRule P_BUSH_BERRY       = density("plant_bush_berry",       0.03);
     private static final VegetationRule P_PALM_FROND       = density("plant_palm_frond",       0.04);
-    private static final VegetationRule P_SAPLING          = density("plant_sapling",          0.05);
-    private static final VegetationRule P_OAK_ROUND        = density("plant_oak_round",        0.06);
-    private static final VegetationRule P_CONIFER          = density("plant_conifer",          0.07);
-    private static final VegetationRule P_OAK_LARGE        = density("plant_oak_large",        0.04);
-    private static final VegetationRule P_PALM_TREE        = density("plant_palm_tree",        0.04);
-    private static final VegetationRule P_BONSAI           = density("plant_bonsai",           0.008);
-    private static final VegetationRule P_WILLOW_LARGE     = density("plant_willow_large",     0.006);
-    private static final VegetationRule P_OAK_MEGA         = density("plant_oak_mega",         0.004);
+    private static final VegetationRule P_SAPLING          = density("plant_sapling",          0.025);
+    private static final VegetationRule P_OAK_ROUND        = density("plant_oak_round",        0.03);
+    private static final VegetationRule P_CONIFER          = density("plant_conifer",          0.035);
+    private static final VegetationRule P_OAK_LARGE        = density("plant_oak_large",        0.02);
+    private static final VegetationRule P_PALM_TREE        = density("plant_palm_tree",        0.02);
+    private static final VegetationRule P_BONSAI           = density("plant_bonsai",           0.004);
+    private static final VegetationRule P_WILLOW_LARGE     = density("plant_willow_large",     0.003);
+    private static final VegetationRule P_OAK_MEGA         = density("plant_oak_mega",         0.002);
     private static final VegetationRule P_MUSHROOM_RED     = density("plant_mushroom_red",     0.03);
     private static final VegetationRule P_MUSHROOM_TALL    = density("plant_mushroom_tall",    0.02);
     private static final VegetationRule P_MUSHROOM_CLUSTER = density("plant_mushroom_cluster", 0.025);

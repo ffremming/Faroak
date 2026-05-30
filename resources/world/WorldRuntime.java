@@ -40,6 +40,13 @@ public interface WorldRuntime {
     BaseEntity getHoveredEntity();
     void setHoveredEntity(int screenX, int screenY);
 
+    // ---- farming (tile-layer) ----
+    /** Hoe the tile under the point into a {@link resources.domain.farming.FarmTile}
+     *  in place; returns it (or an existing one), or null if not tillable. */
+    resources.domain.farming.FarmTile tillTileAt(Point worldPoint);
+    /** The {@link resources.domain.farming.FarmTile} under the point, or null. */
+    resources.domain.farming.FarmTile farmTileAt(Point worldPoint);
+
     // ---- placement / collision ----
     boolean placeEntity(BaseEntity entity);
     /**

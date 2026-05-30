@@ -113,4 +113,8 @@ final class ReplicatedObjectDirectory {
         if (value.length() > 64) value = value.substring(0, 64);
         return value;
     }
+
+    int size() {
+        return byObjectId.size();
+    }
 }

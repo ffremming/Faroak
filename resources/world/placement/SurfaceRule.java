@@ -3,8 +3,7 @@ package resources.world.placement;
 import java.awt.Point;
 
 import resources.app.GameContext;
-import resources.domain.entity.BaseEntity;
-import resources.domain.farming.Farmland;
+import resources.domain.farming.FarmTile;
 import resources.domain.tile.Tile;
 import resources.geometry.HitBox;
 
@@ -29,15 +28,11 @@ public interface SurfaceRule {
         return t != null && TileRules.isTillable(t.getName());
     };
 
-    /** Must overlap an unplanted Farmland entity. Used by seed items. */
-    SurfaceRule ON_FARMLAND_UNPLANTED = (ctx, x, y, hb) -> {
-        for (BaseEntity ent : ctx.world().getEntities()) {
-            if (!(ent instanceof Farmland)) continue;
-            if (!ent.getHitBox().intersects(hb)) continue;
-            if (((Farmland) ent).isPlanted()) continue;
-            return true;
-        }
-        return false;
+    /** The tile under the candidate centre must be an unplanted
+     *  {@link FarmTile}. Used by seed items so seeds only go on tilled soil. */
+    SurfaceRule ON_FARMTILE_UNPLANTED = (ctx, x, y, hb) -> {
+        Tile t = ctx.world().getTile(new Point(x + hb.width / 2, y + hb.height / 2));
+        return t instanceof FarmTile && !((FarmTile) t).isPlanted();
     };
 
     /** Anywhere that's not a water tile under the candidate centre. */

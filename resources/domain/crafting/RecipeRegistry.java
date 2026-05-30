@@ -10,21 +10,30 @@ import java.util.List;
  * looser shapeless ones if they share ingredients.
  *
  * Singleton pattern, mirroring
- * {@link resources.domain.inventory.ItemTypeRegistry}. Seeded once on first
- * access; gameplay or mods can append further recipes via {@link #register}.
+ * {@link resources.domain.inventory.ItemTypeRegistry}. Initialised via the
+ * "initialization-on-demand holder" idiom: the holder class is loaded the
+ * first time {@link #instance()} runs, and JVM class-loading guarantees
+ * make that load atomic — so the default recipe seeding can never race
+ * even if multiple threads (e.g. server tick + UI thread) hit instance()
+ * simultaneously. Gameplay or mods can append further recipes via
+ * {@link #register}; that list is itself not thread-safe, so registrations
+ * should still happen during startup before crafting threads are running.
  */
 public final class RecipeRegistry {
 
-    private static final RecipeRegistry INSTANCE = new RecipeRegistry();
+    private static final class Holder {
+        static final RecipeRegistry INSTANCE = new RecipeRegistry();
+        static {
+            INSTANCE.seedDefaults();
+        }
+    }
 
     private final List<Recipe> recipes = new ArrayList<>();
-    private boolean seeded = false;
 
     private RecipeRegistry() {}
 
     public static RecipeRegistry instance() {
-        if (!INSTANCE.seeded) INSTANCE.seedDefaults();
-        return INSTANCE;
+        return Holder.INSTANCE;
     }
 
     public void register(Recipe r) {
@@ -51,24 +60,29 @@ public final class RecipeRegistry {
      * later (first-match-wins).
      */
     private void seedDefaults() {
-        seeded = true;
 
-        // Stone toolset
+        // Stone toolset. Each recipe MUST be uniquely identifiable by its
+        // ingredient set — first-match-wins on the registry means two recipes
+        // that share the same ingredient bag would leave the second one
+        // permanently uncraftable. Distinct "binder" ingredient per tool:
+        //   axe     = stone + wheat  (stick-stand-in)
+        //   pickaxe = stone + iron   (iron head)
+        //   hammer  = stone + hide   (wrapped grip)
         register(ShapelessRecipe.of("axe_from_stone")
             .ingredient("stone", 3)
-            .ingredient("wheat", 2)        // wheat doubling as "stick"-stand-in
+            .ingredient("wheat", 2)
             .produces("axe", 1)
             .build());
 
         register(ShapelessRecipe.of("pickaxe_from_stone")
             .ingredient("stone", 3)
-            .ingredient("wheat", 2)
+            .ingredient("iron_ore", 1)
             .produces("pickaxe", 1)
             .build());
 
         register(ShapelessRecipe.of("hammer_from_stone")
             .ingredient("stone", 4)
-            .ingredient("wheat", 1)
+            .ingredient("hide", 1)
             .produces("hammer", 1)
             .build());
 

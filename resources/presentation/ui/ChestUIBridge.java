@@ -34,7 +34,7 @@ public final class ChestUIBridge {
         panel.userInterface.add(ui);
         panel.userInterface.enable();
         OPEN.put(chest, ui);
-        // Open the player inventory paired beneath the chest, sharing its look,
+        // Show the player inventory (its normal E-view, centered below the chest)
         // so items can be dragged between the two grids while the chest is open.
         panel.userInterface.openInventoryPaired(ui);
         // Register as a modal overlay so clicks route to the UI (not the world)
@@ -50,7 +50,7 @@ public final class ChestUIBridge {
         ui.disable();
         panel.userInterface.remove(ui);
         panel.userInterface.closeOverlay(ui);
-        // Hide the paired player inventory and restore its standalone look.
+        // Hide the player inventory that was shown alongside the chest.
         panel.userInterface.closeInventoryPaired();
     }
 }

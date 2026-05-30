@@ -34,7 +34,12 @@ final class ProtocolMessageTranslator {
 
     ProtocolEnvelope toEnvelope(ClientMessage message) {
         if (message == null) return null;
-        if (message instanceof ClientJoinMessage) return envelope(message.playerId(), message.sequence(), 0L, 0L, ProtocolMessageType.JOIN, new byte[0]);
+        if (message instanceof ClientJoinMessage) {
+            ClientJoinMessage join = (ClientJoinMessage) message;
+            byte[] payload = payloadCodec.encodeJoinRequest(
+                new ProtocolPayloads.JoinRequest(join.hasSpawn(), join.spawnX(), join.spawnY()));
+            return envelope(join.playerId(), join.sequence(), 0L, 0L, ProtocolMessageType.JOIN, payload);
+        }
         if (message instanceof ClientLeaveMessage) return envelope(message.playerId(), message.sequence(), 0L, 0L, ProtocolMessageType.LEAVE, new byte[0]);
         if (message instanceof ClientInputMessage) {
             ClientInputMessage input = (ClientInputMessage) message;

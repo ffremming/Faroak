@@ -52,6 +52,18 @@ public final class ProtocolPayloads {
         }
     }
 
+    public static final class JoinRequest {
+        public final boolean hasSpawn;
+        public final double spawnX;
+        public final double spawnY;
+
+        public JoinRequest(boolean hasSpawn, double spawnX, double spawnY) {
+            this.hasSpawn = hasSpawn;
+            this.spawnX = spawnX;
+            this.spawnY = spawnY;
+        }
+    }
+
     public static final class Ack {
         public final long acknowledgedSequence;
 

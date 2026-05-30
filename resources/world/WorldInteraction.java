@@ -15,6 +15,7 @@ import resources.domain.inventory.Stack;
 import resources.domain.object.Boat;
 import resources.domain.object.GameObject;
 import resources.domain.combat.TransientWorldEntity;
+import resources.domain.farming.FarmTile;
 import resources.domain.player.Playable;
 import resources.domain.tile.Tile;
 import resources.geometry.HitBox;
@@ -23,6 +24,7 @@ import resources.net.event.RemoveEntityIntentEvent;
 import resources.world.placement.PlacementAction;
 import resources.world.placement.PlacementRegistry;
 import resources.world.placement.PlacementSpec;
+import resources.world.placement.TileRules;
 
 /**
  * Placement, collision, hover, removal. The "what the player can do with the
@@ -52,6 +54,45 @@ public final class WorldInteraction {
             if (chunk.contains(p)) return chunk.getTile(p);
         }
         return chunkSystem.getTile(p);
+    }
+
+    /** Loaded chunk whose bounds contain the world point, or null. */
+    private Chunk chunkContaining(Point p) {
+        for (Chunk chunk : index.chunks()) {
+            if (chunk.contains(p)) return chunk;
+        }
+        return null;
+    }
+
+    /**
+     * Hoe the tile under {@code worldPt} in place: replace the grass {@link Tile}
+     * in its chunk grid with a {@link FarmTile} and invalidate the chunk's render
+     * bake so the new soil sprite shows. Returns the FarmTile on success (an
+     * already-tilled FarmTile is returned as-is), or null if the tile isn't
+     * tillable / not loaded.
+     *
+     * The change lives on the tile layer (the ground itself becomes soil) rather
+     * than placing an object on top.
+     */
+    public FarmTile tillTileAt(Point worldPt) {
+        Chunk chunk = chunkContaining(worldPt);
+        if (chunk == null) return null;
+        Tile tile = chunk.getTile(worldPt);
+        if (tile == null) return null;
+        if (tile instanceof FarmTile) return (FarmTile) tile; // already soil
+        if (!TileRules.isTillable(tile.getName())) return null;
+
+        FarmTile farm = FarmTile.from(tile);
+        chunk.addTile(farm);            // overwrites the grid slot for this cell
+        farm.setNeighBors();            // wire the new tile to its neighbours
+        if (panel.camera != null) panel.camera.invalidateChunkBake(chunk);
+        return farm;
+    }
+
+    /** The {@link FarmTile} under the point, or null if that cell isn't tilled. */
+    public FarmTile farmTileAt(Point worldPt) {
+        Tile t = tileAt(worldPt);
+        return (t instanceof FarmTile) ? (FarmTile) t : null;
     }
 
     public boolean solidCollision(HitBox hitbox) {
@@ -159,10 +200,17 @@ public final class WorldInteraction {
         double mx = panel.mouse.getMouseWorldX();
         double my = panel.mouse.getMouseWorldY();
 
-        // PLANT_SEED short-circuits: FarmingService handles entity-spawn and
-        // seed consumption itself; we must NOT decrement the stack here.
-        if (spec.action == PlacementAction.PLANT_SEED) {
-            return spec.action.execute(ctx, panel.player, spec, new Point((int) mx, (int) my));
+        // Self-managing actions (farming): the action itself spawns/mutates and
+        // handles any stack consumption (seeds) or leaves the tool intact
+        // (hoe/watering can). We must NOT run the entity-placement pipeline or
+        // decrement the stack here. Surface rule still gates the click.
+        if (spec.action != PlacementAction.PLACE_ENTITY) {
+            Point target = WorldCoord.snapToTile(mx, my, panel.tileSize);
+            int cx = target.x + panel.tileSize / 2;
+            int cy = target.y + panel.tileSize / 2;
+            HitBox cell = new HitBox(target.x, target.y, panel.tileSize, panel.tileSize);
+            if (!spec.surface.allows(ctx, target.x, target.y, cell)) return false;
+            return spec.action.execute(ctx, panel.player, spec, new Point(cx, cy));
         }
 
         BaseEntity candidate = spec.factory.apply(panel);
@@ -444,7 +492,10 @@ public final class WorldInteraction {
             if (!removed) removed = removeFromLoadedChunks(ent);
             index.sortedVisible().remove(ent);
             index.entities().remove(ent);
-            if (removed) panel.events().publish(intent);
+            if (removed) {
+                ent.remove(); // lifecycle hook (e.g. Crop frees its FarmTile)
+                panel.events().publish(intent);
+            }
         }
         index.removalQueue().clear();
     }

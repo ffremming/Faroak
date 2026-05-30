@@ -214,4 +214,14 @@ public class Camera extends PrimitiveEntity {
     public void drawRelative(Graphics2D g2, BaseEntity entity) {
         renderer.drawRelative(g2, entity);
     }
+
+    /**
+     * Drop the cached static-tile bake for one chunk so an in-place tile change
+     * (e.g. hoeing grass into farmland) shows up on the next frame. Without
+     * this, the chunk's tiles are composited once and reused, so the mutation
+     * would be invisible until the chunk reloaded.
+     */
+    public void invalidateChunkBake(resources.world.Chunk chunk) {
+        renderer.chunkBakes().invalidate(chunk);
+    }
 }

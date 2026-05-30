@@ -14,7 +14,6 @@ import resources.domain.object.CraftingTable;
 import resources.domain.object.Fence;
 import resources.domain.object.PlaceAble;
 import resources.domain.object.Torch;
-import resources.domain.farming.Farmland;
 import resources.app.GamePanel;
 import resources.world.placement.PlacementRegistry;
 
@@ -29,6 +28,8 @@ public class ItemManager {
         this.panel = panel;
         setupPR();
         PlacementRegistry.registerDefaults(panel);
+        resources.domain.farming.FarmingRegistry.init();
+        resources.domain.farming.FarmingRegistry.registerTileSprites(panel.imageContainer);
         seedItemIcons();
     }
 
@@ -85,7 +86,8 @@ public class ItemManager {
         physicalRepresentations.put("barrel",   new Barrel(panel, 0, 0));
         physicalRepresentations.put("chest",    new Chest(panel, 0, 0));
         physicalRepresentations.put("crafting_table", new CraftingTable(panel, 0, 0));
-        physicalRepresentations.put("farmland", new Farmland(panel, 0, 0));
+        // "farmland" is no longer a placeable object: tilling now mutates the
+        // tile layer in place (see PlacementRegistry "hoe"/"farmland" → TILL_TILE).
 
         // Seeds resolve to a placeable Farmland-target hint — the actual planting
         // happens via FarmingService when the player clicks on existing farmland.

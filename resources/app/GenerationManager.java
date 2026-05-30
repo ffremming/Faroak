@@ -56,6 +56,8 @@ import resources.presentation.camera.Camera;
 
 public class GenerationManager {
     
+    private static final long DEFAULT_MULTIPLAYER_SEED = 424242L;
+
     GamePanel panel;
 
     public GenerationManager(GamePanel panel){
@@ -84,8 +86,12 @@ public class GenerationManager {
         panel.tileM = new TileManager(panel);
 
         resources.presentation.ui.LoadingScreen.setStatus("Registering dimensions");
-        // Fresh random seed on every launch so the world differs each run.
-        ProceduralGen gen = new ProceduralGen(System.nanoTime());
+        // DimensionRegistry is process-global; clear before each fresh panel boot
+        // so returning to menu and starting another session does not duplicate IDs.
+        DimensionRegistry.instance().clear();
+        // Online sessions use a stable default seed unless overridden so all
+        // clients generate the same terrain layout.
+        ProceduralGen gen = new ProceduralGen(resolveWorldSeed());
         DimensionRegistry.instance().register(DimensionRegistry.OVERWORLD,
             new Dimension(DimensionRegistry.OVERWORLD,
                 new resources.generation.factory.EntityFactory(panel, gen),
@@ -280,5 +286,16 @@ public class GenerationManager {
             }
         }
         return true;
+    }
+
+    private long resolveWorldSeed() {
+        String configured = System.getProperty("game.world.seed", "").trim();
+        if (!configured.isBlank()) {
+            try { return Long.parseLong(configured); }
+            catch (NumberFormatException ignored) {}
+        }
+        String mode = System.getProperty("game.multiplayer.mode", "offline");
+        boolean online = mode != null && !"offline".equalsIgnoreCase(mode.trim());
+        return online ? DEFAULT_MULTIPLAYER_SEED : System.nanoTime();
     }
 }

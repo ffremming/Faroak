@@ -1,5 +1,7 @@
 package resources.domain.farming;
 
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,6 +9,7 @@ import resources.domain.entity.component.HarvestableComponent;
 import resources.domain.inventory.DropSpec;
 import resources.domain.inventory.DropTable;
 import resources.domain.inventory.HarvestRegistry;
+import resources.presentation.image.ImageContainer;
 
 /**
  * Bootstraps farming-related entries in the shared {@link HarvestRegistry}.
@@ -50,6 +53,28 @@ public final class FarmingRegistry {
     /** Look up a pre-built HarvestableComponent for a mature crop object name. */
     public static HarvestableComponent harvestFor(String matureCropName) {
         return CROP_HARVESTS.get(matureCropName);
+    }
+
+    /**
+     * Make {@link FarmTile}'s soil/watered sprites resolvable by the tile image
+     * loader. The farmland art ships as an <em>object</em> sprite
+     * (objects/.../soil/farmland/), so a {@link FarmTile} asking the tile loader
+     * for "farmland" would otherwise fall back to a colour swatch. Pre-seed the
+     * tile cache with the object art under the tile keys so no new assets are
+     * needed. Idempotent — the loader only reads the cache on miss.
+     */
+    public static void registerTileSprites(ImageContainer images) {
+        if (images == null) return;
+        aliasObjectIntoTileCache(images, FarmTile.SOIL_SPRITE);
+        aliasObjectIntoTileCache(images, FarmTile.WATERED_SPRITE);
+    }
+
+    private static void aliasObjectIntoTileCache(ImageContainer images, String name) {
+        if (images.containsImage(name)) return; // already resolvable as a tile
+        ArrayList<BufferedImage> objectStack = images.getObjectImages(name);
+        if (objectStack == null || objectStack.isEmpty()) return;
+        BufferedImage first = objectStack.get(0);
+        if (first != null) images.images.put(name, first);
     }
 
     private FarmingRegistry() {}

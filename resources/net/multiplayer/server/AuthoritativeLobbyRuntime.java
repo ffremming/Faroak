@@ -151,7 +151,21 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         String playerId = envelope.playerId();
         if (playerId == null || playerId.isBlank()) { reject(playerId, "missing player id"); return; }
         if (!sessions.containsKey(playerId) && sessions.size() >= maxPlayers) { reject(playerId, "server full"); return; }
-        Session session = sessions.computeIfAbsent(playerId, this::newSession);
+        Session session = sessions.get(playerId);
+        boolean freshSession = false;
+        if (session == null) {
+            session = newSession(playerId);
+            sessions.put(playerId, session);
+            freshSession = true;
+        }
+        if (freshSession) {
+            ProtocolPayloads.JoinRequest join = payloadCodec.decodeJoinRequest(envelope.payload());
+            if (join.hasSpawn) {
+                session.x = join.spawnX;
+                session.y = join.spawnY;
+                session.lastChangedTick = tick;
+            }
+        }
         session.baselineSent = false;
         session.lastSentTick = 0L;
         session.lastChangedTick = tick;

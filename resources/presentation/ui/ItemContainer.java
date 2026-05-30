@@ -34,6 +34,17 @@ public class ItemContainer extends Container {
     private static final int CELL   = 50;
     private static final int GUTTER = 8;
 
+    /**
+     * Shared baseline palette for ALL inventory panels (player inventory,
+     * hotbar, chest, barrel, crafting). The chest's wood-brown look was chosen
+     * as the single house style — every inventory UI now reads from these
+     * constants instead of defining its own colors, so they stay consistent.
+     * Override per-subclass only if a panel genuinely needs to stand apart.
+     */
+    public static final Color PANEL_BG      = new Color(95, 60, 30);
+    public static final Color PANEL_FG      = new Color(50, 30, 12);
+    public static final int   PANEL_PADDING = 15;
+
     public ItemContainer(GamePanel panel,int rows,int cols,int x,int y,Inventory inventory) {
         super(panel);
         this.inventory = inventory;
@@ -44,7 +55,7 @@ public class ItemContainer extends Container {
         this.x = x;
         this.y = y;
 
-        padding = 10;
+        padding = PANEL_PADDING;
 
         // Size the container to fit a rows x cols grid of CELL-sized slots with
         // a GUTTER between/around them. Without this, width/height stay 0
@@ -59,8 +70,8 @@ public class ItemContainer extends Container {
 
 
         addSlots();
-        setBackground(Color.lightGray);
-        setForeGround(Color.gray);
+        setBackground(PANEL_BG);
+        setForeGround(PANEL_FG);
 
 
     }
