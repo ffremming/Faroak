@@ -86,11 +86,11 @@ public class Keys implements KeyListener{
         }
 
         
-        if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER){
+        if (code == KeyEvent.VK_ENTER){
             if (panel.multiplayer() == null || !panel.multiplayer().isOnline()) {
                 BoatRideComponent ride = panel.player().getComponent(BoatRideComponent.class);
                 if (ride != null && ride.boat() != null) {
-                    // SPACE while riding = dismount; otherwise the usual interact.
+                    // ENTER while riding = dismount; otherwise the usual interact.
                     if (!ride.boat().dismount() && panel.userInterface() != null) {
                         panel.userInterface().showToast("Steer to land to disembark", 1500);
                     }
@@ -103,7 +103,7 @@ public class Keys implements KeyListener{
 
         }
 
-        if (code == KeyEvent.VK_F){
+        if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_F){
             handleLightAttack();
         }
 
