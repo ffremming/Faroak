@@ -118,5 +118,39 @@ public class ItemContainer extends Container {
         g2.setColor(Color.white);
         g2.drawRect(slot.x,slot.y,slot.width,slot.height);
     }
-    
+
+    /**
+     * The non-empty {@link Stack} sitting in whichever slot the cursor is over,
+     * or {@code null} if the cursor isn't over an occupied slot. Used by
+     * {@link UserInterface} to render the hover tooltip.
+     *
+     * <p>We test slot geometry against the live mouse point rather than reading
+     * the slots' {@code hover} flag: that flag is set on mouseMoved but never
+     * reset, so it goes stale and would light up multiple slots at once. Slot
+     * rectangles are laid out fresh every frame in {@code drawRect}, so by the
+     * time this runs (after the container has drawn) the coordinates are current.
+     */
+    public Stack stackUnderMouse(int mouseX, int mouseY) {
+        if (!visible || inventory == null) return null;
+        int idx = 0;
+        for (Component comp : content) {
+            // The crafting output cell isn't backed by an inventory index — its
+            // own draw path handles its stack. Skip it (it has number == 100,
+            // outside the grid range) so we never index the inventory with it.
+            if (comp instanceof CraftingOutputSlot) continue;
+            if (comp instanceof ItemContainerSlot) {
+                if (comp.contains(mouseX, mouseY)) {
+                    if (idx < 0 || idx >= inventory.getSize()) return null;
+                    Stack stack = inventory.getStack(idx);
+                    if (stack != null && !stack.isEmpty() && !"empty".equals(stack.getName())) {
+                        return stack;
+                    }
+                    return null;
+                }
+                idx++;
+            }
+        }
+        return null;
+    }
+
 }

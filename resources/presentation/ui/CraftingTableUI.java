@@ -89,4 +89,14 @@ public final class CraftingTableUI extends Container {
     public void mouseMoved(MouseEvent e) {
         inputGrid.mouseMoved(e);
     }
+
+    /**
+     * Hover-tooltip hook: forward to the input grid so the crafting table
+     * participates in the same item-name tooltip as the other inventory panels.
+     * The output cell is intentionally excluded — its contents are a transient
+     * recipe preview, not a real stored item.
+     */
+    public resources.domain.inventory.Stack stackUnderMouse(int mouseX, int mouseY) {
+        return inputGrid.stackUnderMouse(mouseX, mouseY);
+    }
 }

@@ -43,11 +43,11 @@ public final class InputBindings {
         bind(KeyEvent.VK_LEFT,   InputAction.MOVE_LEFT);
         bind(KeyEvent.VK_RIGHT,  InputAction.MOVE_RIGHT);
         bind(KeyEvent.VK_E,      InputAction.OPEN_INVENTORY);
-        // SPACE = interact (and dismount-from-boat).
-        // F/G/R = combat actions (light/heavy/ranged in Keys.java, mapped to
-        // ATTACK here as the semantic umbrella action).
-        bind(KeyEvent.VK_SPACE,  InputAction.INTERACT);
+        // ENTER = interact (and dismount-from-boat).
+        // SPACE/F/G/R = combat actions (light/heavy/ranged in Keys.java, mapped
+        // to ATTACK here as the semantic umbrella action).
         bind(KeyEvent.VK_ENTER,  InputAction.INTERACT);
+        bind(KeyEvent.VK_SPACE,  InputAction.ATTACK);
         bind(KeyEvent.VK_F,      InputAction.ATTACK);
         bind(KeyEvent.VK_G,      InputAction.ATTACK);
         bind(KeyEvent.VK_R,      InputAction.ATTACK);

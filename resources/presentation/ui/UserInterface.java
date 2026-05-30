@@ -193,6 +193,82 @@ public class UserInterface extends Container{
         }
 
         drawToast(g2);
+
+        // Hover tooltip — drawn last so it sits above every slot/grid.
+        drawHoverTooltip(g2);
+    }
+
+    /**
+     * If the cursor is over an occupied slot in any visible inventory grid
+     * (player inventory, chest/barrel/crafting overlay), draw a small tooltip
+     * near the cursor naming the item and its count.
+     *
+     * <p>While a stack is being carried on the cursor we suppress the tooltip —
+     * it would just label the thing already under the cursor and obscure the
+     * drop target. Containers are scanned topmost-first (last added paints on
+     * top) so the tooltip reflects whichever grid is visually frontmost.
+     */
+    private void drawHoverTooltip(Graphics2D g2) {
+        if (panel.player() != null) {
+            resources.domain.inventory.Stack held = panel.player().getTempInHand();
+            if (held != null && !held.isEmpty() && !"empty".equals(held.getName())) return;
+        }
+
+        int mx = panel.mouse().getX();
+        int my = panel.mouse().getY();
+
+        resources.domain.inventory.Stack hovered = null;
+        for (int i = content.size() - 1; i >= 0; i--) {
+            Component comp = content.get(i);
+            if (comp instanceof ItemContainer) {
+                hovered = ((ItemContainer) comp).stackUnderMouse(mx, my);
+                if (hovered != null) break;
+            } else if (comp instanceof CraftingTableUI) {
+                hovered = ((CraftingTableUI) comp).stackUnderMouse(mx, my);
+                if (hovered != null) break;
+            }
+        }
+        if (hovered == null) return;
+
+        String name = prettyItemName(hovered.getName());
+        String qty  = "x" + hovered.getAmount();
+        drawTooltipBox(g2, mx, my, name, qty);
+    }
+
+    /** Turn an internal item id (e.g. "wood") into a display label ("Wood"). */
+    private String prettyItemName(String raw) {
+        if (raw == null || raw.isEmpty()) return "";
+        String cleaned = raw.replace('_', ' ');
+        return Character.toUpperCase(cleaned.charAt(0)) + cleaned.substring(1);
+    }
+
+    /** Paint a two-line tooltip box anchored at the cursor, matching the toast style. */
+    private void drawTooltipBox(Graphics2D g2, int mouseX, int mouseY, String title, String subtitle) {
+        java.awt.FontMetrics fm = g2.getFontMetrics();
+        int padX = 8;
+        int padY = 6;
+        int lineH = fm.getHeight();
+        int textW = Math.max(fm.stringWidth(title), fm.stringWidth(subtitle));
+        int boxW = textW + padX * 2;
+        int boxH = lineH * 2 + padY * 2;
+
+        // Anchor up-and-right of the cursor; clamp so it stays on screen.
+        int boxX = mouseX + 16;
+        int boxY = mouseY + 16;
+        if (boxX + boxW > panel.width)  boxX = panel.width - boxW - 4;
+        if (boxY + boxH > panel.height) boxY = mouseY - boxH - 8;
+        if (boxX < 0) boxX = 4;
+        if (boxY < 0) boxY = 4;
+
+        g2.setColor(new Color(0, 0, 0, 200));
+        g2.fillRoundRect(boxX, boxY, boxW, boxH, 8, 8);
+        g2.setColor(new Color(180, 140, 90));
+        g2.drawRoundRect(boxX, boxY, boxW, boxH, 8, 8);
+
+        g2.setColor(new Color(245, 245, 245));
+        g2.drawString(title, boxX + padX, boxY + padY + fm.getAscent());
+        g2.setColor(new Color(190, 190, 190));
+        g2.drawString(subtitle, boxX + padX, boxY + padY + fm.getAscent() + lineH);
     }
 
     /** Show a transient HUD message for {@code durationMs} milliseconds. */

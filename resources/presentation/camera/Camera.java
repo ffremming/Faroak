@@ -132,7 +132,12 @@ public class Camera extends PrimitiveEntity {
         } else {
             backEndData.clear();
         }
-        debug.drawHoveredEntityOutline(g2);
+        // Suppress the world hover-outline while any modal UI is up (inventory,
+        // chest/barrel/crafting overlay, or escape menu) — the cursor is acting
+        // on slots, not the world, so an outline behind the panel is just noise.
+        if (!panel.userInterface().isModalUIOpen()) {
+            debug.drawHoveredEntityOutline(g2);
+        }
     }
 
     private void recordFrameStats(long startTime, long endTime) {
