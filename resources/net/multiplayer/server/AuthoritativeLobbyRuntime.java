@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import resources.net.multiplayer.MultiplayerAction;
 import resources.net.multiplayer.MultiplayerConfig;
 import resources.net.multiplayer.protocol.ProtocolEnvelope;
 import resources.net.multiplayer.protocol.ProtocolMessageType;
@@ -26,7 +25,6 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
     private static final String META_SERVER_TICK = "server_tick";
     private static final String META_WORLD_NEXT_OBJECT_ID = "world_next_object_id";
     private static final String META_WORLD_REVISION = "world_revision";
-    private static final double MIN_OBJECT_GAP = 32.0;
 
     private final int maxPlayers;
     private final int protocolVersion;
@@ -39,6 +37,8 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
     private final AuthorityService authority;
     private final PersistenceStore persistence;
     private final SnapshotCodec snapshotCodec;
+    private final ActionResolver actionResolver;
+    private final SnapshotPublisher snapshotPublisher;
     private final ProtocolPayloadCodec payloadCodec = new ProtocolPayloadCodec();
     private final ArrayDeque<ProtocolEnvelope> inbound = new ArrayDeque<>();
     private final Map<String, Session> sessions = new HashMap<>();
@@ -68,10 +68,12 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         this.authority = authority;
         this.persistence = persistence;
         this.snapshotCodec = snapshotCodec;
+        this.actionResolver = new ActionResolver(this.maxActionRange);
+        this.snapshotPublisher = new SnapshotPublisher(snapshotCodec, this.protocolVersion, this.interestRadius);
         this.tombstoneTtlTicks = Math.max(1L, config.serverTickRate() * 10L);
-        this.tick = parseLong(persistence.getMeta(META_SERVER_TICK, "0"), 0L);
-        this.nextObjectId = Math.max(1L, parseLong(persistence.getMeta(META_WORLD_NEXT_OBJECT_ID, "1"), 1L));
-        this.worldRevision = Math.max(0L, parseLong(persistence.getMeta(META_WORLD_REVISION, "0"), 0L));
+        this.tick = ServerParse.parseLong(persistence.getMeta(META_SERVER_TICK, "0"), 0L);
+        this.nextObjectId = Math.max(1L, ServerParse.parseLong(persistence.getMeta(META_WORLD_NEXT_OBJECT_ID, "1"), 1L));
+        this.worldRevision = Math.max(0L, ServerParse.parseLong(persistence.getMeta(META_WORLD_REVISION, "0"), 0L));
         restoreWorldObjects();
     }
 
@@ -99,7 +101,9 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         processInbound();
         integratePlayers();
         pruneTombstones();
-        if (tick % snapshotEveryTicks == 0L) publishSnapshots();
+        if (tick % snapshotEveryTicks == 0L) {
+            snapshotPublisher.publishSnapshots(sessions, worldObjects, tombstones, tick, this::send);
+        }
         if (tick % playerFlushEveryTicks == 0L) flushPlayers();
         if (tick % worldFlushEveryTicks == 0L) {
             flushWorld();
@@ -193,7 +197,13 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         ProtocolPayloads.ActionRequest action = payloadCodec.decodeAction(envelope.payload());
         if (action.action == null || !authority.canPerformAction(s.playerId, action.action, tick)) return;
         if (action.hasTarget && !authority.withinRange(s.x, s.y, action.targetX, action.targetY, maxActionRange)) return;
-        if (!applyAction(s, action)) return;
+        ActionResolver.Mutation mutation =
+            new ActionResolver.Mutation(nextObjectId, worldRevision, worldDirty, tick, this::event);
+        boolean applied = actionResolver.applyAction(s, action, worldObjects, tombstones, mutation);
+        nextObjectId = mutation.nextObjectId;
+        worldRevision = mutation.worldRevision;
+        worldDirty = mutation.worldDirty;
+        if (!applied) return;
         s.lastAcceptedSeq = envelope.sequence();
         s.lastAction = action.action;
         s.lastChangedTick = tick;
@@ -215,50 +225,6 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
             s.x += dx; s.y += dy;
             if (moved || velocityChanged) s.lastChangedTick = tick;
         }
-    }
-
-    private void publishSnapshots() {
-        for (Session recipient : sessions.values()) {
-            boolean baseline = !recipient.baselineSent;
-            ArrayList<ProtocolPayloads.PlayerState> states = new ArrayList<>();
-            for (Session candidate : sessions.values()) {
-                if (!isInterested(recipient, candidate)) continue;
-                if (!baseline && !candidate.changedSince(recipient.lastSentTick)) continue;
-                states.add(candidate.toPayloadState());
-            }
-            ArrayList<ProtocolPayloads.WorldObjectState> objects = new ArrayList<>();
-            if (baseline) {
-                for (SimObject object : worldObjects.values()) {
-                    objects.add(object.toPayloadState());
-                }
-            } else {
-                for (SimObject object : worldObjects.values()) {
-                    if (object.changedSince(recipient.lastSentTick)) {
-                        objects.add(object.toPayloadState());
-                    }
-                }
-                for (SimObject tombstone : tombstones.values()) {
-                    if (tombstone.changedSince(recipient.lastSentTick)) {
-                        objects.add(tombstone.toPayloadState());
-                    }
-                }
-            }
-            if (!baseline && states.isEmpty() && objects.isEmpty()) continue;
-            ProtocolPayloads.Snapshot snap = new ProtocolPayloads.Snapshot(
-                baseline, recipient.lastAcceptedSeq, states, objects);
-            byte[] payload = snapshotCodec.encode(snap);
-            ProtocolMessageType type = baseline ? ProtocolMessageType.BASELINE_SNAPSHOT : ProtocolMessageType.DELTA_SNAPSHOT;
-            send(recipient.playerId, new ProtocolEnvelope(protocolVersion, recipient.playerId, 0L, recipient.lastAcceptedSeq, tick, type, payload));
-            recipient.baselineSent = true;
-            recipient.lastSentTick = tick;
-        }
-    }
-
-    private boolean isInterested(Session recipient, Session candidate) {
-        if (recipient.playerId.equals(candidate.playerId)) return true;
-        double dx = candidate.x - recipient.x;
-        double dy = candidate.y - recipient.y;
-        return ((dx * dx) + (dy * dy)) <= (interestRadius * interestRadius);
     }
 
     private Session newSession(String playerId) {
@@ -343,179 +309,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         for (Long key : expired) tombstones.remove(key);
     }
 
-    private boolean applyAction(Session session, ProtocolPayloads.ActionRequest action) {
-        if (action == null || action.action == null) return false;
-        if (MultiplayerAction.PLACE.equals(action.action)) {
-            return applyPlaceAction(session, action);
-        }
-        if (MultiplayerAction.ATTACK.equals(action.action)) {
-            return applyAttackAction(session, action);
-        }
-        if (MultiplayerAction.INTERACT.equals(action.action)) {
-            return applyInteractAction(session, action);
-        }
-        return false;
-    }
-
-    private boolean applyPlaceAction(Session session, ProtocolPayloads.ActionRequest action) {
-        if (!action.hasTarget) return false;
-        String objectType = sanitizeObjectType(action.argument);
-        if (objectType.isBlank()) return false;
-        double x = Math.rint(action.targetX);
-        double y = Math.rint(action.targetY);
-        if (placementBlocked(x, y)) return false;
-
-        long objectId = nextObjectId++;
-        long revision = ++worldRevision;
-        SimObject object = new SimObject(objectId, objectType, x, y, false, revision, tick);
-        worldObjects.put(objectId, object);
-        tombstones.remove(objectId);
-        worldDirty = true;
-        event(session.playerId, "action", "place:" + objectType + ":" + (int) x + "," + (int) y);
-        return true;
-    }
-
-    private boolean applyAttackAction(Session session, ProtocolPayloads.ActionRequest action) {
-        double targetX = action.hasTarget ? action.targetX : session.x;
-        double targetY = action.hasTarget ? action.targetY : session.y;
-        SimObject nearest = nearestObject(targetX, targetY, maxActionRange);
-        if (nearest == null) {
-            event(session.playerId, "action", "attack:none");
-            return true;
-        }
-        worldObjects.remove(nearest.objectId);
-        SimObject tombstone = new SimObject(
-            nearest.objectId, nearest.objectType, nearest.worldX, nearest.worldY, true, ++worldRevision, tick);
-        tombstones.put(tombstone.objectId, tombstone);
-        worldDirty = true;
-        event(session.playerId, "action", "attack:remove:" + nearest.objectId);
-        return true;
-    }
-
-    private boolean applyInteractAction(Session session, ProtocolPayloads.ActionRequest action) {
-        double targetX = action.hasTarget ? action.targetX : session.x;
-        double targetY = action.hasTarget ? action.targetY : session.y;
-        SimObject nearest = nearestObject(targetX, targetY, maxActionRange);
-        if (nearest == null) {
-            event(session.playerId, "action", "interact:none");
-            return true;
-        }
-        nearest.revision = ++worldRevision;
-        nearest.lastChangedTick = tick;
-        worldDirty = true;
-        event(session.playerId, "action", "interact:" + nearest.objectId);
-        return true;
-    }
-
-    private SimObject nearestObject(double x, double y, double maxRange) {
-        SimObject nearest = null;
-        double bestDist2 = maxRange * maxRange;
-        for (SimObject object : worldObjects.values()) {
-            double dx = object.worldX - x;
-            double dy = object.worldY - y;
-            double dist2 = (dx * dx) + (dy * dy);
-            if (dist2 > bestDist2) continue;
-            bestDist2 = dist2;
-            nearest = object;
-        }
-        return nearest;
-    }
-
-    private boolean placementBlocked(double x, double y) {
-        double minDist2 = MIN_OBJECT_GAP * MIN_OBJECT_GAP;
-        for (SimObject object : worldObjects.values()) {
-            double dx = object.worldX - x;
-            double dy = object.worldY - y;
-            if (((dx * dx) + (dy * dy)) <= minDist2) return true;
-        }
-        return false;
-    }
-
-    private String sanitizeObjectType(String raw) {
-        if (raw == null) return "";
-        String value = raw.trim().toLowerCase();
-        if (value.isBlank() || "empty".equals(value)) return "";
-        if (value.length() > 64) value = value.substring(0, 64);
-        for (int i = 0; i < value.length(); i++) {
-            char c = value.charAt(i);
-            boolean ok = (c >= 'a' && c <= 'z')
-                    || (c >= '0' && c <= '9')
-                    || c == '_' || c == '-';
-            if (!ok) return "";
-        }
-        return value;
-    }
-
-    private long parseLong(String value, long fallback) {
-        if (value == null || value.isBlank()) return fallback;
-        try { return Long.parseLong(value.trim()); }
-        catch (NumberFormatException ignored) { return fallback; } // expected: non-numeric config value falls back to default
-    }
-
     private void event(String playerId, String type, String payload) {
         persistence.appendSessionEvent(tick, playerId, type, payload);
-    }
-
-    private static final class Session {
-        final String playerId;
-        double x; double y; double vx; double vy;
-        boolean up; boolean left; boolean down; boolean right;
-        long lastAcceptedSeq;
-        long lastSentTick;
-        long lastChangedTick;
-        boolean baselineSent;
-        MultiplayerAction lastAction;
-
-        Session(PersistenceStore.PersistedPlayer persisted) {
-            this.playerId = persisted.playerId;
-            this.x = persisted.worldX; this.y = persisted.worldY;
-            this.vx = persisted.velocityX; this.vy = persisted.velocityY;
-            this.lastAcceptedSeq = persisted.lastSequence;
-            this.lastChangedTick = 0L;
-        }
-
-        boolean changedSince(long sentTick) {
-            return sentTick <= 0L || lastChangedTick > sentTick;
-        }
-
-        ProtocolPayloads.PlayerState toPayloadState() {
-            return new ProtocolPayloads.PlayerState(playerId, x, y, vx, vy, lastAcceptedSeq);
-        }
-    }
-
-    private static final class SimObject {
-        final long objectId;
-        final String objectType;
-        final double worldX;
-        final double worldY;
-        final boolean removed;
-        long revision;
-        long lastChangedTick;
-
-        SimObject(
-                long objectId,
-                String objectType,
-                double worldX,
-                double worldY,
-                boolean removed,
-                long revision,
-                long lastChangedTick) {
-            this.objectId = Math.max(0L, objectId);
-            this.objectType = (objectType == null) ? "" : objectType;
-            this.worldX = worldX;
-            this.worldY = worldY;
-            this.removed = removed;
-            this.revision = Math.max(0L, revision);
-            this.lastChangedTick = Math.max(0L, lastChangedTick);
-        }
-
-        boolean changedSince(long sentTick) {
-            return sentTick <= 0L || lastChangedTick > sentTick;
-        }
-
-        ProtocolPayloads.WorldObjectState toPayloadState() {
-            return new ProtocolPayloads.WorldObjectState(
-                objectId, objectType, worldX, worldY, removed, revision);
-        }
     }
 }
