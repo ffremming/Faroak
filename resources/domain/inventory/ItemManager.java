@@ -28,6 +28,9 @@ public class ItemManager {
         this.panel = panel;
         setupPR();
         PlacementRegistry.registerDefaults(panel);
+        // Register the sliced misc sprite-sheet objects (items + placeables).
+        // Must run before seedItemIcons() so their icons can be seeded below.
+        resources.domain.object.ObjectCatalog.registerAll(panel);
         resources.domain.farming.FarmingRegistry.init();
         resources.domain.farming.FarmingRegistry.registerTileSprites(panel.imageContainer);
         seedItemIcons();
@@ -69,6 +72,22 @@ public class ItemManager {
             java.util.ArrayList<java.awt.image.BufferedImage> imgs = fenceRep.getImages();
             if (!imgs.isEmpty()) {
                 panel.imageContainer.itemImages.put("fence", imgs.get(0));
+            }
+        }
+
+        // Sliced misc sprite-sheet objects ship no dedicated items/<name>.png
+        // icon — reuse their world-object sprite as the inventory/catalog icon,
+        // same trick as chest/fence above.
+        java.util.List<resources.domain.object.ObjectCatalog.Entry> catalog =
+            new java.util.ArrayList<>();
+        catalog.addAll(resources.domain.object.ObjectCatalog.ENTRIES);
+        catalog.addAll(resources.domain.object.ObjectCatalog.EXTRA);
+        for (resources.domain.object.ObjectCatalog.Entry e : catalog) {
+            if (panel.imageContainer.itemImages.containsKey(e.name)) continue;
+            java.util.ArrayList<java.awt.image.BufferedImage> imgs =
+                panel.imageContainer.getObjectImages(e.name);
+            if (imgs != null && !imgs.isEmpty() && imgs.get(0) != null) {
+                panel.imageContainer.itemImages.put(e.name, imgs.get(0));
             }
         }
     }
