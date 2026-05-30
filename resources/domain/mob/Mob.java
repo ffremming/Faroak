@@ -19,8 +19,11 @@ import resources.domain.player.Moveable;
  *
  * Deliberately doesn't subclass anything player-specific — a Mob has no
  * inventory or input wiring; combat is delegated to behavior + combat systems.
- * Override {@link #getImages()} to pull sprites via {@code getObjectImages},
- * since the playable-directory loader won't find mob sprites.
+ *
+ * Sprites and the walk cycle come straight from {@link Moveable}: each mob ships
+ * a 12-frame directional set under {@code resources/images/playable/<name>/}
+ * (up/right/down/left × 3) loaded by the same playable loader the player uses,
+ * so the directional animation is shared, not duplicated here.
  */
 public class Mob extends Moveable {
 
@@ -49,13 +52,5 @@ public class Mob extends Moveable {
             if (c instanceof Tickable) ((Tickable) c).update();
         }
         super.update();
-    }
-
-    @Override
-    public ArrayList<BufferedImage> getImages() {
-        ArrayList<BufferedImage> out = new ArrayList<>();
-        ArrayList<BufferedImage> src = panel.imageContainer.getObjectImages(getName());
-        if (src != null && !src.isEmpty()) out.add(src.get(0));
-        return out;
     }
 }

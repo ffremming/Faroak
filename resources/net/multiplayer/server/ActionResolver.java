@@ -45,9 +45,11 @@ final class ActionResolver {
     }
 
     private final double maxActionRange;
+    private final ServerTerrainRules terrainRules;
 
-    ActionResolver(double maxActionRange) {
+    ActionResolver(double maxActionRange, ServerTerrainRules terrainRules) {
         this.maxActionRange = maxActionRange;
+        this.terrainRules = terrainRules;
     }
 
     boolean applyAction(
@@ -80,6 +82,7 @@ final class ActionResolver {
         if (objectType.isBlank()) return false;
         double x = Math.rint(action.targetX);
         double y = Math.rint(action.targetY);
+        if (terrainRules != null && !terrainRules.canPlaceObject(objectType, x, y)) return false;
         if (placementBlocked(x, y, worldObjects)) return false;
 
         long objectId = mutation.nextObjectId++;

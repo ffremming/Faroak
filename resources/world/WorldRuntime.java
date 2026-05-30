@@ -50,6 +50,11 @@ public interface WorldRuntime {
     // ---- placement / collision ----
     boolean placeEntity(BaseEntity entity);
     /**
+     * Insert an entity from an authoritative external source (e.g. multiplayer
+     * snapshot) without re-validating local placement rules.
+     */
+    boolean placeEntityAuthoritative(BaseEntity entity);
+    /**
      * Insert a transient entity (projectiles/VFX) without the blanket
      * solid-collision gate used by {@link #placeEntity(BaseEntity)}.
      * Implementations may reject non-transient entities.

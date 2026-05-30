@@ -37,6 +37,7 @@ public final class MultiplayerPersistenceProbe implements Probe {
         ProtocolPayloads.InputState right = new ProtocolPayloads.InputState(false, false, false, true);
         first.receive(new ProtocolEnvelope(1, "p1", 1L, 0L, 0L, ProtocolMessageType.INPUT_STATE, codec.encodeInputState(right)));
         for (int i = 0; i < 40; i++) first.tick();
+        double savedX = latestPlayerX(first.drainFor("p1"), codec, "p1");
         first.onDisconnect("p1");
         first.close();
 
@@ -60,8 +61,32 @@ public final class MultiplayerPersistenceProbe implements Probe {
             }
         }
 
-        String detail = "found=" + found + ", restoredX=" + String.format("%.2f", restoredX);
-        if (!found || restoredX <= 0.0) return ProbeResult.fail(name() + " player state not restored", detail);
+        String detail = "found=" + found
+            + ", savedX=" + String.format("%.2f", savedX)
+            + ", restoredX=" + String.format("%.2f", restoredX);
+        if (!found || Math.abs(restoredX - savedX) > 0.01) {
+            return ProbeResult.fail(name() + " player state not restored", detail);
+        }
         return ProbeResult.pass(name(), detail);
+    }
+
+    private static double latestPlayerX(
+            java.util.List<ProtocolEnvelope> envelopes,
+            ProtocolPayloadCodec codec,
+            String playerId) {
+        double latestX = 0.0;
+        if (envelopes == null) return latestX;
+        for (ProtocolEnvelope e : envelopes) {
+            if (!ProtocolMessageType.BASELINE_SNAPSHOT.equals(e.messageType())
+                    && !ProtocolMessageType.DELTA_SNAPSHOT.equals(e.messageType())) {
+                continue;
+            }
+            ProtocolPayloads.Snapshot snap = codec.decodeSnapshot(e.payload());
+            for (ProtocolPayloads.PlayerState ps : snap.players) {
+                if (!playerId.equals(ps.playerId)) continue;
+                latestX = ps.worldX;
+            }
+        }
+        return latestX;
     }
 }

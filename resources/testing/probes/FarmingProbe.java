@@ -34,11 +34,13 @@ public final class FarmingProbe implements Probe {
     private static final Logger LOG = Logger.forClass(FarmingProbe.class);
 
     private static final String HOE   = "hoe";
-    // FarmingService matches items prefixed "seeds_" / "crop_". Plant the
-    // inventory seed item directly.
-    private static final String SEEDS = "seeds_wheat";
-    /** {@code Crop.STAGES * Crop.TICKS_PER_STAGE = 4 * 600 = 2400} */
-    private static final int GROWTH_TICKS = 2400;
+    // FarmingService matches items prefixed "seeds_" / "crop_". Plant a fantasy
+    // seed directly — it has art at every stage (unlike legacy wheat/carrot).
+    private static final String SEEDS = "seeds_emberwheat";
+    /** Crops grow one stage per in-game day; maturing four stages by ticking
+     *  one day at a time would be millions of updates, so the probe jumps the
+     *  clock forward and ticks once to let growth settle. */
+    private static final int STAGES = 4;
 
     @Override public String name() { return "farming"; }
 
@@ -81,14 +83,18 @@ public final class FarmingProbe implements Probe {
         // --- mature ---
         Crop crop = firstOfType(ctx, Crop.class);
         if (crop == null) return ProbeResult.fail(name() + " crop missing after place");
-        harness.tick(GROWTH_TICKS + 10);
+        // Jump the clock past (STAGES-1) full days, then tick once so the
+        // day-paced GrowableComponent recomputes its stage from the new time.
+        long jump = ctx.clock().ticksPerDay() * STAGES;
+        ctx.clock().advance(jump);
+        harness.tick(1);
         boolean mature = crop.isMature();
         GrowableComponent g = crop.getComponent(GrowableComponent.class);
         int stage = g == null ? -1 : g.currentStage();
 
         String detail = String.format(
-            "crop-added=%d, ticks=%d, final-stage=%d, mature=%s",
-            cropsAfter - cropsBefore, GROWTH_TICKS, stage, mature);
+            "crop-added=%d, days-jumped=%d, final-stage=%d, mature=%s",
+            cropsAfter - cropsBefore, STAGES, stage, mature);
         LOG.info(detail);
         if (!mature) return ProbeResult.fail(name() + " crop did not mature", detail);
         return ProbeResult.pass(name(), detail);

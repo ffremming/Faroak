@@ -14,6 +14,7 @@ import resources.net.multiplayer.message.ServerWelcomeMessage;
 import resources.net.multiplayer.server.AuthoritativeLobbyRuntime;
 import resources.net.multiplayer.server.GameServerRuntime;
 import resources.net.multiplayer.server.LobbyRuntime;
+import resources.net.multiplayer.server.ServerTerrainRules;
 import resources.net.multiplayer.server.authority.DefaultAuthorityService;
 import resources.net.multiplayer.server.codec.DefaultSnapshotCodec;
 import resources.net.multiplayer.server.gateway.WebSocketGatewayServer;
@@ -62,8 +63,18 @@ public final class WebSocketTwoClientMovementProbe implements Probe {
                     "aConnected=" + (a != null && a.isConnected())
                     + ", bConnected=" + (b != null && b.isConnected()));
             }
-            a.submit(new ClientJoinMessage("p-a"));
-            b.submit(new ClientJoinMessage("p-b"));
+            ServerTerrainRules terrain = new ServerTerrainRules();
+            double[] aSpawn = findSpawnWithRunway(terrain);
+            if (aSpawn == null) {
+                return ProbeResult.skip(name() + " no safe spawn runway");
+            }
+            double[] bSpawn = findNearbyLand(terrain, aSpawn[0] + 128.0, aSpawn[1], 256.0);
+            if (bSpawn == null) {
+                return ProbeResult.skip(name() + " no nearby second spawn");
+            }
+
+            a.submit(new ClientJoinMessage("p-a", true, aSpawn[0], aSpawn[1]));
+            b.submit(new ClientJoinMessage("p-b", true, bSpawn[0], bSpawn[1]));
 
             boolean aWelcome = false;
             boolean bWelcome = false;
@@ -150,5 +161,31 @@ public final class WebSocketTwoClientMovementProbe implements Probe {
             Thread.sleep(Math.max(1L, sleepMillis));
         }
         return adapter.isConnected();
+    }
+
+    private static double[] findSpawnWithRunway(ServerTerrainRules terrain) {
+        int tile = 64;
+        for (int x = -40 * tile; x <= 40 * tile; x += tile) {
+            for (int y = -40 * tile; y <= 40 * tile; y += tile) {
+                if (!terrain.canPlayerOccupy(x, y)) continue;
+                if (!terrain.canPlayerOccupy(x + 220.0, y)) continue;
+                return new double[] { x, y };
+            }
+        }
+        return null;
+    }
+
+    private static double[] findNearbyLand(ServerTerrainRules terrain, double nearX, double nearY, double maxRadius) {
+        for (int radius = 0; radius <= (int) maxRadius; radius += 16) {
+            for (int dx = -radius; dx <= radius; dx += 16) {
+                for (int dy = -radius; dy <= radius; dy += 16) {
+                    if (radius > 0 && Math.abs(dx) < radius && Math.abs(dy) < radius) continue;
+                    double x = nearX + dx;
+                    double y = nearY + dy;
+                    if (terrain.canPlayerOccupy(x, y)) return new double[] { x, y };
+                }
+            }
+        }
+        return null;
     }
 }

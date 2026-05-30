@@ -7,6 +7,7 @@ import resources.testing.probes.MultiplayerAuthorityProbe;
 import resources.testing.probes.MultiplayerPersistenceProbe;
 import resources.testing.probes.MultiplayerReconnectProbe;
 import resources.testing.probes.MultiplayerTenClientProbe;
+import resources.testing.probes.MultiplayerTerrainRulesProbe;
 import resources.testing.probes.MultiplayerWorldReplicationProbe;
 import resources.testing.probes.ProtocolCodecProbe;
 import resources.testing.probes.WebSocketGatewayProbe;
@@ -23,6 +24,7 @@ public final class MultiplayerTestRunner {
         List<Probe> probes = new ArrayList<>();
         probes.add(new ProtocolCodecProbe());
         probes.add(new MultiplayerAuthorityProbe());
+        probes.add(new MultiplayerTerrainRulesProbe());
         probes.add(new MultiplayerTenClientProbe());
         probes.add(new MultiplayerPersistenceProbe());
         probes.add(new MultiplayerWorldReplicationProbe());

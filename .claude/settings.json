@@ -24,7 +24,26 @@
       "Bash([ -f \"$d/$f\" ])",
       "Bash(java -Djava.awt.headless=true -cp out resources.testing.TestRunner verbose)",
       "Bash(echo \"RUNNER EXIT=$?\")",
-      "Bash(echo \"BASELINE RUNNER EXIT=$?\")"
+      "Bash(echo \"BASELINE RUNNER EXIT=$?\")",
+      "Bash(sort -t: -k2 -rn)",
+      "Bash(awk '/public|private/ {if \\(prev ~ /^[0-9]+/\\) print prev \":\" NR \": \" $0; prev=NR \":\" $0}' /Users/ferdinandfremming/Documents/prosjekter/survivalGame2D/gameDev2D/resources/presentation/ui/UserInterface.java)",
+      "Bash(grep -n \"[0-9]\\\\{2,\\\\}\\\\|0x\" /Users/ferdinandfremming/Documents/prosjekter/survivalGame2D/gameDev2D/resources/presentation/ui/EscapeMenu.java)",
+      "Bash(awk -F'\\(' '{print NF-1, $0}')",
+      "Bash(javac -d /tmp/out_baseline @/tmp/sources_baseline.txt)",
+      "Bash(timeout 60 java -Djava.awt.headless=true -cp /tmp/out_baseline resources.testing.TestRunner)",
+      "Bash(perl -e 'alarm 120; exec @ARGV' java -cp /tmp/out_baseline resources.testing.TestRunner)",
+      "Bash(chmod +x /tmp/verify.sh)",
+      "Bash(javac -d /tmp/out_w10 @/tmp/src_w10.txt)",
+      "Bash(javac -d /tmp/out_w4 @/tmp/src_w4.txt)",
+      "Bash(javac -d /tmp/out_w15 @/tmp/src_w15.txt)",
+      "Bash(javac -d /tmp/out_w1 @/tmp/src_w1.txt)",
+      "Bash(echo \"javac exit: $?\")",
+      "Bash(javac -d /tmp/out_w9 @/tmp/src_w9.txt)",
+      "Bash(javac -d /tmp/out_w8 @/tmp/src_w8.txt)",
+      "Bash(java -cp /tmp/out_w9 resources.testing.TestRunner)",
+      "Bash(cp -r resources /tmp/w9base_combat_check)",
+      "Bash(grep -rln 'CombatService\\\\|meleeAttack\\\\|MeleeAttackSpec\\\\|applyDamage\\\\|WeaponProfile' resources/testing/probes/GrowableProbe.java resources/testing/probes/PersistenceProbe.java resources/testing/probes/CaveWallSpriteProbe.java resources/testing/probes/InteriorProbe.java)",
+      "Bash(java -cp /tmp/out_base resources.testing.TestRunner)"
     ]
   }
 }

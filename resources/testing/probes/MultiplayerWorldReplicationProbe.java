@@ -12,6 +12,7 @@ import resources.net.multiplayer.protocol.ProtocolPayloadCodec;
 import resources.net.multiplayer.protocol.ProtocolPayloads;
 import resources.net.multiplayer.server.AuthoritativeLobbyRuntime;
 import resources.net.multiplayer.server.LobbyRuntime;
+import resources.net.multiplayer.server.ServerTerrainRules;
 import resources.net.multiplayer.server.authority.DefaultAuthorityService;
 import resources.net.multiplayer.server.codec.DefaultSnapshotCodec;
 import resources.net.multiplayer.server.persistence.InMemoryPersistenceStore;
@@ -37,17 +38,25 @@ public final class MultiplayerWorldReplicationProbe implements Probe {
             cfg, new DefaultAuthorityService(), store, new DefaultSnapshotCodec());
         first.receive(new ProtocolEnvelope(1, "p1", 0L, 0L, 0L, ProtocolMessageType.JOIN, new byte[0]));
         first.tick();
-        drainSnapshots(first.drainFor("p1"), codec); // consume baseline
+        List<ProtocolPayloads.Snapshot> initial = drainSnapshots(first.drainFor("p1"), codec); // consume baseline
+        double[] spawn = findPlayer(initial, "p1");
+        ServerTerrainRules terrain = new ServerTerrainRules();
+        double[] target1 = findNearbyLand(terrain, spawn[0] + 96.0, spawn[1], 256.0);
+        double[] target2 = findNearbyLand(terrain, spawn[0] - 160.0, spawn[1] + 64.0, 256.0);
+        if (target1 == null || target2 == null) {
+            first.close();
+            return ProbeResult.skip(name() + " no land placement targets near spawn");
+        }
 
         ProtocolPayloads.ActionRequest place1 = new ProtocolPayloads.ActionRequest(
-            MultiplayerAction.PLACE, true, 80.0, 80.0, "block");
+            MultiplayerAction.PLACE, true, target1[0], target1[1], "block");
         first.receive(new ProtocolEnvelope(1, "p1", 1L, 0L, 0L, ProtocolMessageType.ACTION, codec.encodeAction(place1)));
         first.tick();
         List<ProtocolPayloads.Snapshot> afterPlace = drainSnapshots(first.drainFor("p1"), codec);
         boolean placedSeen = hasObject(afterPlace, "block", false);
 
         ProtocolPayloads.ActionRequest attack = new ProtocolPayloads.ActionRequest(
-            MultiplayerAction.ATTACK, true, 80.0, 80.0, "");
+            MultiplayerAction.ATTACK, true, target1[0], target1[1], "");
         first.receive(new ProtocolEnvelope(1, "p1", 2L, 0L, 0L, ProtocolMessageType.ACTION, codec.encodeAction(attack)));
         first.tick();
         List<ProtocolPayloads.Snapshot> afterAttack = drainSnapshots(first.drainFor("p1"), codec);
@@ -57,7 +66,7 @@ public final class MultiplayerWorldReplicationProbe implements Probe {
         first.tick();
         first.tick(); // PLACE cooldown window
         ProtocolPayloads.ActionRequest place2 = new ProtocolPayloads.ActionRequest(
-            MultiplayerAction.PLACE, true, 160.0, 160.0, "fence");
+            MultiplayerAction.PLACE, true, target2[0], target2[1], "fence");
         first.receive(new ProtocolEnvelope(1, "p1", 3L, 0L, 0L, ProtocolMessageType.ACTION, codec.encodeAction(place2)));
         first.tick();
         first.close();
@@ -100,5 +109,33 @@ public final class MultiplayerWorldReplicationProbe implements Probe {
             }
         }
         return false;
+    }
+
+    private static double[] findPlayer(List<ProtocolPayloads.Snapshot> snapshots, String playerId) {
+        double[] out = new double[] { 0.0, 0.0 };
+        if (snapshots == null) return out;
+        for (ProtocolPayloads.Snapshot snapshot : snapshots) {
+            if (snapshot == null) continue;
+            for (ProtocolPayloads.PlayerState ps : snapshot.players) {
+                if (!playerId.equals(ps.playerId)) continue;
+                out[0] = ps.worldX;
+                out[1] = ps.worldY;
+            }
+        }
+        return out;
+    }
+
+    private static double[] findNearbyLand(ServerTerrainRules terrain, double nearX, double nearY, double maxRadius) {
+        for (int radius = 0; radius <= (int) maxRadius; radius += 16) {
+            for (int dx = -radius; dx <= radius; dx += 16) {
+                for (int dy = -radius; dy <= radius; dy += 16) {
+                    if (radius > 0 && Math.abs(dx) < radius && Math.abs(dy) < radius) continue;
+                    double x = nearX + dx;
+                    double y = nearY + dy;
+                    if (!terrain.isWaterAt(x, y)) return new double[] { x, y };
+                }
+            }
+        }
+        return null;
     }
 }

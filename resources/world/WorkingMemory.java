@@ -116,23 +116,23 @@ public class WorkingMemory implements WorldRuntime {
 
     private void sortVisibleEntities() {
         long startTime = System.nanoTime();
-        if (panel.camera != null) {
+        if (panel.camera() != null) {
             ArrayList<Entity> inRange = new ArrayList<>();
             for (Chunk c : new ArrayList<>(index.chunks())) {
-                c.getEntitiesInBound(chunkSystem.getRenderRectangle(panel.camera.getHitBox().getCenter()), inRange);
+                c.getEntitiesInBound(chunkSystem.getRenderRectangle(panel.camera().getHitBox().getCenter()), inRange);
             }
             index.setEntities(inRange);
         }
-        index.setSortedVisible(visibility.visibleEntities(panel.camera, index.entities()));
+        index.setSortedVisible(visibility.visibleEntities(panel.camera(), index.entities()));
         EntitySorter.sortByWorldY(index.sortedVisible());
-        if (panel.camera != null) {
-            panel.camera.setObservedSortTime(System.nanoTime() - startTime);
+        if (panel.camera() != null) {
+            panel.camera().setObservedSortTime(System.nanoTime() - startTime);
         }
     }
 
     private void recordChunkUpdateTime(long startTime) {
-        if (panel.camera != null) {
-            panel.camera.setObservedChunkUpdateTime(System.nanoTime() - startTime);
+        if (panel.camera() != null) {
+            panel.camera().setObservedChunkUpdateTime(System.nanoTime() - startTime);
         }
     }
 
@@ -153,7 +153,7 @@ public class WorkingMemory implements WorldRuntime {
     }
 
     private void reportTickStats(int simulated, int nonTile) {
-        Camera cam = panel.camera;
+        Camera cam = panel.camera();
         if (cam == null) return;
         cam.addbackendPrintData("simulated entities: " + simulated);
         cam.addbackendPrintData("non-tile entities: " + nonTile);
@@ -186,6 +186,7 @@ public class WorkingMemory implements WorldRuntime {
     @Override public ArrayList<BaseEntity> getEntitiesCollidedWith(HitBox hb) { return interaction.entitiesCollidedWith(hb); }
     @Override public ArrayList<BaseEntity> getEntitiesCollidedWith(Point p)   { return interaction.entitiesCollidedWith(p); }
     @Override public boolean        placeEntity(BaseEntity e)            { return interaction.placeEntity(e); }
+    @Override public boolean        placeEntityAuthoritative(BaseEntity e) { return interaction.placeEntityAuthoritative(e); }
     @Override public boolean        placeEntityIgnoringTerrainCollision(BaseEntity e) {
         return interaction.placeEntityIgnoringTerrainCollision(e);
     }

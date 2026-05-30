@@ -21,6 +21,7 @@ import resources.net.multiplayer.server.persistence.PersistenceStore;
 public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
 
     private static final double DIAGONAL = 0.70710678118;
+    private static final double MAX_MOVE_SUBSTEP = 4.0;
     private static final long WORLD_CHUNK_KEY = 0L;
     private static final String META_SERVER_TICK = "server_tick";
     private static final String META_WORLD_NEXT_OBJECT_ID = "world_next_object_id";
@@ -37,6 +38,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
     private final AuthorityService authority;
     private final PersistenceStore persistence;
     private final SnapshotCodec snapshotCodec;
+    private final ServerTerrainRules terrainRules;
     private final ActionResolver actionResolver;
     private final SnapshotPublisher snapshotPublisher;
     private final ProtocolPayloadCodec payloadCodec = new ProtocolPayloadCodec();
@@ -68,7 +70,8 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         this.authority = authority;
         this.persistence = persistence;
         this.snapshotCodec = snapshotCodec;
-        this.actionResolver = new ActionResolver(this.maxActionRange);
+        this.terrainRules = new ServerTerrainRules();
+        this.actionResolver = new ActionResolver(this.maxActionRange, this.terrainRules);
         this.snapshotPublisher = new SnapshotPublisher(snapshotCodec, this.protocolVersion, this.interestRadius);
         this.tombstoneTtlTicks = Math.max(1L, config.serverTickRate() * 10L);
         this.tick = ServerParse.parseLong(persistence.getMeta(META_SERVER_TICK, "0"), 0L);
@@ -170,6 +173,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
                 session.lastChangedTick = tick;
             }
         }
+        ensureSpawnOnLand(session);
         session.baselineSent = false;
         session.lastSentTick = 0L;
         session.lastChangedTick = tick;
@@ -212,6 +216,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
 
     private void integratePlayers() {
         for (Session s : sessions.values()) {
+            ensureSpawnOnLand(s);
             double dx = 0.0; double dy = 0.0;
             if (s.up) dy -= moveSpeedPerTick;
             if (s.down) dy += moveSpeedPerTick;
@@ -219,18 +224,92 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
             if (s.right) dx += moveSpeedPerTick;
             if (dx != 0.0 && dy != 0.0) { dx *= DIAGONAL; dy *= DIAGONAL; }
             if (!authority.canMove(dx, dy, moveSpeedPerTick)) continue;
-            boolean moved = dx != 0.0 || dy != 0.0;
-            boolean velocityChanged = s.vx != dx || s.vy != dy;
-            s.vx = dx; s.vy = dy;
-            s.x += dx; s.y += dy;
+            MoveResult movement = moveWithTerrainSteps(s, dx, dy);
+            double nextVx = movement.movedX;
+            double nextVy = movement.movedY;
+            boolean moved = movement.moved;
+            boolean velocityChanged = s.vx != nextVx || s.vy != nextVy;
+            s.vx = nextVx;
+            s.vy = nextVy;
             if (moved || velocityChanged) s.lastChangedTick = tick;
         }
+    }
+
+    private MoveResult moveWithTerrainSteps(Session s, double dx, double dy) {
+        if (dx == 0.0 && dy == 0.0) return MoveResult.NONE;
+
+        int steps = Math.max(1, (int) Math.ceil(
+            Math.max(Math.abs(dx), Math.abs(dy)) / MAX_MOVE_SUBSTEP));
+        double stepX = dx / steps;
+        double stepY = dy / steps;
+        double movedX = 0.0;
+        double movedY = 0.0;
+        boolean moved = false;
+
+        for (int i = 0; i < steps; i++) {
+            double targetX = s.x + stepX;
+            double targetY = s.y + stepY;
+            if (terrainRules.canPlayerOccupy(targetX, targetY)) {
+                s.x = targetX;
+                s.y = targetY;
+                movedX += stepX;
+                movedY += stepY;
+                moved = true;
+                continue;
+            }
+            boolean progressed = false;
+            if (stepX != 0.0 && terrainRules.canPlayerOccupy(s.x + stepX, s.y)) {
+                s.x += stepX;
+                movedX += stepX;
+                moved = true;
+                progressed = true;
+            }
+            if (stepY != 0.0 && terrainRules.canPlayerOccupy(s.x, s.y + stepY)) {
+                s.y += stepY;
+                movedY += stepY;
+                moved = true;
+                progressed = true;
+            }
+            if (!progressed) break;
+        }
+        return new MoveResult(movedX, movedY, moved);
     }
 
     private Session newSession(String playerId) {
         PersistenceStore.PersistedPlayer persisted = persistence.loadPlayer(playerId)
             .orElse(new PersistenceStore.PersistedPlayer(playerId, 0.0, 0.0, 0.0, 0.0, 0L));
-        return new Session(persisted);
+        Session session = new Session(persisted);
+        ensureSpawnOnLand(session);
+        return session;
+    }
+
+    private void ensureSpawnOnLand(Session session) {
+        if (session == null) return;
+        if (terrainRules.canPlayerOccupy(session.x, session.y)) return;
+        double[] spawn = nearestLand(session.x, session.y);
+        session.x = spawn[0];
+        session.y = spawn[1];
+        session.vx = 0.0;
+        session.vy = 0.0;
+    }
+
+    private double[] nearestLand(double aroundX, double aroundY) {
+        final int tile = 64;
+        int baseX = (int) Math.rint(aroundX / tile) * tile;
+        int baseY = (int) Math.rint(aroundY / tile) * tile;
+        for (int radius = 0; radius <= 48; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dy = -radius; dy <= radius; dy++) {
+                    if (radius > 0 && Math.abs(dx) < radius && Math.abs(dy) < radius) continue;
+                    double x = baseX + (dx * tile);
+                    double y = baseY + (dy * tile);
+                    if (terrainRules.canPlayerOccupy(x, y)) {
+                        return new double[] { x, y };
+                    }
+                }
+            }
+        }
+        return new double[] { aroundX, aroundY };
     }
 
     private void presence(String playerId, boolean joined) {
@@ -311,5 +390,18 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
 
     private void event(String playerId, String type, String payload) {
         persistence.appendSessionEvent(tick, playerId, type, payload);
+    }
+
+    private static final class MoveResult {
+        static final MoveResult NONE = new MoveResult(0.0, 0.0, false);
+        final double movedX;
+        final double movedY;
+        final boolean moved;
+
+        MoveResult(double movedX, double movedY, boolean moved) {
+            this.movedX = movedX;
+            this.movedY = movedY;
+            this.moved = moved;
+        }
     }
 }

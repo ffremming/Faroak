@@ -31,29 +31,36 @@ public final class RemotePlayerAvatar extends Moveable {
 
     public void pushSnapshot(long serverTick, PlayerStateMessage state) {
         if (state == null) return;
-        samples.addLast(new StateSample(serverTick, state.worldX(), state.worldY()));
+        long nowMs = System.currentTimeMillis();
+        samples.addLast(new StateSample(serverTick, nowMs,
+            state.worldX(), state.worldY(), state.velocityX(), state.velocityY()));
         while (samples.size() > 20) samples.removeFirst();
     }
 
-    public void advanceInterpolation(long latestServerTick, int interpolationTicks) {
+    public void advanceInterpolation(int interpolationDelayMs, int serverTickRate) {
         if (samples.isEmpty()) return;
-        long targetTick = Math.max(0L, latestServerTick - Math.max(0, interpolationTicks));
+        long nowMs = System.currentTimeMillis();
+        long targetMs = nowMs - Math.max(0, interpolationDelayMs);
         while (samples.size() >= 2) {
             StateSample first = samples.peekFirst();
             StateSample second = samples.size() > 1 ? sampleAt(1) : null;
-            if (second == null || second.tick > targetTick) break;
+            if (second == null || second.arrivedAtMs > targetMs) break;
             samples.removeFirst();
         }
         if (samples.size() >= 2) {
             StateSample a = samples.peekFirst();
             StateSample b = sampleAt(1);
-            double alpha = (b.tick == a.tick) ? 1.0 : clamp((targetTick - a.tick) / (double) (b.tick - a.tick), 0.0, 1.0);
+            long span = Math.max(1L, b.arrivedAtMs - a.arrivedAtMs);
+            double alpha = clamp((targetMs - a.arrivedAtMs) / (double) span, 0.0, 1.0);
             setWorldX(lerp(a.x, b.x, alpha));
             setWorldY(lerp(a.y, b.y, alpha));
         } else {
             StateSample only = samples.peekFirst();
-            setWorldX(only.x);
-            setWorldY(only.y);
+            long aheadMs = Math.max(0L, targetMs - only.arrivedAtMs);
+            double cappedAhead = Math.min(aheadMs, 1000.0 / Math.max(1, serverTickRate));
+            double ticksAhead = cappedAhead * (Math.max(1, serverTickRate) / 1000.0);
+            setWorldX(only.x + (only.vx * ticksAhead));
+            setWorldY(only.y + (only.vy * ticksAhead));
         }
         getHitBox().updateCoords();
     }
@@ -77,13 +84,19 @@ public final class RemotePlayerAvatar extends Moveable {
 
     private static final class StateSample {
         final long tick;
+        final long arrivedAtMs;
         final double x;
         final double y;
+        final double vx;
+        final double vy;
 
-        StateSample(long tick, double x, double y) {
+        StateSample(long tick, long arrivedAtMs, double x, double y, double vx, double vy) {
             this.tick = tick;
+            this.arrivedAtMs = arrivedAtMs;
             this.x = x;
             this.y = y;
+            this.vx = vx;
+            this.vy = vy;
         }
     }
 }

@@ -47,6 +47,7 @@ public final class InputBindings {
         // F/G/R = combat actions (light/heavy/ranged in Keys.java, mapped to
         // ATTACK here as the semantic umbrella action).
         bind(KeyEvent.VK_SPACE,  InputAction.INTERACT);
+        bind(KeyEvent.VK_ENTER,  InputAction.INTERACT);
         bind(KeyEvent.VK_F,      InputAction.ATTACK);
         bind(KeyEvent.VK_G,      InputAction.ATTACK);
         bind(KeyEvent.VK_R,      InputAction.ATTACK);

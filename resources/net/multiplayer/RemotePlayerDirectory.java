@@ -18,7 +18,6 @@ final class RemotePlayerDirectory {
 
     private final GameContext ctx;
     private final Map<String, RemotePlayerAvatar> byPlayerId = new HashMap<>();
-    private long latestServerTick;
 
     RemotePlayerDirectory(GameContext ctx) {
         this.ctx = ctx;
@@ -26,7 +25,6 @@ final class RemotePlayerDirectory {
 
     void applySnapshot(long serverTick, boolean baseline, List<PlayerStateMessage> players, String localPlayerId) {
         if (players == null) return;
-        latestServerTick = Math.max(latestServerTick, serverTick);
         Set<String> seen = new HashSet<>();
         for (PlayerStateMessage state : players) {
             if (state == null || state.playerId() == null) continue;
@@ -43,17 +41,16 @@ final class RemotePlayerDirectory {
         if (baseline) removeMissing(seen);
     }
 
-    void interpolate(int interpolationDelayMs, int snapshotRate) {
-        int ticks = Math.max(0, (interpolationDelayMs * Math.max(1, snapshotRate)) / 1000);
+    void interpolate(int interpolationDelayMs, int serverTickRate) {
         for (RemotePlayerAvatar avatar : byPlayerId.values()) {
-            avatar.advanceInterpolation(latestServerTick, ticks);
+            avatar.advanceInterpolation(interpolationDelayMs, serverTickRate);
         }
     }
 
     private RemotePlayerAvatar spawn(String playerId, PlayerStateMessage state) {
         GamePanel panel = ctx.player().panel;
         RemotePlayerAvatar avatar = new RemotePlayerAvatar(panel, playerId, state.worldX(), state.worldY());
-        ctx.world().placeEntity(avatar);
+        ctx.world().placeEntityAuthoritative(avatar);
         return avatar;
     }
 

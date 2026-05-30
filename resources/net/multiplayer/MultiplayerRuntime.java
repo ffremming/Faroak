@@ -28,6 +28,7 @@ import resources.net.multiplayer.message.ServerWelcomeMessage;
 public final class MultiplayerRuntime {
 
     private static final long DEFAULT_RECONNECT_DELAY_MS = 1000L;
+    private static final int MAX_LOCAL_SAMPLES = 20;
 
     private final GameContext ctx;
     private final MultiplayerConfig config;
@@ -37,6 +38,7 @@ public final class MultiplayerRuntime {
     private final boolean reconnectEnabled;
     private final long reconnectDelayMs;
     private final boolean localReconcileEnabled;
+    private final int localInterpolationDelayMs;
 
     private long sequence;
     private boolean started;
@@ -48,6 +50,7 @@ public final class MultiplayerRuntime {
     private long pingCounter;
     private long lastAckedSeq;
     private final ArrayDeque<PredictedInput> pendingInputs = new ArrayDeque<>();
+    private final ArrayDeque<LocalSnapshotSample> localSamples = new ArrayDeque<>();
 
     private MultiplayerRuntime(GameContext ctx, MultiplayerConfig config, MultiplayerServerAdapter adapter) {
         this.ctx = ctx;
@@ -61,6 +64,8 @@ public final class MultiplayerRuntime {
             "game.multiplayer.reconnectDelayMs", DEFAULT_RECONNECT_DELAY_MS, 0L, 60_000L);
         this.localReconcileEnabled = parseBoolean(
             "game.multiplayer.reconcileLocal", true);
+        this.localInterpolationDelayMs = (int) parseLong(
+            "game.multiplayer.localInterpolationDelayMs", 0L, 0L, 250L);
     }
 
     public static MultiplayerRuntime createDefault(GameContext ctx) {
@@ -112,6 +117,7 @@ public final class MultiplayerRuntime {
         ensureStarted();
         adapter.tick();
         consume(adapter.poll());
+        if (localReconcileEnabled) applyLocalAuthoritativePose();
         if (!adapter.isConnected()) {
             reconnectIfDue();
             return;
@@ -120,7 +126,7 @@ public final class MultiplayerRuntime {
         if (!joined) return;
         publishMovement();
         publishActions();
-        remotes.interpolate(config.interpolationDelayMs(), config.snapshotRate());
+        remotes.interpolate(config.interpolationDelayMs(), config.serverTickRate());
     }
 
     public void close() {
@@ -133,6 +139,7 @@ public final class MultiplayerRuntime {
         joined = false;
         joinSent = false;
         nextReconnectAttemptAtMs = 0L;
+        localSamples.clear();
     }
 
     private void ensureStarted() {
@@ -162,6 +169,7 @@ public final class MultiplayerRuntime {
         joined = false;
         joinSent = false;
         pendingInputs.clear();
+        localSamples.clear();
         lastMovementMask = -1L;
         adapter.connect(config.playerId());
         nextReconnectAttemptAtMs = 0L;
@@ -261,20 +269,61 @@ public final class MultiplayerRuntime {
         if (ackSeq > 0L) onAck(new ServerAckMessage(config.playerId(), ackSeq, 0L));
         for (PlayerStateMessage state : players) {
             if (state == null || !config.playerId().equals(state.playerId())) continue;
-            double dx = state.worldX() - ctx.player().getWorldX();
-            double dy = state.worldY() - ctx.player().getWorldY();
-            double dist2 = (dx * dx) + (dy * dy);
-            if (dist2 > 400.0) {
-                ctx.player().setWorldX(state.worldX());
-                ctx.player().setWorldY(state.worldY());
-                ctx.player().getHitBox().updateCoords();
-            } else if (dist2 > 1.0) {
-                ctx.player().setWorldX(ctx.player().getWorldX() + (dx * 0.25));
-                ctx.player().setWorldY(ctx.player().getWorldY() + (dy * 0.25));
-                ctx.player().getHitBox().updateCoords();
-            }
+            pushLocalSample(state);
             break;
         }
+    }
+
+    private void pushLocalSample(PlayerStateMessage state) {
+        long nowMs = System.currentTimeMillis();
+        localSamples.addLast(new LocalSnapshotSample(
+            nowMs, state.worldX(), state.worldY(), state.velocityX(), state.velocityY()));
+        while (localSamples.size() > MAX_LOCAL_SAMPLES) localSamples.removeFirst();
+    }
+
+    private void applyLocalAuthoritativePose() {
+        if (ctx.player() == null || localSamples.isEmpty()) return;
+        long nowMs = System.currentTimeMillis();
+        long targetMs = nowMs - Math.max(0, localInterpolationDelayMs);
+
+        while (localSamples.size() >= 2) {
+            LocalSnapshotSample second = sampleAt(1);
+            if (second == null || second.arrivedAtMs > targetMs) break;
+            localSamples.removeFirst();
+        }
+
+        double nextX;
+        double nextY;
+        if (localSamples.size() >= 2) {
+            LocalSnapshotSample a = localSamples.peekFirst();
+            LocalSnapshotSample b = sampleAt(1);
+            if (a == null || b == null) return;
+            long span = Math.max(1L, b.arrivedAtMs - a.arrivedAtMs);
+            double alpha = clamp((targetMs - a.arrivedAtMs) / (double) span, 0.0, 1.0);
+            nextX = lerp(a.x, b.x, alpha);
+            nextY = lerp(a.y, b.y, alpha);
+        } else {
+            LocalSnapshotSample only = localSamples.peekFirst();
+            if (only == null) return;
+            long aheadMs = Math.max(0L, targetMs - only.arrivedAtMs);
+            double cappedAhead = Math.min(aheadMs, 1000.0 / Math.max(1, config.serverTickRate()));
+            double ticksAhead = cappedAhead * (Math.max(1, config.serverTickRate()) / 1000.0);
+            nextX = only.x + (only.vx * ticksAhead);
+            nextY = only.y + (only.vy * ticksAhead);
+        }
+
+        ctx.player().setWorldX(nextX);
+        ctx.player().setWorldY(nextY);
+        ctx.player().getHitBox().updateCoords();
+    }
+
+    private LocalSnapshotSample sampleAt(int index) {
+        int i = 0;
+        for (LocalSnapshotSample sample : localSamples) {
+            if (i == index) return sample;
+            i++;
+        }
+        return null;
     }
 
     private long movementMask(InputHandlingSystem input) {
@@ -317,8 +366,32 @@ public final class MultiplayerRuntime {
         }
     }
 
+    private static double lerp(double a, double b, double t) {
+        return a + ((b - a) * t);
+    }
+
+    private static double clamp(double v, double min, double max) {
+        return Math.max(min, Math.min(max, v));
+    }
+
     private static final class PredictedInput {
         final long sequence;
         PredictedInput(long sequence) { this.sequence = sequence; }
+    }
+
+    private static final class LocalSnapshotSample {
+        final long arrivedAtMs;
+        final double x;
+        final double y;
+        final double vx;
+        final double vy;
+
+        LocalSnapshotSample(long arrivedAtMs, double x, double y, double vx, double vy) {
+            this.arrivedAtMs = arrivedAtMs;
+            this.x = x;
+            this.y = y;
+            this.vx = vx;
+            this.vy = vy;
+        }
     }
 }

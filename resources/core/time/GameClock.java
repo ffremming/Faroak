@@ -37,6 +37,18 @@ public final class GameClock {
     /** Advance one logical tick. Called once per simulation step. */
     public void tick() { ticks++; }
 
+    /**
+     * Jump the clock forward by {@code delta} ticks in one step. Used by
+     * time-skip mechanics (sleeping through to morning) and save/load catch-up,
+     * where advancing one tick at a time would be wasteful. Cadence-based
+     * subsystems ({@link resources.domain.entity.component.GrowableComponent})
+     * read absolute tick counts, so they settle to the correct state on their
+     * next update. Negative deltas are ignored.
+     */
+    public void advance(long delta) {
+        if (delta > 0) ticks += delta;
+    }
+
     public long ticks()       { return ticks; }
     public long day()         { return ticks / ticksPerDay; }
     public long tickOfDay()   { return ticks % ticksPerDay; }

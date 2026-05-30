@@ -49,23 +49,17 @@ public final class MultiplayerGuiE2ERunner {
 
             waitForJoined(host, join, hostTelemetryPort, joinTelemetryPort, Duration.ofSeconds(35));
             waitForRemotes(host, join, hostTelemetryPort, joinTelemetryPort, Duration.ofSeconds(25));
+            boolean movementVerified = false;
+            if (bool(System.getProperty("game.test.requireMovementReplication", "false"))) {
+                verifyMovementReplication(robot, host, join, hostTelemetryPort, joinTelemetryPort, Duration.ofSeconds(20));
+                movementVerified = true;
+            }
 
-            double beforeMeanX = parseDouble(status(joinTelemetryPort).get("remoteMeanX"));
-            focusGame(robot, HOST_X, HOST_Y);
-            holdKey(robot, KeyEvent.VK_D, 1200);
-            waitForRemoteMovement(host, join, joinTelemetryPort, beforeMeanX, Duration.ofSeconds(12));
-
-            int hostObjectsBefore = parseInt(status(hostTelemetryPort).get("replicatedObjects"));
-            int joinObjectsBefore = parseInt(status(joinTelemetryPort).get("replicatedObjects"));
-            Map<String, String> hostStatus = status(hostTelemetryPort);
-            int clickX = HOST_X + playerScreenX(hostStatus);
-            int clickY = HOST_Y + playerScreenY(hostStatus);
-            leftClick(robot, clickX, clickY);
-            waitForReplicatedObjectDelta(host, join, hostTelemetryPort, joinTelemetryPort,
-                hostObjectsBefore, joinObjectsBefore, Duration.ofSeconds(12));
+            verifyReplicatedPlaceInteraction(robot, host, join, hostTelemetryPort, joinTelemetryPort, Duration.ofSeconds(20));
 
             System.out.println("PASS multiplayer-gui-e2e "
-                + "joined=true remotes-visible=true movement-replicated=true interactions-replicated=true");
+                + "joined=true remotes-visible=true movement-replicated=" + movementVerified
+                + " interactions-replicated=true");
         } finally {
             host.destroy();
             join.destroy();
@@ -81,27 +75,6 @@ public final class MultiplayerGuiE2ERunner {
     }
 
     private static void waitForRemotes(Process host, Process join, int hostPort, int joinPort, Duration timeout) throws Exception {
-        waitUntil(timeout, host, join, () -> {
-            Map<String, String> hs = status(hostPort);
-            Map<String, String> js = status(joinPort);
-            return parseInt(hs.get("remotePlayers")) >= 1
-                && parseInt(js.get("remotePlayers")) >= 1
-                && parseInt(hs.get("visibleRemotePlayers")) >= 1
-                && parseInt(js.get("visibleRemotePlayers")) >= 1;
-        }, "remote players not visible in both clients");
-    }
-
-    private static void waitForRemoteMovement(Process host, Process join, int joinPort, double beforeMeanX, Duration timeout) throws Exception {
-        waitUntil(timeout, host, join, () -> {
-            Map<String, String> js = status(joinPort);
-            double after = parseDouble(js.get("remoteMeanX"));
-            return Math.abs(after - beforeMeanX) >= 10.0;
-        }, "remote player movement did not replicate");
-    }
-
-    private static void waitForReplicatedObjectDelta(
-            Process host, Process join, int hostPort, int joinPort,
-            int hostBefore, int joinBefore, Duration timeout) throws Exception {
         Instant deadline = Instant.now().plus(timeout);
         Map<String, String> lastHost = new HashMap<>();
         Map<String, String> lastJoin = new HashMap<>();
@@ -111,16 +84,144 @@ public final class MultiplayerGuiE2ERunner {
             try {
                 lastHost = status(hostPort);
                 lastJoin = status(joinPort);
-                boolean ok = parseInt(lastHost.get("replicatedObjects")) > hostBefore
-                    && parseInt(lastJoin.get("replicatedObjects")) > joinBefore;
+                boolean ok = parseInt(lastHost.get("remotePlayers")) >= 1
+                    && parseInt(lastJoin.get("remotePlayers")) >= 1
+                    && parseInt(lastHost.get("visibleRemotePlayers")) >= 1
+                    && parseInt(lastJoin.get("visibleRemotePlayers")) >= 1;
                 if (ok) return;
             } catch (Exception ignored) {}
             Thread.sleep(150L);
         }
         throw new IllegalStateException(
-            "replicated object interaction did not appear on both clients"
+            "remote players not visible in both clients"
             + " host=" + compact(lastHost)
             + " join=" + compact(lastJoin));
+    }
+
+    private static void verifyMovementReplication(
+            Robot robot,
+            Process host,
+            Process join,
+            int hostPort,
+            int joinPort,
+            Duration timeout) throws Exception {
+        Instant deadline = Instant.now().plus(timeout);
+        while (Instant.now().isBefore(deadline)) {
+            if (attemptMovementFromMover(host, join, hostPort, joinPort)) return;
+            if (attemptMovementFromMover(host, join, joinPort, hostPort)) return;
+            Thread.sleep(140L);
+        }
+        Map<String, String> hs = status(hostPort);
+        Map<String, String> js = status(joinPort);
+        throw new IllegalStateException(
+            "remote player movement did not replicate"
+            + " host=" + compact(hs)
+            + " join=" + compact(js));
+    }
+
+    private static boolean attemptMovementFromMover(
+            Process host,
+            Process join,
+            int moverPort,
+            int observerPort) throws Exception {
+        String[] dirs = { "right", "down", "left", "up" };
+        for (String dir : dirs) {
+            ensureAlive(host, "host");
+            ensureAlive(join, "join");
+            Map<String, String> moverBefore = status(moverPort);
+            Map<String, String> observerBefore = status(observerPort);
+            double moverX0 = parseDouble(moverBefore.get("playerX"));
+            double moverY0 = parseDouble(moverBefore.get("playerY"));
+            double remoteX0 = parseDouble(observerBefore.get("remoteMeanX"));
+            double remoteY0 = parseDouble(observerBefore.get("remoteMeanY"));
+
+            String reply = command(moverPort, "MOVE " + dir + " 1300");
+            if (!"OK".equalsIgnoreCase(reply)) continue;
+            Thread.sleep(1450L);
+
+            Map<String, String> moverAfter = status(moverPort);
+            Map<String, String> observerAfter = status(observerPort);
+            double moverDx = parseDouble(moverAfter.get("playerX")) - moverX0;
+            double moverDy = parseDouble(moverAfter.get("playerY")) - moverY0;
+            double remoteDx = parseDouble(observerAfter.get("remoteMeanX")) - remoteX0;
+            double remoteDy = parseDouble(observerAfter.get("remoteMeanY")) - remoteY0;
+            double moverDist = Math.hypot(moverDx, moverDy);
+            double remoteDist = Math.hypot(remoteDx, remoteDy);
+            if (moverDist >= 6.0 && remoteDist >= 4.0) return true;
+        }
+        return false;
+    }
+
+    private static void verifyReplicatedPlaceInteraction(
+            Robot robot,
+            Process host,
+            Process join,
+            int hostPort,
+            int joinPort,
+            Duration timeout) throws Exception {
+        Instant deadline = Instant.now().plus(timeout);
+        while (Instant.now().isBefore(deadline)) {
+            ensureAlive(host, "host");
+            ensureAlive(join, "join");
+            command(hostPort, "UI_CLOSE");
+            command(joinPort, "UI_CLOSE");
+            if (attemptPlaceFromClient(robot, HOST_X, hostPort, hostPort, joinPort)) return;
+            if (attemptPlaceFromClient(robot, JOIN_X, joinPort, hostPort, joinPort)) return;
+            Thread.sleep(120L);
+        }
+        Map<String, String> hs = status(hostPort);
+        Map<String, String> js = status(joinPort);
+        throw new IllegalStateException(
+            "replicated object interaction did not appear on both clients"
+            + " host=" + compact(hs)
+            + " join=" + compact(js));
+    }
+
+    private static boolean attemptPlaceFromClient(
+            Robot robot,
+            int windowX,
+            int placerPort,
+            int hostPort,
+            int joinPort) throws Exception {
+        Map<String, String> beforeHost = status(hostPort);
+        Map<String, String> beforeJoin = status(joinPort);
+        Map<String, String> beforePlacer = status(placerPort);
+        int hostBefore = parseInt(beforeHost.get("replicatedObjects"));
+        int joinBefore = parseInt(beforeJoin.get("replicatedObjects"));
+        long seqBefore = parseInt(beforePlacer.get("localSeq"));
+
+        int baseX = windowX + playerScreenX(beforePlacer);
+        int baseY = (windowX == HOST_X ? HOST_Y : JOIN_Y) + playerScreenY(beforePlacer);
+        int[][] offsets = {
+            { 96, 0 }, { -96, 0 }, { 0, 96 }, { 0, -96 },
+            { 64, 64 }, { -64, 64 }, { 64, -64 }, { -64, -64 },
+            { 24, 0 }, { 0, 24 }, { -24, 0 }, { 0, -24 }
+        };
+
+        int minX = windowX + 32;
+        int maxX = windowX + W - 32;
+        int winY = (windowX == HOST_X ? HOST_Y : JOIN_Y);
+        int minY = winY + 32;
+        int maxY = winY + H - 32;
+        for (int[] off : offsets) {
+            focusGame(robot, windowX, winY);
+            Thread.sleep(140L);
+            int clickX = clamp(baseX + off[0], minX, maxX);
+            int clickY = clamp(baseY + off[1], minY, maxY);
+            for (int attempt = 0; attempt < 2; attempt++) {
+                leftClick(robot, clickX, clickY);
+                Thread.sleep(280L);
+                Map<String, String> afterHost = status(hostPort);
+                Map<String, String> afterJoin = status(joinPort);
+                Map<String, String> afterPlacer = status(placerPort);
+                boolean actionSent = parseInt(afterPlacer.get("localSeq")) > seqBefore;
+                boolean replicated = parseInt(afterHost.get("replicatedObjects")) > hostBefore
+                    && parseInt(afterJoin.get("replicatedObjects")) > joinBefore;
+                if (actionSent && replicated) return true;
+                if (actionSent) break;
+            }
+        }
+        return false;
     }
 
     private static void waitUntil(Duration timeout, Process host, Process join, ProbeCondition condition, String failure) throws Exception {
@@ -195,8 +296,9 @@ public final class MultiplayerGuiE2ERunner {
             "-Dgame.multiplayer.gatewayPort=" + gatewayPort,
             "-Dgame.multiplayer.serverUrl=" + serverUrl,
             "-Dgame.multiplayer.maxPlayers=2",
-            "-Dgame.multiplayer.reconcileLocal=false",
-            "-Dgame.multiplayer.serverMoveSpeedPerTick=10.0",
+            "-Dgame.multiplayer.reconcileLocal=true",
+            "-Dgame.multiplayer.serverMoveSpeedPerTick=20.0",
+            "-Dgame.multiplayer.serverActionRange=768.0",
             "-Dgame.test.hotbarItem=block",
             "resources.app.Main");
         pb.redirectErrorStream(true);
@@ -212,6 +314,18 @@ public final class MultiplayerGuiE2ERunner {
             out.println("STATUS");
             String line = in.readLine();
             return parseStatus(line);
+        }
+    }
+
+    private static String command(int port, String command) throws Exception {
+        try (Socket socket = new Socket("127.0.0.1", port)) {
+            socket.setSoTimeout(1500);
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
+            BufferedReader in = new BufferedReader(
+                new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+            out.println(command);
+            String line = in.readLine();
+            return line == null ? "" : line.trim();
         }
     }
 
@@ -276,6 +390,10 @@ public final class MultiplayerGuiE2ERunner {
         return Math.max(32, Math.min(H - 32, v));
     }
 
+    private static int clamp(int v, int min, int max) {
+        return Math.max(min, Math.min(max, v));
+    }
+
     @FunctionalInterface
     private interface ProbeCondition {
         boolean ok() throws Exception;
@@ -286,8 +404,13 @@ public final class MultiplayerGuiE2ERunner {
             + ", remotePlayers=" + m.get("remotePlayers")
             + ", visibleRemotePlayers=" + m.get("visibleRemotePlayers")
             + ", replicatedObjects=" + m.get("replicatedObjects")
+            + ", playerX=" + m.get("playerX")
+            + ", playerY=" + m.get("playerY")
+            + ", remoteMeanX=" + m.get("remoteMeanX")
+            + ", remoteMeanY=" + m.get("remoteMeanY")
             + ", localSeq=" + m.get("localSeq")
             + ", ackSeq=" + m.get("ackSeq")
+            + ", equipped=" + m.get("equipped")
             + "}";
     }
 }

@@ -39,13 +39,13 @@ public final class WeaponSwingEffect extends Entity implements TransientWorldEnt
         this.lifeTicks = Math.max(1, lifeTicks);
         this.radiusPx = Math.max(10.0, radiusPx);
 
-        BufferedImage raw = panel.imageContainer.getItemImage(spriteName);
+        BufferedImage raw = panel.images().getItemImage(spriteName);
         if (raw == null) {
-            ArrayList<BufferedImage> fallback = panel.imageContainer.getObjectImages(spriteName);
+            ArrayList<BufferedImage> fallback = panel.images().getObjectImages(spriteName);
             raw = fallback.isEmpty() ? null : fallback.get(0);
         }
         if (raw == null) {
-            raw = panel.imageContainer.getItemImage("axe");
+            raw = panel.images().getItemImage("axe");
         }
         this.source = ImageContainer.scaleImage(raw, 40, 40);
         this.slashFrames = CombatSpriteSheet.slashFrames(56);
@@ -63,7 +63,7 @@ public final class WeaponSwingEffect extends Entity implements TransientWorldEnt
     public void update() {
         ticks++;
         if (ticks > lifeTicks) {
-            panel.world.addToRemovalQueue(this);
+            panel.world().addToRemovalQueue(this);
             return;
         }
         double progress = (double) ticks / (double) lifeTicks;

@@ -190,13 +190,15 @@ public class LobbyScreen extends JPanel {
 
     private void onPrimary() {
         String playerName = trimOr(nameField.getText(), suggestedName());
-        System.setProperty("game.multiplayer.playerId", playerName);
+        System.setProperty("game.multiplayer.playerId", sessionPlayerId(playerName));
         System.setProperty("game.multiplayer.backend", DEFAULT_BACKEND);
         System.setProperty("game.multiplayer.gateway.enabled", "true");
         System.setProperty("game.multiplayer.reconcileLocal", "true");
-        // Match local player movement so remote avatars don't appear to move
-        // in slow motion relative to what each client controls.
-        System.setProperty("game.multiplayer.serverMoveSpeedPerTick", "10.0");
+        // Match local player movement so reconciliation doesn't rubber-band.
+        // Local runs at ~10 px/frame @ 60 FPS ~= 600 px/s => 20 px/tick @ 30Hz.
+        System.setProperty("game.multiplayer.serverMoveSpeedPerTick", "20.0");
+        // Keep online placement reach aligned with offline feel (12 tiles).
+        System.setProperty("game.multiplayer.serverActionRange", "768.0");
 
         if (mode == Mode.HOST) {
             System.setProperty("game.multiplayer.mode", "host");
@@ -237,6 +239,12 @@ public class LobbyScreen extends JPanel {
         if (s == null) return fallback;
         try { return Integer.parseInt(s.trim()); }
         catch (NumberFormatException e) { return fallback; }
+    }
+
+    private static String sessionPlayerId(String rawName) {
+        String base = trimOr(rawName, suggestedName()).replaceAll("\\s+", "_");
+        String suffix = UUID.randomUUID().toString().substring(0, 6).toLowerCase();
+        return base + "-" + suffix;
     }
 
     @Override

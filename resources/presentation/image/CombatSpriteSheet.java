@@ -28,6 +28,17 @@ public final class CombatSpriteSheet {
     private static final int SHEET_COLS = 4;
     private static final int SHEET_ROWS = 3;
 
+    /**
+     * Fraction of fully-transparent border trimmed off each extracted cell. The
+     * source art is a single 1448x1086 sheet whose icons (weapons, crescent
+     * slash arcs, spark bursts) sit inside generously padded cells, so a raw
+     * width/COLS x height/ROWS slice is mostly empty space with the icon off to
+     * one side. Naively scaling that slice to a small sprite turns the sparse
+     * icon into a blurry coloured smear. We instead crop to the cell's opaque
+     * bounding box before scaling so the actual artwork fills the sprite.
+     */
+    private static final int MIN_OPAQUE_ALPHA = 16;
+
     private static boolean attemptedLoad;
     private static BufferedImage sheet;
 
@@ -37,7 +48,8 @@ public final class CombatSpriteSheet {
         if (name == null || name.isBlank()) return null;
         int idx = itemIndex(name);
         if (idx < 0) return null;
-        return cell(idx);
+        BufferedImage cropped = cropToOpaque(cell(idx));
+        return cropped != null ? cropped : cell(idx);
     }
 
     public static ArrayList<BufferedImage> slashFrames(int sizePx) {
@@ -52,11 +64,38 @@ public final class CombatSpriteSheet {
         ArrayList<BufferedImage> out = new ArrayList<>();
         int dim = Math.max(8, sizePx);
         for (int idx : indices) {
-            BufferedImage src = cell(idx);
+            BufferedImage src = cropToOpaque(cell(idx));
             if (src == null) continue;
             out.add(ImageContainer.scaleImage(src, dim, dim));
         }
         return out;
+    }
+
+    /**
+     * Crop a cell to the bounding box of its non-transparent pixels so the
+     * icon fills the frame. Returns null if the cell is null or fully
+     * transparent; returns the input unchanged if it's already tight.
+     */
+    private static BufferedImage cropToOpaque(BufferedImage src) {
+        if (src == null) return null;
+        int w = src.getWidth();
+        int h = src.getHeight();
+        int minX = w, minY = h, maxX = -1, maxY = -1;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int alpha = src.getRGB(x, y) >>> 24;
+                if (alpha < MIN_OPAQUE_ALPHA) continue;
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+        }
+        if (maxX < minX || maxY < minY) return null; // fully transparent
+        int cw = maxX - minX + 1;
+        int ch = maxY - minY + 1;
+        if (minX == 0 && minY == 0 && cw == w && ch == h) return src;
+        return src.getSubimage(minX, minY, cw, ch);
     }
 
     private static int itemIndex(String name) {

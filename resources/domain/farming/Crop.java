@@ -20,10 +20,12 @@ import resources.domain.object.GameObject;
  */
 public final class Crop extends GameObject {
 
-    /** Default stages + ticks-per-stage; tuning lives here, not in callers. */
-    private static final int  STAGES         = 4;
-    private static final long TICKS_PER_STAGE = 600L;
-    private static final int  HITBOX_SIZE     = 48;
+    /** Default stages + growth cadence; tuning lives here, not in callers.
+     *  Growth is day-paced: one stage per in-game day, so a crop takes
+     *  {@code STAGES - 1} full days to reach maturity. */
+    private static final int  STAGES        = 4;
+    private static final long DAYS_PER_STAGE = 1L;
+    private static final int  HITBOX_SIZE    = 48;
 
     private final String baseName;
     private int currentStage = 0;
@@ -44,7 +46,7 @@ public final class Crop extends GameObject {
         String produce      = entry != null ? entry.produceName  : cropName;
         String requiredTool = entry != null ? entry.requiredTool : null;
 
-        GrowableComponent growth = GrowableComponent.perTicks(panel.clock(), STAGES, TICKS_PER_STAGE);
+        GrowableComponent growth = GrowableComponent.perDays(panel.clock(), STAGES, DAYS_PER_STAGE);
         addComponent(growth);
         addComponent(new HarvestableComponent(
             requiredTool, 1, DropTable.of(new DropSpec(produce, 1, 3))));

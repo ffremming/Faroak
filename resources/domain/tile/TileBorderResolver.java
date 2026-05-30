@@ -61,12 +61,41 @@ public final class TileBorderResolver {
         this.images = images;
     }
 
+    /**
+     * Family used for the soil-plot edge drawn around a tilled {@link
+     * resources.domain.farming.FarmTile}. Reuses the procedurally generated
+     * {@code mudB1/mudC0} shapes (see {@code TileMaskGenerator}); the tile
+     * loader derives the other sides/corners by rotation.
+     */
+    private static final String FARM_BORDER_FAMILY = "mud";
+
     /** Replace {@code tile.images} with the full stack for the given animation frame. */
     public void resolveInto(ArrayList<BufferedImage> sink, int frame) {
         sink.clear();
         sink.add(baseFrame(frame));
-        boolean[] borders = addBorders(sink, frame);
+        // Tilled soil draws its own plot edge against any non-farm neighbour,
+        // independent of elevation. Other tiles keep the higher-neighbour rule.
+        boolean[] borders = tile instanceof resources.domain.farming.FarmTile
+                ? addFarmBorders(sink, frame)
+                : addBorders(sink, frame);
         addCorners(sink, frame, borders);
+    }
+
+    /**
+     * Border pass for a {@link resources.domain.farming.FarmTile}: draw the
+     * {@link #FARM_BORDER_FAMILY} edge on every side whose neighbour is not also
+     * a FarmTile (or is unloaded), so a tilled plot reads as soil framed against
+     * the surrounding terrain and contiguous tilled tiles merge into one bed.
+     */
+    private boolean[] addFarmBorders(ArrayList<BufferedImage> sink, int frame) {
+        boolean[] borders = new boolean[4];
+        Tile[] n = tile.getNeighbors();
+        for (int side = 0; side < 4; side++) {
+            if (n[side] instanceof resources.domain.farming.FarmTile) continue;
+            sink.add(images.getTileImage(borderKey(FARM_BORDER_FAMILY, frame, side)));
+            borders[side] = true;
+        }
+        return borders;
     }
 
     private BufferedImage baseFrame(int frame) {
@@ -96,11 +125,30 @@ public final class TileBorderResolver {
     }
 
     private void addCorners(ArrayList<BufferedImage> sink, int frame, boolean[] borders) {
+        if (tile instanceof resources.domain.farming.FarmTile) {
+            addFarmCorners(sink, frame, borders);
+            return;
+        }
         Tile[] n = tile.getNeighbors();
         addCornerIfMatch(sink, frame, borders, n, 0, 1, 1);
         addCornerIfMatch(sink, frame, borders, n, 1, 2, 2);
         addCornerIfMatch(sink, frame, borders, n, 2, 3, 3);
         addCornerIfMatch(sink, frame, borders, n, 3, 0, 4);
+    }
+
+    /**
+     * Corner pass for a tilled tile: wherever two adjacent plot edges meet, add
+     * the matching {@link #FARM_BORDER_FAMILY} corner so the outline turns
+     * cleanly. No same-neighbour check (unlike elevation borders) — the soil
+     * edge is keyed on "not farm", not on the neighbour's biome.
+     */
+    private void addFarmCorners(ArrayList<BufferedImage> sink, int frame, boolean[] borders) {
+        int[][] pairs = { {0, 1, 1}, {1, 2, 2}, {2, 3, 3}, {3, 0, 4} };
+        for (int[] p : pairs) {
+            if (borders[p[0]] && borders[p[1]]) {
+                sink.add(images.getTileImage(cornerKey(FARM_BORDER_FAMILY, frame, p[2])));
+            }
+        }
     }
 
     private void addCornerIfMatch(ArrayList<BufferedImage> sink, int frame, boolean[] borders,
