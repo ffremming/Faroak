@@ -21,6 +21,8 @@ import resources.testing.probes.FarmBorderProbe;
 import resources.testing.probes.FarmingProbe;
 import resources.testing.probes.GrowableProbe;
 import resources.testing.probes.GroundItemProbe;
+import resources.testing.probes.CatalogProbe;
+import resources.testing.probes.PlaceAllProbe;
 import resources.testing.probes.HarvestableProbe;
 import resources.testing.probes.HealthProbe;
 import resources.testing.probes.InteriorProbe;
