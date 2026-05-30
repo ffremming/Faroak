@@ -45,8 +45,8 @@ public class Playable extends Moveable {
         super(panel, name, worldX, worldY, width, height, hitBoxWidth, hitBoxHeight, relativeXPlus, relativeYPlus);
 
         inventory = new Inventory(this);
-        panel.userInterface.clear();
-        panel.userInterface.addInventory(inventory);
+        panel.userInterface().clear();
+        panel.userInterface().addInventory(inventory);
 
         // All equipment (tools/weapons)
         addItem(new Item(panel, "hammer"));
@@ -93,7 +93,7 @@ public class Playable extends Moveable {
         // Suppress the placement ghost whenever the inventory or a menu is
         // open. Without this, the preview tracks the cursor under the UI and
         // looks like a stuck object on screen.
-        boolean uiOpen = panel.userInterface != null && panel.userInterface.isEnabled();
+        boolean uiOpen = panel.userInterface() != null && panel.userInterface().isEnabled();
         if (uiOpen) {
             panel.world.addObjectPreview(null);
         } else {
@@ -134,7 +134,7 @@ public class Playable extends Moveable {
         HitBox pickupArea = getImageHitbox().getAlteredHitBox(
             PICKUP_MARGIN_PX, PICKUP_MARGIN_PX, PICKUP_MARGIN_PX, PICKUP_MARGIN_PX);
         ArrayList<BaseEntity> overlapping =
-            new ArrayList<>(panel.world.getEntitiesCollidedWith(pickupArea));
+            new ArrayList<>(panel.world().getEntitiesCollidedWith(pickupArea));
         for (BaseEntity e : overlapping) {
             if (!(e instanceof GroundItem)) continue;
             GroundItem drop = (GroundItem) e;
@@ -143,7 +143,7 @@ public class Playable extends Moveable {
             int leftover = inventory.addItem(new Item(panel, drop.getItemName()),
                                              drop.getQuantity());
             if (leftover <= 0) {
-                panel.world.addToRemovalQueue(drop);
+                panel.world().addToRemovalQueue(drop);
             } else if (leftover < drop.getQuantity()) {
                 // Took some but not all (inventory filled up) — keep the rest
                 // on the ground reflecting what actually remains.
@@ -165,7 +165,7 @@ public class Playable extends Moveable {
         HitBox reach = getInteractionHitBox();
         // Snapshot first — interact() can swap the world (portals fire a
         // DimensionChangeEvent that replaces the entity list).
-        ArrayList<BaseEntity> snapshot = new ArrayList<>(panel.world.getEntities());
+        ArrayList<BaseEntity> snapshot = new ArrayList<>(panel.world().getEntities());
         // Sort candidates by distance from the player's center so the nearest
         // object wins instead of whichever the chunk happened to add first.
         double pcx = getWorldX() + getWidth()  / 2.0;
@@ -212,7 +212,7 @@ public class Playable extends Moveable {
         if (lifecycle != null && lifecycle.isDead()) return;
         if (heavyCooldownTicks > 0) return;
         WeaponProfile weapon = equippedWeaponProfile();
-        Vector aim = panel.inputHandlingSystem.combatAimVector();
+        Vector aim = panel.input().combatAimVector();
         int hits = combat.meleeAttack(this, panel, aim, new MeleeAttackSpec(
             weapon.heavyDamage,
             weapon.heavyRangePx,
@@ -234,7 +234,7 @@ public class Playable extends Moveable {
         if (lifecycle != null && lifecycle.isDead()) return;
         if (rangedCooldownTicks > 0) return;
         WeaponProfile weapon = equippedWeaponProfile();
-        Vector aim = panel.inputHandlingSystem.combatAimVector();
+        Vector aim = panel.input().combatAimVector();
         boolean fired = combat.fireProjectile(this, panel, aim,
             weapon.rangedDamage,
             weapon.projectileSpeedPxPerTick,
@@ -256,7 +256,7 @@ public class Playable extends Moveable {
         comboStep = (comboWindowTicks > 0) ? Math.min(3, comboStep + 1) : 1;
         comboWindowTicks = COMBO_WINDOW_TICKS;
 
-        Vector aim = panel.inputHandlingSystem.combatAimVector();
+        Vector aim = panel.input().combatAimVector();
         int hits = combat.meleeAttack(this, panel, aim, new MeleeAttackSpec(
             weapon.comboDamage(comboStep),
             weapon.comboRange(comboStep),

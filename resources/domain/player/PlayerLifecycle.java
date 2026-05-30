@@ -53,7 +53,7 @@ public final class PlayerLifecycle {
      * components, null the boat's rider, and let the boat resume patrol.
      */
     private void forceDismount() {
-        Playable p = panel.player;
+        Playable p = panel.player();
         if (p == null) return;
         BoatRideComponent ride = p.getComponent(BoatRideComponent.class);
         if (ride == null) return;
@@ -74,7 +74,7 @@ public final class PlayerLifecycle {
      * dead — useful as a "return to spawn" cheat.
      */
     public void respawn() {
-        Playable p = panel.player;
+        Playable p = panel.player();
         if (p == null) return;
         p.components().remove(HealthComponent.class);
         p.addComponent(new HealthComponent(DEFAULT_MAX_HEALTH));
@@ -85,16 +85,16 @@ public final class PlayerLifecycle {
 
     /** Read-only health snapshot. May be null in test harnesses with no player. */
     public HealthComponent health() {
-        if (panel.player == null) return null;
-        return panel.player.getComponent(HealthComponent.class);
+        if (panel.player() == null) return null;
+        return panel.player().getComponent(HealthComponent.class);
     }
 
     private HealthComponent ensureHealth(int max) {
-        if (panel.player == null) return null;
-        HealthComponent hc = panel.player.getComponent(HealthComponent.class);
+        if (panel.player() == null) return null;
+        HealthComponent hc = panel.player().getComponent(HealthComponent.class);
         if (hc == null) {
             hc = new HealthComponent(max);
-            panel.player.addComponent(hc);
+            panel.player().addComponent(hc);
         }
         return hc;
     }

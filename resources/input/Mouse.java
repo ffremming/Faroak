@@ -36,20 +36,20 @@ public class Mouse implements MouseListener, MouseMotionListener, MouseWheelList
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
         // Wheel cycles the hotbar — but only when no modal UI is taking focus.
-        if (panel.userInterface != null && panel.userInterface.isModalUIOpen()) {
-            panel.userInterface.mouseWheelMoved(e);
+        if (panel.userInterface() != null && panel.userInterface().isModalUIOpen()) {
+            panel.userInterface().mouseWheelMoved(e);
             return;
         }
         if (e.getWheelRotation() < 0) {
-            panel.player.getInventory().decreaseIndex();
+            panel.player().getInventory().decreaseIndex();
         } else if (e.getWheelRotation() > 0) {
-            panel.player.getInventory().increseIndex();
+            panel.player().getInventory().increseIndex();
         }
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        panel.userInterface.mouseDragged(e);
+        panel.userInterface().mouseDragged(e);
     }
 
     @Override
@@ -57,12 +57,12 @@ public class Mouse implements MouseListener, MouseMotionListener, MouseWheelList
         this.x = e.getX();
         this.y = e.getY();
         panel.UI.mouseMoved(e);
-        panel.userInterface.mouseMoved(e);
+        panel.userInterface().mouseMoved(e);
     }
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        panel.userInterface.mouseClicked(e);
+        panel.userInterface().mouseClicked(e);
     }
 
     @Override
@@ -73,8 +73,8 @@ public class Mouse implements MouseListener, MouseMotionListener, MouseWheelList
 
         // UI takes precedence: a modal UI (inventory, menu, container overlay)
         // owns the click and it never reaches the world.
-        if (panel.userInterface.isModalUIOpen()) {
-            panel.userInterface.mousePressed(e);
+        if (panel.userInterface().isModalUIOpen()) {
+            panel.userInterface().mousePressed(e);
             return;
         }
         // Left button = act on the world. Other buttons do nothing on the world layer.
@@ -89,13 +89,13 @@ public class Mouse implements MouseListener, MouseMotionListener, MouseWheelList
             // All cursor-targeted world actions flow through the click chain:
             // board boat → open container → use equipped item → harvest.
             Point worldPoint = new Point(
-                (int) panel.camera.getWorldX() + e.getX(),
-                (int) panel.camera.getWorldY() + e.getY());
+                (int) panel.camera().getWorldX() + e.getX(),
+                (int) panel.camera().getWorldY() + e.getY());
             if (clickRouter.route(panel, worldPoint)) lastPlaceMs = now;
         } else {
             // Online: the server applies the intent. Stamp the cooldown either
             // way so a rejected intent can't open rapid-fire retries.
-            panel.inputHandlingSystem.enqueueAction(InputAction.PLACE);
+            panel.input().enqueueAction(InputAction.PLACE);
             lastPlaceMs = now;
         }
     }
@@ -107,6 +107,6 @@ public class Mouse implements MouseListener, MouseMotionListener, MouseWheelList
     public int getX() { return x; }
     public int getY() { return y; }
 
-    public double getMouseWorldX(){ return panel.camera.getWorldX() + getX(); }
-    public double getMouseWorldY(){ return panel.camera.getWorldY() + getY(); }
+    public double getMouseWorldX(){ return panel.camera().getWorldX() + getX(); }
+    public double getMouseWorldY(){ return panel.camera().getWorldY() + getY(); }
 }

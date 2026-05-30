@@ -36,7 +36,7 @@ public class GameObject extends Entity {
     @Override
     public BufferedImage getImage() {
         try {
-            images = panel.imageContainer.getObjectImages(name);
+            images = panel.images().getObjectImages(name);
         } catch (RuntimeException ex) {
             ex.printStackTrace();
         }

@@ -82,14 +82,14 @@ public class UserInterface extends Container{
      * effectively held in limbo — visible but inaccessible.
      */
     private void returnTempInHand() {
-        if (panel.player == null) return;
-        resources.domain.inventory.Stack held = panel.player.getTempInHand();
+        if (panel.player() == null) return;
+        resources.domain.inventory.Stack held = panel.player().getTempInHand();
         if (held == null || held.isEmpty()) {
-            panel.player.setTempInHand(null);
+            panel.player().setTempInHand(null);
             return;
         }
-        panel.player.getInventory().addStack(held);
-        panel.player.setTempInHand(null);
+        panel.player().getInventory().addStack(held);
+        panel.player().setTempInHand(null);
     }
 
     /**
@@ -118,8 +118,8 @@ public class UserInterface extends Container{
             menu.hide();
         } else {
             cleanUI();
-            if (panel.inputHandlingSystem != null) {
-                panel.inputHandlingSystem.clearHeldInput();
+            if (panel.input() != null) {
+                panel.input().clearHeldInput();
             }
             menu.show();
         }
@@ -184,11 +184,11 @@ public class UserInterface extends Container{
         hud.draw(g2);
 
         //temporary item in hand — only draw if it's a real, non-empty stack
-        if (panel.player != null) {
-            resources.domain.inventory.Stack held = panel.player.getTempInHand();
+        if (panel.player() != null) {
+            resources.domain.inventory.Stack held = panel.player().getTempInHand();
             if (held != null && !held.isEmpty() && !"empty".equals(held.getName())) {
-                BufferedImage tempImg = panel.imageContainer.getItemImage(held.getName());
-                g2.drawImage(tempImg, panel.mouse.getX() - 25, panel.mouse.getY() - 25, 50, 50, null);
+                BufferedImage tempImg = panel.images().getItemImage(held.getName());
+                g2.drawImage(tempImg, panel.mouse().getX() - 25, panel.mouse().getY() - 25, 50, 50, null);
             }
         }
 

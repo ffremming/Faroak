@@ -40,8 +40,8 @@ public final class CameraSceneRenderer {
 
     /** Paint visible tiles and entities relative to the camera. */
     public void drawScene(Graphics2D g2) {
-        ArrayList<Entity> entities = panel.world.getVisibleEntities(camera);
-        ArrayList<BaseEntity> tiles = panel.world.getVisibleTiles(camera);
+        ArrayList<Entity> entities = panel.world().getVisibleEntities(camera);
+        ArrayList<BaseEntity> tiles = panel.world().getVisibleTiles(camera);
 
         drawStaticChunkLayer(g2);
 
@@ -67,7 +67,7 @@ public final class CameraSceneRenderer {
      * replaces N×N per-tile draws.
      */
     private void drawStaticChunkLayer(Graphics2D g2) {
-        ArrayList<Chunk> live = panel.world.getChunks();
+        ArrayList<Chunk> live = panel.world().getChunks();
         chunkBakes.pruneTo(live);
         HitBox cull = camera.cullBounds();
         int camX = (int) camera.getWorldX();

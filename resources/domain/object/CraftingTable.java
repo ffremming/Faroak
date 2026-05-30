@@ -12,7 +12,7 @@ import resources.presentation.ui.CraftingUIBridge;
  *
  * Mirrors the {@link Barrel} pattern so the placement / persistence /
  * interact paths in the rest of the engine work without special-casing:
- *   - lazy initialisation of the service (the panel.itemM template path
+ *   - lazy initialisation of the service (the panel.items() template path
  *     constructs the entity before any player exists)
  *   - {@link #placementCandidate(GamePanel)} returns a fresh table when the
  *     player places one, so each placed table has its own grid state

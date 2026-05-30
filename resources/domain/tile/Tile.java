@@ -41,7 +41,7 @@ public class Tile extends BaseEntity {
         super(panel, name, worldX, worldY,
             panel.tileSize, panel.tileSize, panel.tileSize, panel.tileSize, (short) 0, (short) 0);
         this.altitude = altitude;
-        this.borderResolver = new TileBorderResolver(this, panel.imageContainer);
+        this.borderResolver = new TileBorderResolver(this, panel.images());
         setupSpecialBehaviour();
     }
 
@@ -68,8 +68,8 @@ public class Tile extends BaseEntity {
     // ---- comparators (used by TileManager) ----
 
     public boolean compareTo(Tile other)        { return this.getName().equals(other.getName()); }
-    public boolean isLowerThan(Tile other)      { return panel.tileM.isHigher(this, other); }
-    public boolean isCliffDifference(Tile other){ return panel.tileM.cliffDifference(other, this); }
+    public boolean isLowerThan(Tile other)      { return panel.tiles().isHigher(this, other); }
+    public boolean isCliffDifference(Tile other){ return panel.tiles().cliffDifference(other, this); }
 
     public int getAltitude() { return altitude; }
     public int getFloor()    { return floor; }
@@ -137,7 +137,7 @@ public class Tile extends BaseEntity {
 
     private Tile neighborAt(int direction) {
         Point p = neighborPoint(direction);
-        return panel.world.getTile(p);
+        return panel.world().getTile(p);
     }
 
     private Point neighborPoint(int direction) {

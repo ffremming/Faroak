@@ -44,7 +44,7 @@ public final class GameLoop implements Runnable {
             fpsAccumulator += elapsed;
             fpsCounter++;
             if (fpsAccumulator >= 1_000_000_000L) {
-                panel.camera.setObservedFPS(fpsCounter);
+                panel.camera().setObservedFPS(fpsCounter);
                 fpsAccumulator = 0;
                 fpsCounter = 0;
             }
@@ -59,7 +59,7 @@ public final class GameLoop implements Runnable {
                 long before = System.nanoTime();
                 panel.update(delta);
                 long after = System.nanoTime();
-                panel.camera.addbackendPrintData("update time " + ((after - before) / 1000) + " us");
+                panel.camera().addbackendPrintData("update time " + ((after - before) / 1000) + " us");
             });
         } catch (InvocationTargetException | InterruptedException e) {
             e.printStackTrace();
@@ -70,7 +70,7 @@ public final class GameLoop implements Runnable {
         long before = System.nanoTime();
         panel.repaint();
         long after = System.nanoTime();
-        panel.camera.addbackendPrintData("repaint time " + ((after - before) / 1000) + " us");
+        panel.camera().addbackendPrintData("repaint time " + ((after - before) / 1000) + " us");
     }
 
     private void sleepUntilNextFrame(long lastLoopTime) {

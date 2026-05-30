@@ -93,7 +93,7 @@ public class BaseEntity implements Tickable, Drawable {
     public void draw(Graphics2D g2) {}
 
     public BufferedImage getImage() {
-        try { return panel.imageContainer.getTileImage(name); }
+        try { return panel.images().getTileImage(name); }
         catch (Exception e) { System.err.println("[BaseEntity] getImage failed for '" + name + "': " + e); return null; }
     }
 

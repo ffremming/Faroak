@@ -45,7 +45,7 @@ public final class CameraDebugOverlay {
         g2.setColor(Color.WHITE);
         int camX = (int) camera.getWorldX();
         int camY = (int) camera.getWorldY();
-        for (Chunk chunk : new ArrayList<>(panel.world.getChunks())) {
+        for (Chunk chunk : new ArrayList<>(panel.world().getChunks())) {
             int x = (int) (chunk.getWorldX() - camX);
             int y = (int) (chunk.getWorldY() - camY);
             g2.drawRect(x, y, (int) chunk.getWidth(), (int) chunk.getHeight());
@@ -75,17 +75,17 @@ public final class CameraDebugOverlay {
     }
 
     public void drawHoveredEntityOutline(Graphics2D g2) {
-        BaseEntity hovered = panel.world.getHoveredEntity();
+        BaseEntity hovered = panel.world().getHoveredEntity();
         if (hovered == null) return;
         int x = (int) (hovered.getWorldX() - camera.getWorldX());
         int y = (int) (hovered.getWorldY() - camera.getWorldY());
         if (hovered.getImages().isEmpty()) return;
-        g2.drawImage(panel.imageContainer.getOutline(hovered.getImages().get(0)),
+        g2.drawImage(panel.images().getOutline(hovered.getImages().get(0)),
             x, y, hovered.getWidth(), hovered.getHeight(), null);
     }
 
     public void writeHoveredInformation(Graphics g2) {
-        BaseEntity hovered = panel.world.getHoveredEntity();
+        BaseEntity hovered = panel.world().getHoveredEntity();
         if (hovered == null) return;
         g2.setColor(Color.WHITE);
         g2.setFont(LABEL_FONT);

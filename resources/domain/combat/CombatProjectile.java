@@ -45,12 +45,12 @@ public final class CombatProjectile extends Entity implements TransientWorldEnti
         this.lifeTicks = lifeTicks;
         this.solid = false;
 
-        BufferedImage raw = panel.imageContainer.getItemImage(spriteName);
+        BufferedImage raw = panel.images().getItemImage(spriteName);
         if (raw == null) {
-            ArrayList<BufferedImage> fallback = panel.imageContainer.getObjectImages(spriteName);
+            ArrayList<BufferedImage> fallback = panel.images().getObjectImages(spriteName);
             raw = fallback.isEmpty() ? null : fallback.get(0);
         }
-        if (raw == null) raw = panel.imageContainer.getItemImage("block");
+        if (raw == null) raw = panel.images().getItemImage("block");
 
         BufferedImage scaled = ImageContainer.scaleImage(raw, sizePx, sizePx);
         double angle = Math.toDegrees(Math.atan2(dy, dx)) + 90.0;
@@ -67,7 +67,7 @@ public final class CombatProjectile extends Entity implements TransientWorldEnti
     public void update() {
         ticks++;
         if (ticks > lifeTicks) {
-            panel.world.addToRemovalQueue(this);
+            panel.world().addToRemovalQueue(this);
             return;
         }
 
@@ -76,12 +76,12 @@ public final class CombatProjectile extends Entity implements TransientWorldEnti
         getHitBox().updateCoords();
 
         if (resolveImpact()) {
-            panel.world.addToRemovalQueue(this);
+            panel.world().addToRemovalQueue(this);
         }
     }
 
     private boolean resolveImpact() {
-        ArrayList<BaseEntity> collided = panel.world.getEntitiesCollidedWith(getHitBox());
+        ArrayList<BaseEntity> collided = panel.world().getEntitiesCollidedWith(getHitBox());
         for (BaseEntity target : collided) {
             if (target == null || target == this || target == attacker) continue;
             if (target instanceof WeaponSwingEffect) continue;

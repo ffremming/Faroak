@@ -120,7 +120,7 @@ public class Moveable extends Entity {
     // ---- sprite + animation ----
 
     private void loadDirectionalSprites() {
-        images = panel.imageContainer.setPlayableImages(getName());
+        images = panel.images().setPlayableImages(getName());
     }
 
     private void advanceAnimation() {

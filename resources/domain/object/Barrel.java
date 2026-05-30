@@ -21,7 +21,7 @@ public class Barrel extends GameObject {
               0, 0,
               true);
         // Lazy: ItemManager constructs Barrel as a physical-representation
-        // template before the panel.itemM field is published, so we can't
+        // template before the panel.items() field is published, so we can't
         // build the inventory eagerly. Initialised on first access.
     }
 

@@ -40,7 +40,7 @@ public final class HealthHUD {
     }
 
     public void draw(Graphics2D g2) {
-        Playable player = panel.player;
+        Playable player = panel.player();
         if (player == null) return;
         HealthComponent hc = player.getComponent(HealthComponent.class);
         if (hc == null) return;

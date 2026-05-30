@@ -64,27 +64,27 @@ public final class DimensionService {
         //   4. Re-place the player in the new chunk system and force an
         //      immediate world.update so the entity index includes them.
         java.awt.Point arrival = event.arrival();
-        if (panel.player != null) {
-            panel.player.setWorldX(arrival.x);
-            panel.player.setWorldY(arrival.y);
+        if (panel.player() != null) {
+            panel.player().setWorldX(arrival.x);
+            panel.player().setWorldY(arrival.y);
         }
         snapCameraTo(arrival);
         world.setChunkSystem(next, arrival);
         current = event.to();
-        if (panel.player != null) {
-            world.placeEntity(panel.player);
-            world.update(panel.player.getPoint());
+        if (panel.player() != null) {
+            world.placeEntity(panel.player());
+            world.update(panel.player().getPoint());
         }
     }
 
     /** Force the camera onto the arrival point so any visibility-filter pass
      * during the swap uses the new viewport instead of stale coords. */
     private void snapCameraTo(java.awt.Point arrival) {
-        if (panel.camera == null) return;
-        panel.camera.worldX = arrival.x - panel.camera.getWidth()  / 2;
-        panel.camera.worldY = arrival.y - panel.camera.getHeight() / 2;
-        panel.camera.getHitBox().x = arrival.x - panel.camera.getHitBox().width  / 2;
-        panel.camera.getHitBox().y = arrival.y - panel.camera.getHitBox().height / 2;
+        if (panel.camera() == null) return;
+        panel.camera().worldX = arrival.x - panel.camera().getWidth()  / 2;
+        panel.camera().worldY = arrival.y - panel.camera().getHeight() / 2;
+        panel.camera().getHitBox().x = arrival.x - panel.camera().getHitBox().width  / 2;
+        panel.camera().getHitBox().y = arrival.y - panel.camera().getHitBox().height / 2;
     }
 
     private ChunkSystem lazyBuild(Identifier id) {

@@ -56,7 +56,7 @@ public final class GroundItem extends GameObject {
     private void loadIcon() {
         BufferedImage icon = null;
         try {
-            icon = panel.imageContainer.getItemImage(itemName);
+            icon = panel.images().getItemImage(itemName);
         } catch (RuntimeException e) {
             // fall through to whatever GameObject already loaded
             System.err.println("[GroundItem] loadIcon failed for item '" + itemName + "': " + e);

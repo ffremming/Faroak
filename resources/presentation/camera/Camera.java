@@ -62,7 +62,7 @@ public class Camera extends PrimitiveEntity {
         this.renderer = new CameraSceneRenderer(panel, this);
         this.debug    = new CameraDebugOverlay(panel, this);
         this.lighting = new LightingPass(panel.lighting(), panel.clock());
-        follow(panel.player);
+        follow(panel.player());
     }
 
     public Camera(GamePanel panel, String name) {
@@ -117,7 +117,7 @@ public class Camera extends PrimitiveEntity {
             if (!previewValid) renderer.drawInvalidPreviewOverlay(g2, previewObject);
         }
         lighting.apply(g2, this, panel.getWidth(), panel.getHeight());
-        panel.userInterface.draw(g2);
+        panel.userInterface().draw(g2);
 
         long endTime = System.nanoTime();
         drawDebug(g2, startTime, endTime);

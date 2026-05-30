@@ -25,29 +25,29 @@ public class InputHandlingSystem {
         // While the player is riding a boat, the boat reads these flags
         // directly to steer; routing them into player velocity too would
         // both drift the player off the boat and double-handle the input.
-        boolean riding = panel.player != null
-            && panel.player.hasComponent(BoatRideComponent.class);
+        boolean riding = panel.player() != null
+            && panel.player().hasComponent(BoatRideComponent.class);
 
         if (!riding) {
             if (up){
-                panel.player.addVelocity(new Vector(0,-2*delta));
+                panel.player().addVelocity(new Vector(0,-2*delta));
             }
 
             if (left){
-                panel.player.addVelocity(new Vector(-2*delta,0));
+                panel.player().addVelocity(new Vector(-2*delta,0));
             }
 
             if (down){
-                panel.player.addVelocity(new Vector(0,2*delta));
+                panel.player().addVelocity(new Vector(0,2*delta));
             }
 
             if (right){
-                panel.player.addVelocity(new Vector(2*delta,0));
+                panel.player().addVelocity(new Vector(2*delta,0));
             }
         }
 
         //setting the hovered entities from mouse input
-        panel.world.setHoveredEntity(panel.mouse.x,panel.mouse.y);
+        panel.world().setHoveredEntity(panel.mouse().x,panel.mouse().y);
     }
 
     public void setDown(boolean val){
@@ -110,8 +110,8 @@ public class InputHandlingSystem {
             if (right) ax += 1;
         }
 
-        if (ax == 0 && ay == 0 && panel.player != null) {
-            Vector facing = panel.player.getFacingVector();
+        if (ax == 0 && ay == 0 && panel.player() != null) {
+            Vector facing = panel.player().getFacingVector();
             if (facing != null) return facing.normalize(1.0);
         }
 

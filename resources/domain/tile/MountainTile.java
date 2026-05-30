@@ -44,7 +44,7 @@ public class MountainTile extends Tile {
         images.clear();
         // Body first — fully opaque so transparent regions of the cliff
         // overlay never reveal the void underneath.
-        images.add(panel.imageContainer.getTileImage(BODY));
+        images.add(panel.images().getTileImage(BODY));
 
         int mask = eightBitMask();
         ArrayList<String> keys = new ArrayList<>(2);
@@ -54,7 +54,7 @@ public class MountainTile extends Tile {
             // enclosed walls (no diagonals open) to mean "no overlay needed,
             // body is enough".
             if ("cliff0".equals(key)) continue;
-            images.add(panel.imageContainer.getTileImage(key));
+            images.add(panel.images().getTileImage(key));
         }
     }
 
@@ -91,7 +91,7 @@ public class MountainTile extends Tile {
     }
 
     private boolean isMountainAt(java.awt.Point p) {
-        Tile t = panel.world.getTile(p);
+        Tile t = panel.world().getTile(p);
         if (t == null) return true;
         return t instanceof MountainTile || t instanceof CaveWallTile;
     }

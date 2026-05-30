@@ -76,7 +76,7 @@ public class GenerationManager {
         // wired in and must never generate images at runtime.
         PlantCatalog.bootstrap();
         resources.presentation.ui.LoadingScreen.setStatus("Building animations");
-        Animations.bootstrap(panel.animations(), panel.imageContainer);
+        Animations.bootstrap(panel.animations(), panel.images());
         resources.presentation.ui.LoadingScreen.setStatus("Loading items");
         panel.itemM = new ItemManager(panel);
 
@@ -111,7 +111,7 @@ public class GenerationManager {
 
         resources.presentation.ui.LoadingScreen.setStatus("Generating terrain");
         panel.world.initial();
-        panel.world.update(new Point(0,0));
+        panel.world().update(new Point(0,0));
 
     }
 
@@ -121,13 +121,13 @@ public class GenerationManager {
      * Called after the player exists so we can target spawn-relative positions.
      */
     public void seedWorldEntities() {
-        if (panel.player == null) return;
-        Point p = new Point((int) panel.player.getWorldX(), (int) panel.player.getWorldY());
+        if (panel.player() == null) return;
+        Point p = new Point((int) panel.player().getWorldX(), (int) panel.player().getWorldY());
         Portal toCave = new Portal(panel, "cave_portal",
             p.x + 128, p.y,
             DimensionRegistry.OVERWORLD, DimensionRegistry.CAVE, new Point(0, 0));
         toCave.addComponent(new resources.domain.entity.component.LabelComponent("Cave"));
-        panel.world.placeEntity(toCave);
+        panel.world().placeEntity(toCave);
         // Arrive one tile north of the starter house door so the player
         // spawns on a floor cell, not inside the door tile itself.
         Point doorPx = interiorDoorPixel(InteriorRegistry.STARTER_HOUSE, 0, 0);
@@ -137,7 +137,7 @@ public class GenerationManager {
             overworldDoor.x, overworldDoor.y,
             DimensionRegistry.OVERWORLD, DimensionRegistry.INTERIOR, arrival);
         toInterior.addComponent(new resources.domain.entity.component.LabelComponent("House"));
-        panel.world.placeEntity(toInterior);
+        panel.world().placeEntity(toInterior);
         // Doors inside any interior should return the player to the overworld
         // portal location, not (0,0).
         InteriorManager interiors = InteriorBootstrap.lastBuilt();
@@ -173,7 +173,7 @@ public class GenerationManager {
             int x = originX + col * spacingX;
             int y = originY + row * spacingY;
             GameObject plant = ObjectFactory.create(panel, all.get(i), x, y);
-            panel.world.placeEntity(plant);
+            panel.world().placeEntity(plant);
         }
     }
 
@@ -199,25 +199,25 @@ public class GenerationManager {
             if (!isLandPatch(x, y, ts)) continue;
             Npc npc = new Npc(panel, "npc", x, y, 20,
                 new IdleStrollBehavior(seed ^ ((long) x << 16) ^ y));
-            panel.world.placeEntity(npc);
+            panel.world().placeEntity(npc);
         }
     }
 
     public void newSeed(){
         panel.world = new WorkingMemory(panel);
         panel.world.initial();
-        panel.world.update(new Point(0,0));
+        panel.world().update(new Point(0,0));
 
         initiate();
-        //panel.world.update(panel.player.getPoint());
+        //panel.world().update(panel.player().getPoint());
     }
 
 
     public void initiate(){
         Point p = getStartingPoint();
         panel.player = (new Playable(panel, "red",p.x,p.y,(short)48,(short)96,(short)36,(short)32,(short)6,(short)64));
-        panel.world.placeEntity(panel.player);
-        panel.player.components().add(new LightSourceComponent(200, 1.0f, new Color(255, 220, 160)));
+        panel.world().placeEntity(panel.player());
+        panel.player().components().add(new LightSourceComponent(200, 1.0f, new Color(255, 220, 160)));
         placeStarterChest(p);
     }
 
@@ -242,7 +242,7 @@ public class GenerationManager {
             if (!isLandPatch(cx, cy, ts)) continue;
             resources.domain.object.Chest chest =
                 new resources.domain.object.Chest(panel, cx, cy);
-            if (panel.world.placeEntity(chest)) return;
+            if (panel.world().placeEntity(chest)) return;
         }
     }
 
@@ -274,13 +274,13 @@ public class GenerationManager {
     }
 
     private boolean isLandPatch(int x, int y, int ts){
-        if (panel.world.solidCollision(new HitBox(x, y, ts*2, ts*2))) return false;
+        if (panel.world().solidCollision(new HitBox(x, y, ts*2, ts*2))) return false;
         // Sample every corner of the 2x2 footprint; all must be on dry land.
         int[] xs = { x, x + ts*2 - 1 };
         int[] ys = { y, y + ts*2 - 1 };
         for (int sx : xs) {
             for (int sy : ys) {
-                resources.domain.tile.Tile t = panel.world.getTile(new java.awt.Point(sx, sy));
+                resources.domain.tile.Tile t = panel.world().getTile(new java.awt.Point(sx, sy));
                 if (t == null) return false;
                 String n = t.getName();
                 if (TileRules.isWater(n)) return false;

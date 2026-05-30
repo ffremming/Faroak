@@ -247,8 +247,8 @@ public final class EscapeMenu extends Component {
     }
 
     private void actionRespawn() {
-        if (panel.player != null && panel.player.lifecycle() != null) {
-            panel.player.lifecycle().respawn();
+        if (panel.player() != null && panel.player().lifecycle() != null) {
+            panel.player().lifecycle().respawn();
         }
         hide();
     }

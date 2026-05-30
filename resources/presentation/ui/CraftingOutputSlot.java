@@ -47,7 +47,7 @@ public final class CraftingOutputSlot extends Component {
 
         Stack out = service.output();
         if (out == null || out.isEmpty() || "empty".equals(out.getName())) return;
-        BufferedImage img = panel.imageContainer.getItemImage(out.getName());
+        BufferedImage img = panel.images().getItemImage(out.getName());
         g2.drawImage(img, x + 4, y + 4, width - 8, height - 8, null);
         g2.setColor(Color.white);
         g2.drawString(out.getAmount() + "", x + width - 14, y + height - 8);
@@ -70,7 +70,7 @@ public final class CraftingOutputSlot extends Component {
      * destroy any overflow that exceeded both destinations.
      */
     private void takeOutput() {
-        Stack hand = panel.player.getTempInHand();
+        Stack hand = panel.player().getTempInHand();
         Stack preview = service.output();
         if (preview == null || preview.isEmpty() || "empty".equals(preview.getName())) return;
 
@@ -85,14 +85,14 @@ public final class CraftingOutputSlot extends Component {
         if (produced == null || produced.isEmpty()) return;
 
         if (handEmpty) {
-            panel.player.setTempInHand(produced);
+            panel.player().setTempInHand(produced);
         } else {
             hand.addStack(produced);
             // capacity check above guarantees the inventory can absorb any
             // overflow — but assert it anyway so a future change to addStack
             // can't silently regress to item loss.
             if (!produced.isEmpty()) {
-                panel.player.getInventory().addStack(produced);
+                panel.player().getInventory().addStack(produced);
             }
         }
     }
@@ -116,7 +116,7 @@ public final class CraftingOutputSlot extends Component {
         } else if (itemName.equals(hand.getName())) {
             capacity += hand.getStackLimit() - hand.getAmount();
         }
-        var inv = panel.player.getInventory();
+        var inv = panel.player().getInventory();
         for (int i = 0; i < inv.getSize(); i++) {
             Stack s = inv.getStack(i);
             if (s == null) continue;

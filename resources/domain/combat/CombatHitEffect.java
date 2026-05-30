@@ -53,7 +53,7 @@ public final class CombatHitEffect extends Entity implements TransientWorldEntit
     private void expire() {
         if (expired) return;
         expired = true;
-        panel.world.addToRemovalQueue(this);
+        panel.world().addToRemovalQueue(this);
     }
 
     private static ArrayList<BufferedImage> loadFrames(int sizePx) {

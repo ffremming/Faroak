@@ -58,7 +58,7 @@ public final class FarmTile extends Tile {
     public boolean plant(String cropName) {
         if (isPlanted()) return false;
         Crop c = new Crop(panel, cropName, (int) getWorldX(), (int) getWorldY());
-        if (!panel.world.placeEntity(c)) return false;
+        if (!panel.world().placeEntity(c)) return false;
         crop = c;
         c.onRemoved(this::clearCrop); // free the tile when the crop is harvested
         return true;

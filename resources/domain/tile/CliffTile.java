@@ -35,6 +35,6 @@ public class CliffTile extends Tile {
         ArrayList<String> keys = new ArrayList<>(1);
         int mask = ConnectionBitmask.cardinal(this, getNeighbors(), CLIFF_RULE);
         CliffConnectingSprite.INSTANCE.appendLayers(mask, keys);
-        for (String key : keys) images.add(panel.imageContainer.getTileImage(key));
+        for (String key : keys) images.add(panel.images().getTileImage(key));
     }
 }

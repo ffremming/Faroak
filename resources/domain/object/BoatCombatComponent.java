@@ -115,7 +115,7 @@ public final class BoatCombatComponent implements EntityComponent, Tickable {
     private double forwardLeadPx() {
         Playable rider = boat.rider();
         if (rider == null) return 0.0;
-        InputHandlingSystem in = boat.panel.inputHandlingSystem;
+        InputHandlingSystem in = boat.panel.input();
         if (in == null) return 0.0;
         int ix = (in.isRight() ? 1 : 0) - (in.isLeft() ? 1 : 0);
         int iy = (in.isDown()  ? 1 : 0) - (in.isUp()   ? 1 : 0);
@@ -128,7 +128,7 @@ public final class BoatCombatComponent implements EntityComponent, Tickable {
         BoatProjectile projectile = new BoatProjectile(
             boat.panel, boat, muzzleX, muzzleY, dirX, dirY,
             PROJECTILE_SPEED, maxRange, BROADSIDE_DAMAGE);
-        boat.panel.world.placeEntityIgnoringTerrainCollision(projectile);
+        boat.panel.world().placeEntityIgnoringTerrainCollision(projectile);
     }
 
     private void sink() {
@@ -145,6 +145,6 @@ public final class BoatCombatComponent implements EntityComponent, Tickable {
         }
 
         boat.clearRiderForSink();
-        boat.panel.world.addToRemovalQueue(boat);
+        boat.panel.world().addToRemovalQueue(boat);
     }
 }

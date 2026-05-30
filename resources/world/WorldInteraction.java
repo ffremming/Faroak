@@ -88,7 +88,7 @@ public final class WorldInteraction {
         FarmTile farm = FarmTile.from(tile);
         chunk.addTile(farm);            // overwrites the grid slot for this cell
         farm.setNeighBors();            // wire the new tile to its neighbours
-        if (panel.camera != null) panel.camera.invalidateChunkBake(chunk);
+        if (panel.camera() != null) panel.camera().invalidateChunkBake(chunk);
         return farm;
     }
 
@@ -179,8 +179,8 @@ public final class WorldInteraction {
         if (spec == null) return legacyPlaceFromRepresentation(representation, equipped);
 
         GameContext ctx = panel;
-        double mx = panel.mouse.getMouseWorldX();
-        double my = panel.mouse.getMouseWorldY();
+        double mx = panel.mouse().getMouseWorldX();
+        double my = panel.mouse().getMouseWorldY();
 
         // Self-managing actions (farming): the action itself spawns/mutates and
         // handles any stack consumption (seeds) or leaves the tool intact
@@ -192,7 +192,7 @@ public final class WorldInteraction {
             int cy = target.y + panel.tileSize / 2;
             HitBox cell = new HitBox(target.x, target.y, panel.tileSize, panel.tileSize);
             if (!spec.surface.allows(ctx, target.x, target.y, cell)) return false;
-            return spec.action.execute(ctx, panel.player, spec, new Point(cx, cy));
+            return spec.action.execute(ctx, panel.player(), spec, new Point(cx, cy));
         }
 
         BaseEntity candidate = spec.factory.apply(panel);
@@ -230,8 +230,8 @@ public final class WorldInteraction {
         if (!(representation instanceof GameObject)) return false;
         GameObject source = (GameObject) representation;
         GameObject placed = source.placementCandidate(panel);
-        placed.setWorldX(panel.mouse.getMouseWorldX() - placed.getWidth()  / 2);
-        placed.setWorldY(panel.mouse.getMouseWorldY() - placed.getHeight() / 2);
+        placed.setWorldX(panel.mouse().getMouseWorldX() - placed.getWidth()  / 2);
+        placed.setWorldY(panel.mouse().getMouseWorldY() - placed.getHeight() / 2);
         if (solidCollision(placed.getHitBox())) return false;
         if (!placeEntity(placed)) return false;
         equipped.removeOneItem();
@@ -246,8 +246,8 @@ public final class WorldInteraction {
      */
     public boolean tryHarvestAtMouse(Playable player, GameContext ctx) {
         if (player == null) return false;
-        int wx = (int) panel.camera.getWorldX() + panel.mouse.getX();
-        int wy = (int) panel.camera.getWorldY() + panel.mouse.getY();
+        int wx = (int) panel.camera().getWorldX() + panel.mouse().getX();
+        int wy = (int) panel.camera().getWorldY() + panel.mouse().getY();
         BaseEntity target = harvestableAtPoint(new Point(wx, wy), player.getInteractionHitBox());
         if (target == null) return false;
         return player.harvestService().attackEntity(player, ctx, target) != null;
@@ -274,11 +274,11 @@ public final class WorldInteraction {
     }
 
     private boolean withinPlacementReach() {
-        if (panel.player == null) return true; // no player → no gate
-        double px = panel.player.getWorldX() + panel.player.getWidth()  / 2.0;
-        double py = panel.player.getWorldY() + panel.player.getHeight() / 2.0;
-        double dx = panel.mouse.getMouseWorldX() - px;
-        double dy = panel.mouse.getMouseWorldY() - py;
+        if (panel.player() == null) return true; // no player → no gate
+        double px = panel.player().getWorldX() + panel.player().getWidth()  / 2.0;
+        double py = panel.player().getWorldY() + panel.player().getHeight() / 2.0;
+        double dx = panel.mouse().getMouseWorldX() - px;
+        double dy = panel.mouse().getMouseWorldY() - py;
         return (dx * dx + dy * dy) <= (PLACEMENT_REACH_PX * PLACEMENT_REACH_PX);
     }
 
@@ -288,8 +288,8 @@ public final class WorldInteraction {
      * require every hitbox corner to land on water, and reject otherwise.
      */
     private boolean tryPlaceBoat(Boat source, Stack equipped) {
-        int x = (int) (panel.mouse.getMouseWorldX() - source.getWidth()  / 2.0);
-        int y = (int) (panel.mouse.getMouseWorldY() - source.getHeight() / 2.0);
+        int x = (int) (panel.mouse().getMouseWorldX() - source.getWidth()  / 2.0);
+        int y = (int) (panel.mouse().getMouseWorldY() - source.getHeight() / 2.0);
         // Player-placed boats sit still until boarded. AI patrol re-attaches
         // automatically on dismount via Boat.dismount().
         Boat placed = new Boat(panel, x, y, false);
@@ -365,8 +365,8 @@ public final class WorldInteraction {
         GameObject source = (GameObject) representation;
         refreshPreviewObject(source);
 
-        double mx = panel.mouse.getMouseWorldX();
-        double my = panel.mouse.getMouseWorldY();
+        double mx = panel.mouse().getMouseWorldX();
+        double my = panel.mouse().getMouseWorldY();
         int px, py;
         if (spec != null && spec.snap == PlacementSpec.SnapPolicy.TILE) {
             Point snap = WorldCoord.snapToTile(mx, my, panel.tileSize);
@@ -385,9 +385,9 @@ public final class WorldInteraction {
         boolean collisionOk  = !solidCollision(previewObject.getHitBox());
         previewValid = reachable && surfaceOk && collisionOk;
 
-        if (panel.camera != null) {
-            panel.camera.setPreviewObject(previewObject);
-            panel.camera.setPreviewValid(previewValid);
+        if (panel.camera() != null) {
+            panel.camera().setPreviewObject(previewObject);
+            panel.camera().setPreviewValid(previewValid);
         }
     }
 
@@ -410,17 +410,17 @@ public final class WorldInteraction {
         }
         double w = previewObject.getWidth();
         double h = previewObject.getHeight();
-        previewObject.setWorldX(panel.mouse.getMouseWorldX() - w / 2.0);
-        previewObject.setWorldY(panel.mouse.getMouseWorldY() - h / 2.0);
+        previewObject.setWorldX(panel.mouse().getMouseWorldX() - w / 2.0);
+        previewObject.setWorldY(panel.mouse().getMouseWorldY() - h / 2.0);
         previewObject.getHitBox().updateCoords();
         // Mirror tryPlaceBoat exactly: water-only surface + no entity overlap.
         // Do NOT call solidCollision here — water tiles are solid.
         previewValid = withinPlacementReach()
                     && isAllWater(previewObject.getHitBox())
                     && !entityCollision(previewObject.getHitBox());
-        if (panel.camera != null) {
-            panel.camera.setPreviewObject(previewObject);
-            panel.camera.setPreviewValid(previewValid);
+        if (panel.camera() != null) {
+            panel.camera().setPreviewObject(previewObject);
+            panel.camera().setPreviewValid(previewValid);
         }
     }
 
@@ -438,12 +438,12 @@ public final class WorldInteraction {
     private void clearPreviewObject() {
         previewObject = null;
         previewSourceName = null;
-        if (panel.camera != null) panel.camera.setPreviewObject(null);
+        if (panel.camera() != null) panel.camera().setPreviewObject(null);
     }
 
     public void setHoveredEntity(int screenX, int screenY) {
-        int worldX = (int) panel.camera.getWorldX() + screenX;
-        int worldY = (int) panel.camera.getWorldY() + screenY;
+        int worldX = (int) panel.camera().getWorldX() + screenX;
+        int worldY = (int) panel.camera().getWorldY() + screenY;
         ArrayList<BaseEntity> hits = entitiesCollidedWith(new Point(worldX, worldY));
         for (BaseEntity be : hits) {
             if (hits.size() == 1) { hoveredEntity = be; return; }

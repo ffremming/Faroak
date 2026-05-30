@@ -129,7 +129,7 @@ public final class BoatProjectile extends Entity implements TransientWorldEntity
     }
 
     private Boat hitBoat() {
-        for (BaseEntity ent : panel.world.getEntities()) {
+        for (BaseEntity ent : panel.world().getEntities()) {
             if (!(ent instanceof Boat)) continue;
             Boat boat = (Boat) ent;
             if (boat == shooter) continue;
@@ -140,7 +140,7 @@ public final class BoatProjectile extends Entity implements TransientWorldEntity
     }
 
     private boolean isOffWater() {
-        Tile tile = panel.world.getTile(new Point((int) centerX(), (int) centerY()));
+        Tile tile = panel.world().getTile(new Point((int) centerX(), (int) centerY()));
         if (tile == null) return true;
         String n = tile.getName();
         return !TileRules.isWater(n);
@@ -189,6 +189,6 @@ public final class BoatProjectile extends Entity implements TransientWorldEntity
     private void expire() {
         if (expired) return;
         expired = true;
-        panel.world.addToRemovalQueue(this);
+        panel.world().addToRemovalQueue(this);
     }
 }

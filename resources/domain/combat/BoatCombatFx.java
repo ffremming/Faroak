@@ -105,7 +105,7 @@ public final class BoatCombatFx extends Entity implements TransientWorldEntity {
 
     private static void spawn(GamePanel panel, BoatCombatFx fx) {
         if (panel == null || panel.world == null || fx == null) return;
-        panel.world.placeEntityIgnoringTerrainCollision(fx);
+        panel.world().placeEntityIgnoringTerrainCollision(fx);
     }
 
     @Override
@@ -130,7 +130,7 @@ public final class BoatCombatFx extends Entity implements TransientWorldEntity {
     private void expire() {
         if (expired) return;
         expired = true;
-        panel.world.addToRemovalQueue(this);
+        panel.world().addToRemovalQueue(this);
     }
 
     private static ArrayList<BufferedImage> buildMuzzleFrames() {

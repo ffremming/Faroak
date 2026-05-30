@@ -174,7 +174,7 @@ public final class Boat extends Moveable {
     }
 
     private void steerByInput() {
-        InputHandlingSystem in = panel.inputHandlingSystem;
+        InputHandlingSystem in = panel.input();
         if (in == null) return;
         // Defensive: a dead rider should not steer. PlayerLifecycle.damage
         // already force-detaches on the death tick, but if anything else
@@ -261,7 +261,7 @@ public final class Boat extends Moveable {
         int[] ys = { candidate.y, candidate.y + candidate.height - 1 };
         for (int x : xs) {
             for (int y : ys) {
-                Tile t = panel.world.getTile(new Point(x, y));
+                Tile t = panel.world().getTile(new Point(x, y));
                 if (t == null) return false;
                 String name = t.getName();
                 if (!TileRules.isWater(name)) return false;
@@ -439,7 +439,7 @@ public final class Boat extends Moveable {
     }
 
     private boolean isLand(int worldX, int worldY) {
-        Tile t = panel.world.getTile(new Point(worldX, worldY));
+        Tile t = panel.world().getTile(new Point(worldX, worldY));
         if (t == null) return false;
         String n = t.getName();
         return !TileRules.isWater(n);

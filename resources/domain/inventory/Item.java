@@ -15,12 +15,12 @@ public class Item extends BaseEntity {
     public Item(GamePanel panel, String name) {
         super(panel, name);
         //TODO Auto-generated constructor stub
-        images.add(panel.imageContainer.getItemImage(name));
-        physicalRepresentation = panel.itemM.getPhysicalRepresentation(name);
+        images.add(panel.images().getItemImage(name));
+        physicalRepresentation = panel.items().getPhysicalRepresentation(name);
     }
 
     public BaseEntity getPhysicalRepresentation() {
-        return panel.itemM.getPhysicalRepresentation(name);
+        return panel.items().getPhysicalRepresentation(name);
     }
 
     

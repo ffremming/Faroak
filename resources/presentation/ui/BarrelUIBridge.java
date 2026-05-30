@@ -37,12 +37,12 @@ public final class BarrelUIBridge {
         ui.visible = true;
         ui.enable();
 
-        panel.userInterface.add(ui);
-        panel.userInterface.enable();
+        panel.userInterface().add(ui);
+        panel.userInterface().enable();
         OPEN.put(barrel, ui);
         // Register as a modal overlay so clicks route to the UI (not the world)
         // and Escape can close it.
-        panel.userInterface.openOverlay(ui, () -> closeBarrel(panel, barrel));
+        panel.userInterface().openOverlay(ui, () -> closeBarrel(panel, barrel));
     }
 
     /**
@@ -55,7 +55,7 @@ public final class BarrelUIBridge {
         if (ui == null) return;
         ui.visible = false;
         ui.disable();
-        panel.userInterface.remove(ui);
-        panel.userInterface.closeOverlay(ui);
+        panel.userInterface().remove(ui);
+        panel.userInterface().closeOverlay(ui);
     }
 }

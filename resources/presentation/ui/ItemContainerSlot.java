@@ -103,7 +103,7 @@ public class ItemContainerSlot extends Component {
         if (inventory == null) return;
         Stack stack = inventory.getStack(slotIndex);
         if (stack == null || "empty".equals(stack.getName())) return;
-        BufferedImage image = panel.imageContainer.getItemImage(stack.getName());
+        BufferedImage image = panel.images().getItemImage(stack.getName());
         g2.drawImage(image, slotX, slotY, width, height, null);
         if (showCount) {
             g2.drawString(stack.getAmount() + "", slotX + width - LABEL_PADDING, slotY + height - LABEL_PADDING);
@@ -153,7 +153,7 @@ public class ItemContainerSlot extends Component {
      * duplicated.
      */
     private void swapWithPlayerHand() {
-        Stack hand = panel.player.getTempInHand();
+        Stack hand = panel.player().getTempInHand();
         Stack mine = inventory.getStack(number);
         if (mine == null) return; // shouldn't happen; slots are pre-seeded
 
@@ -164,7 +164,7 @@ public class ItemContainerSlot extends Component {
 
         if (handEmpty) {
             // Pick up: hand takes the slot's stack; slot gets a fresh empty.
-            panel.player.setTempInHand(mine);
+            panel.player().setTempInHand(mine);
             inventory.setStack(number, new Stack(panel, "empty"));
             return;
         }
@@ -172,7 +172,7 @@ public class ItemContainerSlot extends Component {
         if (slotEmpty) {
             // Drop into empty slot.
             inventory.setStack(number, hand);
-            panel.player.setTempInHand(null);
+            panel.player().setTempInHand(null);
             return;
         }
 
@@ -181,15 +181,15 @@ public class ItemContainerSlot extends Component {
             // Same item: pour hand into slot up to its limit.
             mine.addStack(hand);
             if (hand.isEmpty()) {
-                panel.player.setTempInHand(null);
+                panel.player().setTempInHand(null);
             } else {
-                panel.player.setTempInHand(hand);
+                panel.player().setTempInHand(hand);
             }
             return;
         }
 
         // Different items: swap.
-        panel.player.setTempInHand(mine);
+        panel.player().setTempInHand(mine);
         inventory.setStack(number, hand);
     }
 
@@ -206,7 +206,7 @@ public class ItemContainerSlot extends Component {
      * destruction.
      */
     private void splitWithPlayerHand() {
-        Stack hand = panel.player.getTempInHand();
+        Stack hand = panel.player().getTempInHand();
         Stack mine = inventory.getStack(number);
         if (mine == null) return;
 
@@ -228,7 +228,7 @@ public class ItemContainerSlot extends Component {
                 if (one == null) break;
                 carried.addItem(one);
             }
-            panel.player.setTempInHand(carried);
+            panel.player().setTempInHand(carried);
             return;
         }
 
@@ -248,7 +248,7 @@ public class ItemContainerSlot extends Component {
                     hand.addItem(one);
                 }
             }
-            if (hand.isEmpty()) panel.player.setTempInHand(null);
+            if (hand.isEmpty()) panel.player().setTempInHand(null);
         }
     }
 }

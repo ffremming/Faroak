@@ -47,7 +47,7 @@ public class CaveWallTile extends Tile {
     private void populateImages() {
         images.clear();
         int mask = ConnectionBitmask.cardinal(this, getNeighbors(), WALL_RULE);
-        images.add(panel.imageContainer.getTileImage(variantSprite(mask, (int) worldX, (int) worldY)));
+        images.add(panel.images().getTileImage(variantSprite(mask, (int) worldX, (int) worldY)));
     }
 
     /**

@@ -46,7 +46,7 @@ public final class MovementController {
     private double terrainMultiplier() {
         TerrainSpeedComponent comp = owner.getComponent(TerrainSpeedComponent.class);
         if (comp == null) return 1.0;
-        Tile tile = owner.panel.world.getTile(owner.getPoint());
+        Tile tile = owner.panel.world().getTile(owner.getPoint());
         return comp.multiplierFor(tile == null ? null : tile.getName());
     }
 
@@ -57,6 +57,6 @@ public final class MovementController {
     }
 
     private boolean canMoveTo(HitBox candidate) {
-        return !owner.panel.world.solidCollision(candidate, owner);
+        return !owner.panel.world().solidCollision(candidate, owner);
     }
 }

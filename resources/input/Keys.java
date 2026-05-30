@@ -32,10 +32,10 @@ public class Keys implements KeyListener{
         // crafting) is open, E closes that overlay instead — the inventory is
         // shown paired with it, so dismissing the chest dismisses both.
         if (code == KeyEvent.VK_E){
-            if (panel.userInterface.hasOpenOverlay()) {
-                panel.userInterface.closeTopOverlay();
+            if (panel.userInterface().hasOpenOverlay()) {
+                panel.userInterface().closeTopOverlay();
             } else {
-                panel.userInterface.toggleInventory();
+                panel.userInterface().toggleInventory();
             }
             return;
         }
@@ -44,61 +44,61 @@ public class Keys implements KeyListener{
         // captures input: gameplay keys are ignored so SPACE doesn't re-interact
         // and WASD doesn't walk the player while a container is open. Escape is
         // routed separately (window-scoped binding) so it can still close them.
-        if (panel.userInterface != null && panel.userInterface.isModalUIOpen()) {
+        if (panel.userInterface() != null && panel.userInterface().isModalUIOpen()) {
             return;
         }
 
         if (code == KeyEvent.VK_W){
-           panel.inputHandlingSystem.setUp(true);
-           panel.player.nullPath();
+           panel.input().setUp(true);
+           panel.player().nullPath();
         }
 
         
         if (code == KeyEvent.VK_A){
-            panel.inputHandlingSystem.setLeft(true);
-            panel.player.nullPath();
+            panel.input().setLeft(true);
+            panel.player().nullPath();
         }
 
         if (code == KeyEvent.VK_S){
-            panel.inputHandlingSystem.setDown(true);
-            panel.player.nullPath();
+            panel.input().setDown(true);
+            panel.player().nullPath();
         }
 
         if (code == KeyEvent.VK_D){
-            panel.inputHandlingSystem.setRight(true);
-            panel.player.nullPath();
+            panel.input().setRight(true);
+            panel.player().nullPath();
         }
 
         if (code == KeyEvent.VK_I){
-            panel.inputHandlingSystem.setAimUp(true);
+            panel.input().setAimUp(true);
         }
 
         if (code == KeyEvent.VK_J){
-            panel.inputHandlingSystem.setAimLeft(true);
+            panel.input().setAimLeft(true);
         }
 
         if (code == KeyEvent.VK_K){
-            panel.inputHandlingSystem.setAimDown(true);
+            panel.input().setAimDown(true);
         }
 
         if (code == KeyEvent.VK_L){
-            panel.inputHandlingSystem.setAimRight(true);
+            panel.input().setAimRight(true);
         }
 
         
         if (code == KeyEvent.VK_SPACE){
             if (panel.multiplayer() == null || !panel.multiplayer().isOnline()) {
-                BoatRideComponent ride = panel.player.getComponent(BoatRideComponent.class);
+                BoatRideComponent ride = panel.player().getComponent(BoatRideComponent.class);
                 if (ride != null && ride.boat() != null) {
                     // SPACE while riding = dismount; otherwise the usual interact.
-                    if (!ride.boat().dismount() && panel.userInterface != null) {
-                        panel.userInterface.showToast("Steer to land to disembark", 1500);
+                    if (!ride.boat().dismount() && panel.userInterface() != null) {
+                        panel.userInterface().showToast("Steer to land to disembark", 1500);
                     }
                 } else {
-                    panel.player.interact();
+                    panel.player().interact();
                 }
             } else {
-                panel.inputHandlingSystem.enqueueAction(InputAction.INTERACT);
+                panel.input().enqueueAction(InputAction.INTERACT);
             }
 
         }
@@ -116,7 +116,7 @@ public class Keys implements KeyListener{
         }
 
         if (code == KeyEvent.VK_T){
-            panel.camera.toggleTestData();
+            panel.camera().toggleTestData();
             
         }
        
@@ -133,36 +133,36 @@ public class Keys implements KeyListener{
     public void keyReleased(KeyEvent e) {
         int code = e.getKeyCode();
         if (code == KeyEvent.VK_W){
-           panel.inputHandlingSystem.setUp(false);
+           panel.input().setUp(false);
         }
 
         
         if (code == KeyEvent.VK_A){
-            panel.inputHandlingSystem.setLeft(false);
+            panel.input().setLeft(false);
         }
 
         if (code == KeyEvent.VK_S){
-            panel.inputHandlingSystem.setDown(false);
+            panel.input().setDown(false);
         }
 
         if (code == KeyEvent.VK_D){
-            panel.inputHandlingSystem.setRight(false);
+            panel.input().setRight(false);
         }
 
         if (code == KeyEvent.VK_I){
-            panel.inputHandlingSystem.setAimUp(false);
+            panel.input().setAimUp(false);
         }
 
         if (code == KeyEvent.VK_J){
-            panel.inputHandlingSystem.setAimLeft(false);
+            panel.input().setAimLeft(false);
         }
 
         if (code == KeyEvent.VK_K){
-            panel.inputHandlingSystem.setAimDown(false);
+            panel.input().setAimDown(false);
         }
 
         if (code == KeyEvent.VK_L){
-            panel.inputHandlingSystem.setAimRight(false);
+            panel.input().setAimRight(false);
         }
     } 
 
@@ -173,7 +173,7 @@ public class Keys implements KeyListener{
                 showOnlineBoatCombatToast();
                 return;
             }
-            panel.inputHandlingSystem.enqueueAction(InputAction.ATTACK);
+            panel.input().enqueueAction(InputAction.ATTACK);
             return;
         }
         offlineAction.accept(ride);
@@ -185,14 +185,14 @@ public class Keys implements KeyListener{
                 ride.boat().fireBroadside();
                 return;
             }
-            panel.player.requestLightAttack();
+            panel.player().requestLightAttack();
         });
     }
 
     private void handleHeavyAttack() {
         handleAttack(ride -> {
             if (ride == null || ride.boat() == null) {
-                panel.player.requestHeavyAttack();
+                panel.player().requestHeavyAttack();
             }
         });
     }
@@ -200,14 +200,14 @@ public class Keys implements KeyListener{
     private void handleRangedAttack() {
         handleAttack(ride -> {
             if (ride == null || ride.boat() == null) {
-                panel.player.requestRangedAttack();
+                panel.player().requestRangedAttack();
             }
         });
     }
 
     private BoatRideComponent activeRide() {
-        if (panel.player == null) return null;
-        BoatRideComponent ride = panel.player.getComponent(BoatRideComponent.class);
+        if (panel.player() == null) return null;
+        BoatRideComponent ride = panel.player().getComponent(BoatRideComponent.class);
         return (ride != null && ride.boat() != null) ? ride : null;
     }
 
@@ -216,8 +216,8 @@ public class Keys implements KeyListener{
     }
 
     private void showOnlineBoatCombatToast() {
-        if (panel.userInterface != null) {
-            panel.userInterface.showToast("Boat combat is offline-only for now", 1500);
+        if (panel.userInterface() != null) {
+            panel.userInterface().showToast("Boat combat is offline-only for now", 1500);
         }
     }
     

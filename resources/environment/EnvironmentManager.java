@@ -37,12 +37,12 @@ public class EnvironmentManager {
 
         // Chunk streaming runs at ~10 Hz so newly entered chunks load
         // promptly, well before the player can outrun the render rectangle.
-        int chunkTickInterval = Math.max(1, panel.camera.FPS / 10);
+        int chunkTickInterval = Math.max(1, panel.camera().FPS / 10);
         if (ms % chunkTickInterval == 0){
-            panel.world.update(panel.camera.getHitBox().getCenter());
+            panel.world().update(panel.camera().getHitBox().getCenter());
         }
 
-        if (ms%panel.camera.FPS == 0){
+        if (ms%panel.camera().FPS == 0){
             second++;
             updatePanelDimensions();
 
@@ -68,13 +68,13 @@ public class EnvironmentManager {
     }
 
     private void tryPopulateMobs() {
-        if (panel.player == null) return;
-        Point center = new Point((int) panel.player.getWorldX(), (int) panel.player.getWorldY());
+        if (panel.player() == null) return;
+        Point center = new Point((int) panel.player().getWorldX(), (int) panel.player().getWorldY());
         mobSpawner.tryPopulateChunk(panel, center, SpawnRules.defaults(panel));
     }
 
     private void ageAll() {
-       for (BaseEntity ent:panel.world.getEntities()){
+       for (BaseEntity ent:panel.world().getEntities()){
            ent.age();
        }
     }
@@ -82,10 +82,10 @@ public class EnvironmentManager {
     public void updatePanelDimensions(){
         panel.width = (int)panel.getSize().getWidth();
         panel.height = (int)panel.getSize().getHeight();
-        panel.camera.setWidth((panel.width));
-        panel.camera.setHeight((panel.height));
-        panel.camera.getHitBox().width = panel.width;
-        panel.camera.getHitBox().height = panel.height;
+        panel.camera().setWidth((panel.width));
+        panel.camera().setHeight((panel.height));
+        panel.camera().getHitBox().width = panel.width;
+        panel.camera().getHitBox().height = panel.height;
     }
 
     
@@ -144,7 +144,7 @@ public class EnvironmentManager {
             animationValue = 0;
         }
         
-        panel.world.animate(animationValue);
+        panel.world().animate(animationValue);
     }
 
 }
