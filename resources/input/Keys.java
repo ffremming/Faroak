@@ -69,7 +69,8 @@ public class Keys implements KeyListener{
             panel.player().nullPath();
         }
 
-        if (code == KeyEvent.VK_I){
+        // Combat aim-up moved from I to U: I now opens the item catalog.
+        if (code == KeyEvent.VK_U){
             panel.input().setAimUp(true);
         }
 
@@ -149,7 +150,7 @@ public class Keys implements KeyListener{
             panel.input().setRight(false);
         }
 
-        if (code == KeyEvent.VK_I){
+        if (code == KeyEvent.VK_U){
             panel.input().setAimUp(false);
         }
 
