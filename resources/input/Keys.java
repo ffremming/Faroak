@@ -40,6 +40,17 @@ public class Keys implements KeyListener{
             return;
         }
 
+        // I toggles the creative item catalog. Placed before the modal guard so
+        // it can also close itself while open (mirrors E for the inventory).
+        if (code == KeyEvent.VK_I){
+            if (panel.userInterface().hasOpenOverlay()) {
+                panel.userInterface().closeTopOverlay();
+            } else {
+                resources.presentation.ui.ItemCatalogUIBridge.toggle(panel);
+            }
+            return;
+        }
+
         // Any modal UI (pause menu, or an open chest/crafting/barrel overlay)
         // captures input: gameplay keys are ignored so SPACE doesn't re-interact
         // and WASD doesn't walk the player while a container is open. Escape is
