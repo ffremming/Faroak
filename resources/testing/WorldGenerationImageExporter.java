@@ -101,6 +101,8 @@ public final class WorldGenerationImageExporter {
     private static Color colorForBiome(Biome biome) {
         switch (biome.id) {
             case "ocean": return new Color(22, 73, 138);
+            case "mediumWater": return new Color(22, 129, 151);
+            case "shallowWater": return new Color(99, 192, 187);
             case "river": return new Color(45, 115, 187);
             case "beach": return new Color(224, 209, 143);
             case "riverbank": return new Color(201, 188, 132);

@@ -14,6 +14,7 @@ public final class Animations {
 
     public static final Identifier OCEAN_WAVES         = Identifier.of("tile/ocean_waves");
     public static final Identifier SHALLOW_WATER_WAVES = Identifier.of("tile/shallow_water_waves");
+    public static final Identifier MEDIUM_WATER_WAVES  = Identifier.of("tile/medium_water_waves");
 
     private Animations() {}
 
@@ -21,6 +22,7 @@ public final class Animations {
     public static void bootstrap(AnimationLibrary library, ImageContainer images) {
         if (!library.contains(OCEAN_WAVES))         library.register(OCEAN_WAVES,         oceanWaves(images));
         if (!library.contains(SHALLOW_WATER_WAVES)) library.register(SHALLOW_WATER_WAVES, shallowWaterWaves(images));
+        if (!library.contains(MEDIUM_WATER_WAVES))  library.register(MEDIUM_WATER_WAVES,  mediumWaterWaves(images));
     }
 
     /** 3-frame wave loop. 30 sim-ticks/frame ≈ 0.5 second/frame. */
@@ -37,5 +39,13 @@ public final class Animations {
             new AnimationFrame(images.getTileImage("shallowWater0"), 30),
             new AnimationFrame(images.getTileImage("shallowWater1"), 30),
             new AnimationFrame(images.getTileImage("shallowWater2"), 30));
+    }
+
+    /** Medium-depth wave loop — same cadence, darker sprite set. */
+    private static AnimationClip mediumWaterWaves(ImageContainer images) {
+        return new AnimationClip(MEDIUM_WATER_WAVES, true,
+            new AnimationFrame(images.getTileImage("mediumWater0"), 30),
+            new AnimationFrame(images.getTileImage("mediumWater1"), 30),
+            new AnimationFrame(images.getTileImage("mediumWater2"), 30));
     }
 }

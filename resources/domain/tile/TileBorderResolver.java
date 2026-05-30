@@ -50,6 +50,11 @@ public final class TileBorderResolver {
     private static Map<String, String> buildHostOverlayFamilyMap() {
         Map<String, String> m = new HashMap<>();
         m.put("tidalSand|wetBeach", "wetBeachDry");
+        // Foam crescents where water meets sand and at internal depth boundaries.
+        m.put("shallowWater|tidalSand", "oceanFoam");
+        m.put("shallowWater|wetBeach", "oceanFoam");
+        m.put("mediumWater|shallowWater", "oceanFoam");
+        m.put("ocean|mediumWater", "oceanFoam");
         return m;
     }
 
@@ -59,6 +64,17 @@ public final class TileBorderResolver {
     public TileBorderResolver(Tile tile, ImageContainer images) {
         this.tile   = tile;
         this.images = images;
+    }
+
+    private boolean isSeabedRevealing() {
+        String n = tile.getName();
+        return "shallowWater".equals(n) || "mediumWater".equals(n);
+    }
+
+    private boolean isWaterTile() {
+        String n = tile.getName();
+        return "ocean".equals(n) || "river".equals(n)
+            || "mediumWater".equals(n) || "shallowWater".equals(n);
     }
 
     /**
@@ -72,6 +88,13 @@ public final class TileBorderResolver {
     /** Replace {@code tile.images} with the full stack for the given animation frame. */
     public void resolveInto(ArrayList<BufferedImage> sink, int frame) {
         sink.clear();
+        // Shallow/medium water are semi-transparent: lay an opaque seabed sprite
+        // underneath (hash-picked per cell) so the bottom shows through and the
+        // water reads bright rather than murky.
+        if (isSeabedRevealing()) {
+            sink.add(images.getTileImage(
+                SeabedPicker.seabedFor((int) tile.worldX, (int) tile.worldY)));
+        }
         sink.add(baseFrame(frame));
         // Tilled soil draws its own plot edge against any non-farm neighbour,
         // independent of elevation. Other tiles keep the higher-neighbour rule.
@@ -79,6 +102,11 @@ public final class TileBorderResolver {
                 ? addFarmBorders(sink, frame)
                 : addBorders(sink, frame);
         addCorners(sink, frame, borders);
+        // Sparse surface details (bubbles/sparkles/ripples) on top of any water.
+        if (isWaterTile()) {
+            String detail = SeabedPicker.detailFor((int) tile.worldX, (int) tile.worldY);
+            if (detail != null) sink.add(images.getTileImage(detail));
+        }
     }
 
     /**

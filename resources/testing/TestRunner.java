@@ -6,6 +6,8 @@ import java.util.List;
 import resources.testing.probes.AIProbe;
 import resources.testing.probes.AnimationFrameProbe;
 import resources.testing.probes.BeachWaterTransitionProbe;
+import resources.testing.probes.WaterDepthProbe;
+import resources.testing.probes.WaterRenderProbe;
 import resources.testing.probes.BoatProbe;
 import resources.testing.probes.CaveEntryProbe;
 import resources.testing.probes.CaveProbe;
@@ -67,6 +69,8 @@ public final class TestRunner {
         List<Probe> probes = new ArrayList<>();
         probes.add(new TileBorderProbe());
         probes.add(new BeachWaterTransitionProbe());
+        probes.add(new WaterDepthProbe());
+        probes.add(new WaterRenderProbe());
         probes.add(new AnimationFrameProbe());
         probes.add(new LightingProbe());
         probes.add(new HarvestableProbe());
