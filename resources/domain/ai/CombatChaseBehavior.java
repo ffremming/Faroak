@@ -2,6 +2,7 @@ package resources.domain.ai;
 
 import resources.app.GameContext;
 import resources.domain.combat.CombatService;
+import resources.domain.combat.MeleeAttackSpec;
 import resources.domain.entity.BaseEntity;
 import resources.domain.entity.component.HealthComponent;
 import resources.domain.player.Moveable;
@@ -81,7 +82,7 @@ public final class CombatChaseBehavior implements AIBehavior {
         Vector aim = new Vector(dx, dy).normalize(1.0);
 
         if (dist <= meleeRange && meleeCooldown == 0) {
-            int hits = combat.meleeAttack(host, ctx, aim,
+            int hits = combat.meleeAttack(host, ctx, aim, new MeleeAttackSpec(
                 meleeDamage,
                 meleeRange + 16,
                 100.0,
@@ -89,7 +90,7 @@ public final class CombatChaseBehavior implements AIBehavior {
                 meleeSprite,
                 8,
                 138.0,
-                44.0);
+                44.0));
             if (hits > 0) {
                 meleeCooldown = Math.max(1, meleeCooldownTicks);
             }

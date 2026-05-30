@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import resources.app.GamePanel;
 import resources.domain.combat.CombatService;
+import resources.domain.combat.MeleeAttackSpec;
 import resources.domain.combat.WeaponProfile;
 import resources.domain.entity.BaseEntity;
 import resources.domain.entity.component.HealthComponent;
@@ -212,7 +213,7 @@ public class Playable extends Moveable {
         if (heavyCooldownTicks > 0) return;
         WeaponProfile weapon = equippedWeaponProfile();
         Vector aim = panel.inputHandlingSystem.combatAimVector();
-        int hits = combat.meleeAttack(this, panel, aim,
+        int hits = combat.meleeAttack(this, panel, aim, new MeleeAttackSpec(
             weapon.heavyDamage,
             weapon.heavyRangePx,
             weapon.heavyArcDegrees,
@@ -220,7 +221,7 @@ public class Playable extends Moveable {
             weapon.swingSpriteName,
             weapon.swingDurationTicks + 2,
             weapon.swingArcDegrees + 10.0,
-            weapon.swingRadiusPx);
+            weapon.swingRadiusPx));
         if (hits == 0) harvest.attack(this, panel);
         heavyCooldownTicks = weapon.heavyCooldownTicks;
         lightCooldownTicks = Math.max(lightCooldownTicks, weapon.lightCooldownTicks / 2);
@@ -256,7 +257,7 @@ public class Playable extends Moveable {
         comboWindowTicks = COMBO_WINDOW_TICKS;
 
         Vector aim = panel.inputHandlingSystem.combatAimVector();
-        int hits = combat.meleeAttack(this, panel, aim,
+        int hits = combat.meleeAttack(this, panel, aim, new MeleeAttackSpec(
             weapon.comboDamage(comboStep),
             weapon.comboRange(comboStep),
             weapon.comboArc(comboStep),
@@ -264,7 +265,7 @@ public class Playable extends Moveable {
             weapon.swingSpriteName,
             weapon.swingDurationTicks,
             weapon.swingArcDegrees + (comboStep - 1) * 8.0,
-            weapon.swingRadiusPx);
+            weapon.swingRadiusPx));
 
         if (hits == 0) harvest.attack(this, panel);
         lightCooldownTicks = weapon.lightCooldownTicks;

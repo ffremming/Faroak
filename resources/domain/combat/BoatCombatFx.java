@@ -10,6 +10,7 @@ import resources.app.GamePanel;
 import resources.domain.entity.Entity;
 import resources.presentation.image.BoatCombatSpriteSheet;
 import resources.presentation.image.CombatSpriteSheet;
+import resources.presentation.image.LazyImageCache;
 
 /**
  * Short-lived boat combat VFX entities (muzzle, hit, splash, sink).
@@ -19,12 +20,42 @@ public final class BoatCombatFx extends Entity implements TransientWorldEntity {
     private static final int FAST_FRAME_STEP_TICKS = 2;
     private static final int SLOW_FRAME_STEP_TICKS = 3;
 
-    private static volatile ArrayList<BufferedImage> MUZZLE_FRAMES;
-    private static volatile ArrayList<BufferedImage> HIT_FRAMES;
-    private static volatile ArrayList<BufferedImage> SMOKE_FRAMES;
-    private static volatile ArrayList<BufferedImage> SPLASH_FRAMES;
-    private static volatile ArrayList<BufferedImage> RIPPLE_FRAMES;
-    private static volatile ArrayList<BufferedImage> SINK_FRAMES;
+    private static final LazyImageCache<ArrayList<BufferedImage>> MUZZLE_FRAMES =
+        new LazyImageCache<>(() -> {
+            ArrayList<BufferedImage> fromSheet = BoatCombatSpriteSheet.muzzleFrames(56);
+            if (fromSheet.isEmpty()) fromSheet = CombatSpriteSheet.hitFrames(56);
+            return fromSheet.isEmpty() ? buildMuzzleFrames() : fromSheet;
+        });
+    private static final LazyImageCache<ArrayList<BufferedImage>> HIT_FRAMES =
+        new LazyImageCache<>(() -> {
+            ArrayList<BufferedImage> combined = new ArrayList<>();
+            combined.addAll(BoatCombatSpriteSheet.hitSparkFrames(70));
+            combined.addAll(BoatCombatSpriteSheet.explosionFrames(70));
+            if (combined.isEmpty()) combined.addAll(CombatSpriteSheet.hitFrames(70));
+            return combined.isEmpty() ? buildHitFrames() : combined;
+        });
+    private static final LazyImageCache<ArrayList<BufferedImage>> SMOKE_FRAMES =
+        new LazyImageCache<>(() -> {
+            ArrayList<BufferedImage> fromSheet = BoatCombatSpriteSheet.smokeFrames(76);
+            return fromSheet.isEmpty() ? buildSmokeFrames() : fromSheet;
+        });
+    private static final LazyImageCache<ArrayList<BufferedImage>> SPLASH_FRAMES =
+        new LazyImageCache<>(() -> {
+            ArrayList<BufferedImage> fromSheet = BoatCombatSpriteSheet.splashFrames(90);
+            return fromSheet.isEmpty() ? buildSplashFrames() : fromSheet;
+        });
+    private static final LazyImageCache<ArrayList<BufferedImage>> RIPPLE_FRAMES =
+        new LazyImageCache<>(() -> {
+            ArrayList<BufferedImage> fromSheet = BoatCombatSpriteSheet.rippleFrames(96);
+            return fromSheet.isEmpty() ? buildRippleFrames() : fromSheet;
+        });
+    private static final LazyImageCache<ArrayList<BufferedImage>> SINK_FRAMES =
+        new LazyImageCache<>(() -> {
+            ArrayList<BufferedImage> combined = new ArrayList<>();
+            combined.addAll(BoatCombatSpriteSheet.sinkDebrisFrames(120));
+            combined.addAll(BoatCombatSpriteSheet.splashFrames(120));
+            return combined.isEmpty() ? buildSinkFrames() : combined;
+        });
 
     private final ArrayList<BufferedImage> frames;
     private final int frameStepTicks;
@@ -48,28 +79,28 @@ public final class BoatCombatFx extends Entity implements TransientWorldEntity {
 
     public static void spawnMuzzleFlash(GamePanel panel, double centerX, double centerY) {
         spawn(panel, new BoatCombatFx(
-            panel, "boat_fx_muzzle", centerX, centerY, muzzleFrames(), FAST_FRAME_STEP_TICKS));
+            panel, "boat_fx_muzzle", centerX, centerY, MUZZLE_FRAMES.get(), FAST_FRAME_STEP_TICKS));
     }
 
     public static void spawnHitBurst(GamePanel panel, double centerX, double centerY) {
         spawn(panel, new BoatCombatFx(
-            panel, "boat_fx_hit", centerX, centerY, hitFrames(), FAST_FRAME_STEP_TICKS));
+            panel, "boat_fx_hit", centerX, centerY, HIT_FRAMES.get(), FAST_FRAME_STEP_TICKS));
         spawn(panel, new BoatCombatFx(
-            panel, "boat_fx_smoke", centerX, centerY, smokeFrames(), SLOW_FRAME_STEP_TICKS));
+            panel, "boat_fx_smoke", centerX, centerY, SMOKE_FRAMES.get(), SLOW_FRAME_STEP_TICKS));
     }
 
     public static void spawnWaterImpact(GamePanel panel, double centerX, double centerY) {
         spawn(panel, new BoatCombatFx(
-            panel, "boat_fx_splash", centerX, centerY, splashFrames(), FAST_FRAME_STEP_TICKS));
+            panel, "boat_fx_splash", centerX, centerY, SPLASH_FRAMES.get(), FAST_FRAME_STEP_TICKS));
         spawn(panel, new BoatCombatFx(
-            panel, "boat_fx_ripple", centerX, centerY, rippleFrames(), SLOW_FRAME_STEP_TICKS));
+            panel, "boat_fx_ripple", centerX, centerY, RIPPLE_FRAMES.get(), SLOW_FRAME_STEP_TICKS));
     }
 
     public static void spawnSinkBurst(GamePanel panel, double centerX, double centerY) {
         spawn(panel, new BoatCombatFx(
-            panel, "boat_fx_sink", centerX, centerY, sinkFrames(), FAST_FRAME_STEP_TICKS));
+            panel, "boat_fx_sink", centerX, centerY, SINK_FRAMES.get(), FAST_FRAME_STEP_TICKS));
         spawn(panel, new BoatCombatFx(
-            panel, "boat_fx_sink_ripple", centerX, centerY, rippleFrames(), SLOW_FRAME_STEP_TICKS));
+            panel, "boat_fx_sink_ripple", centerX, centerY, RIPPLE_FRAMES.get(), SLOW_FRAME_STEP_TICKS));
     }
 
     private static void spawn(GamePanel panel, BoatCombatFx fx) {
@@ -100,78 +131,6 @@ public final class BoatCombatFx extends Entity implements TransientWorldEntity {
         if (expired) return;
         expired = true;
         panel.world.addToRemovalQueue(this);
-    }
-
-    private static ArrayList<BufferedImage> muzzleFrames() {
-        ArrayList<BufferedImage> cached = MUZZLE_FRAMES;
-        if (cached != null) return cached;
-        synchronized (BoatCombatFx.class) {
-            if (MUZZLE_FRAMES != null) return MUZZLE_FRAMES;
-            ArrayList<BufferedImage> fromSheet = BoatCombatSpriteSheet.muzzleFrames(56);
-            if (fromSheet.isEmpty()) fromSheet = CombatSpriteSheet.hitFrames(56);
-            MUZZLE_FRAMES = fromSheet.isEmpty() ? buildMuzzleFrames() : fromSheet;
-            return MUZZLE_FRAMES;
-        }
-    }
-
-    private static ArrayList<BufferedImage> hitFrames() {
-        ArrayList<BufferedImage> cached = HIT_FRAMES;
-        if (cached != null) return cached;
-        synchronized (BoatCombatFx.class) {
-            if (HIT_FRAMES != null) return HIT_FRAMES;
-            ArrayList<BufferedImage> combined = new ArrayList<>();
-            combined.addAll(BoatCombatSpriteSheet.hitSparkFrames(70));
-            combined.addAll(BoatCombatSpriteSheet.explosionFrames(70));
-            if (combined.isEmpty()) combined.addAll(CombatSpriteSheet.hitFrames(70));
-            HIT_FRAMES = combined.isEmpty() ? buildHitFrames() : combined;
-            return HIT_FRAMES;
-        }
-    }
-
-    private static ArrayList<BufferedImage> smokeFrames() {
-        ArrayList<BufferedImage> cached = SMOKE_FRAMES;
-        if (cached != null) return cached;
-        synchronized (BoatCombatFx.class) {
-            if (SMOKE_FRAMES != null) return SMOKE_FRAMES;
-            ArrayList<BufferedImage> fromSheet = BoatCombatSpriteSheet.smokeFrames(76);
-            SMOKE_FRAMES = fromSheet.isEmpty() ? buildSmokeFrames() : fromSheet;
-            return SMOKE_FRAMES;
-        }
-    }
-
-    private static ArrayList<BufferedImage> splashFrames() {
-        ArrayList<BufferedImage> cached = SPLASH_FRAMES;
-        if (cached != null) return cached;
-        synchronized (BoatCombatFx.class) {
-            if (SPLASH_FRAMES != null) return SPLASH_FRAMES;
-            ArrayList<BufferedImage> fromSheet = BoatCombatSpriteSheet.splashFrames(90);
-            SPLASH_FRAMES = fromSheet.isEmpty() ? buildSplashFrames() : fromSheet;
-            return SPLASH_FRAMES;
-        }
-    }
-
-    private static ArrayList<BufferedImage> rippleFrames() {
-        ArrayList<BufferedImage> cached = RIPPLE_FRAMES;
-        if (cached != null) return cached;
-        synchronized (BoatCombatFx.class) {
-            if (RIPPLE_FRAMES != null) return RIPPLE_FRAMES;
-            ArrayList<BufferedImage> fromSheet = BoatCombatSpriteSheet.rippleFrames(96);
-            RIPPLE_FRAMES = fromSheet.isEmpty() ? buildRippleFrames() : fromSheet;
-            return RIPPLE_FRAMES;
-        }
-    }
-
-    private static ArrayList<BufferedImage> sinkFrames() {
-        ArrayList<BufferedImage> cached = SINK_FRAMES;
-        if (cached != null) return cached;
-        synchronized (BoatCombatFx.class) {
-            if (SINK_FRAMES != null) return SINK_FRAMES;
-            ArrayList<BufferedImage> combined = new ArrayList<>();
-            combined.addAll(BoatCombatSpriteSheet.sinkDebrisFrames(120));
-            combined.addAll(BoatCombatSpriteSheet.splashFrames(120));
-            SINK_FRAMES = combined.isEmpty() ? buildSinkFrames() : combined;
-            return SINK_FRAMES;
-        }
     }
 
     private static ArrayList<BufferedImage> buildMuzzleFrames() {

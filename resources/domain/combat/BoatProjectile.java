@@ -15,6 +15,7 @@ import resources.domain.tile.Tile;
 import resources.world.placement.TileRules;
 import resources.presentation.image.BoatCombatSpriteSheet;
 import resources.presentation.image.ImageContainer;
+import resources.presentation.image.LazyImageCache;
 
 /**
  * Broadside cannonball fired from a boat. Flies in a straight line, damages
@@ -34,7 +35,11 @@ public final class BoatProjectile extends Entity implements TransientWorldEntity
      */
     private static final double SOURCE_FORWARD_ANGLE_DEG = 180.0;
 
-    private static volatile ArrayList<BufferedImage> BASE_FRAMES;
+    private static final LazyImageCache<ArrayList<BufferedImage>> BASE_FRAMES =
+        new LazyImageCache<>(() -> {
+            ArrayList<BufferedImage> fromSheet = BoatCombatSpriteSheet.projectileFrames(BODY_SIZE);
+            return fromSheet.isEmpty() ? fallbackFrames() : fromSheet;
+        });
 
     private final Boat shooter;
     private final double dirX;
@@ -142,7 +147,7 @@ public final class BoatProjectile extends Entity implements TransientWorldEntity
     }
 
     private ArrayList<BufferedImage> orientedFrames() {
-        ArrayList<BufferedImage> base = baseFrames();
+        ArrayList<BufferedImage> base = BASE_FRAMES.get();
         if (base.isEmpty()) return fallbackFrames();
 
         double heading = Math.toDegrees(Math.atan2(dirY, dirX));
@@ -154,17 +159,6 @@ public final class BoatProjectile extends Entity implements TransientWorldEntity
             out.add(ImageContainer.scaleImage(rotated, BODY_SIZE, BODY_SIZE));
         }
         return out.isEmpty() ? fallbackFrames() : out;
-    }
-
-    private static ArrayList<BufferedImage> baseFrames() {
-        ArrayList<BufferedImage> cached = BASE_FRAMES;
-        if (cached != null) return cached;
-        synchronized (BoatProjectile.class) {
-            if (BASE_FRAMES != null) return BASE_FRAMES;
-            ArrayList<BufferedImage> fromSheet = BoatCombatSpriteSheet.projectileFrames(BODY_SIZE);
-            BASE_FRAMES = fromSheet.isEmpty() ? fallbackFrames() : fromSheet;
-            return BASE_FRAMES;
-        }
     }
 
     private static ArrayList<BufferedImage> fallbackFrames() {

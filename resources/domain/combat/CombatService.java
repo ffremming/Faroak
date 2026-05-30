@@ -41,26 +41,20 @@ public final class CombatService {
             BaseEntity attacker,
             GameContext ctx,
             Vector aim,
-            int damage,
-            int rangePx,
-            double arcDegrees,
-            int maxTargets,
-            String swingSpriteName,
-            int swingTicks,
-            double swingArcDegrees,
-            double swingRadiusPx) {
-        if (attacker == null || ctx == null || damage <= 0) return 0;
+            MeleeAttackSpec spec) {
+        if (attacker == null || ctx == null || spec == null || spec.damage() <= 0) return 0;
         if (!(ctx instanceof GamePanel)) return 0;
 
         Vector direction = normalizedAim(aim, attacker);
-        spawnSwingEffect(attacker, ctx, direction, swingSpriteName,
-            swingTicks, swingArcDegrees, swingRadiusPx);
+        spawnSwingEffect(attacker, ctx, direction, spec.swingSpriteName(),
+            spec.swingTicks(), spec.swingArcDegrees(), spec.swingRadiusPx());
 
-        List<TargetCandidate> targets = targetsInArc(attacker, ctx, direction, rangePx, arcDegrees);
+        List<TargetCandidate> targets =
+            targetsInArc(attacker, ctx, direction, spec.rangePx(), spec.arcDegrees());
         int hits = 0;
         for (TargetCandidate candidate : targets) {
-            if (maxTargets > 0 && hits >= maxTargets) break;
-            if (applyDamage(ctx, attacker, candidate.target, damage)) {
+            if (spec.maxTargets() > 0 && hits >= spec.maxTargets()) break;
+            if (applyDamage(ctx, attacker, candidate.target, spec.damage())) {
                 hits++;
             }
         }
@@ -98,14 +92,26 @@ public final class CombatService {
         if (ctx == null || attacker == null || target == null || damage <= 0) return false;
         if (!isDamageableTarget(attacker, target)) return false;
 
+        // Players and HealthComponent-bearing entities take damage through
+        // different paths (player lifecycle vs. component + loot-on-death), so
+        // dispatch stays an instanceof check with each branch in its own helper.
         if (target instanceof Playable) {
-            Playable playable = (Playable) target;
-            if (playable.lifecycle() == null || playable.lifecycle().isDead()) return false;
-            playable.lifecycle().damage(damage);
-            spawnHitEffect(ctx, target);
-            return true;
+            return damagePlayable(ctx, (Playable) target, damage);
         }
+        return damageHealthComponent(ctx, attacker, target, damage);
+    }
 
+    /** Damage a player via its lifecycle; players drop no loot here. */
+    private boolean damagePlayable(GameContext ctx, Playable playable, int damage) {
+        if (playable.lifecycle() == null || playable.lifecycle().isDead()) return false;
+        playable.lifecycle().damage(damage);
+        spawnHitEffect(ctx, playable);
+        return true;
+    }
+
+    /** Damage a HealthComponent-bearing entity; awards loot if it dies. */
+    private boolean damageHealthComponent(
+            GameContext ctx, BaseEntity attacker, BaseEntity target, int damage) {
         HealthComponent hp = target.getComponent(HealthComponent.class);
         if (hp == null || hp.isDead()) return false;
 
