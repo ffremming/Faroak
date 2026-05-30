@@ -20,7 +20,6 @@ import resources.domain.player.Playable;
 import resources.domain.tile.Tile;
 import resources.geometry.HitBox;
 import resources.net.event.PlaceEntityIntentEvent;
-import resources.net.event.RemoveEntityIntentEvent;
 import resources.world.placement.PlacementAction;
 import resources.world.placement.PlacementRegistry;
 import resources.world.placement.PlacementSpec;
@@ -36,6 +35,8 @@ public final class WorldInteraction {
     private final EntityIndex index;
     private final ChunkSystem chunkSystem;
     private final GamePanel panel;
+    private final CollisionChecker collision;
+    private final EntityRemovalQueue removal;
 
     private BaseEntity hoveredEntity;
     // BaseEntity to allow Boat (Moveable) previews alongside GameObject ones.
@@ -47,6 +48,8 @@ public final class WorldInteraction {
         this.index = index;
         this.chunkSystem = chunkSystem;
         this.panel = panel;
+        this.collision = new CollisionChecker(index);
+        this.removal = new EntityRemovalQueue(index, chunkSystem, panel);
     }
 
     public Tile tileAt(Point p) {
@@ -96,44 +99,19 @@ public final class WorldInteraction {
     }
 
     public boolean solidCollision(HitBox hitbox) {
-        return solidCollision(hitbox, null);
+        return collision.solidCollision(hitbox);
     }
 
-    /** Solid-collision check that excludes {@code mover} from the candidate set.
-     *  Use when testing a hypothetical hitbox (e.g. "can this NPC step forward?")
-     *  whose underlying entity would otherwise collide with itself — the
-     *  candidate is a freshly-allocated HitBox so the reference-equality skip
-     *  in {@link #entitiesCollidedWith(HitBox)} doesn't catch it. */
     public boolean solidCollision(HitBox hitbox, BaseEntity mover) {
-        for (BaseEntity be : entitiesCollidedWith(hitbox)) {
-            if (be == mover) continue;
-            if (be.isSolid()) return true;
-        }
-        return false;
+        return collision.solidCollision(hitbox, mover);
     }
 
     public ArrayList<BaseEntity> entitiesCollidedWith(HitBox hitBox) {
-        ArrayList<BaseEntity> collided = new ArrayList<>();
-        for (BaseEntity be : index.entities()) {
-            if (hitBox.collision(be.getHitBox()) && be.getHitBox() != hitBox) {
-                collided.add(be);
-            }
-        }
-        for (Chunk chunk : index.chunks()) {
-            if (chunk.collision(hitBox)) collided.addAll(chunk.getTilesCollidedWith(hitBox));
-        }
-        return collided;
+        return collision.entitiesCollidedWith(hitBox);
     }
 
     public ArrayList<BaseEntity> entitiesCollidedWith(Point p) {
-        ArrayList<BaseEntity> collided = new ArrayList<>();
-        for (BaseEntity be : index.entities()) {
-            if (be.getHitBox().collision(p)) collided.add(be);
-        }
-        for (Chunk chunk : index.chunks()) {
-            if (chunk.collision(p)) collided.add(chunk.getTile(p));
-        }
-        return collided;
+        return collision.entitiesCollidedWith(p);
     }
 
     public boolean placeEntity(BaseEntity entity) {
@@ -152,6 +130,16 @@ public final class WorldInteraction {
     }
 
     /**
+     * Authoritative insertion path for externally-owned world state (network
+     * replication / restore). Skips local authority + collision checks and
+     * does not emit local intent events.
+     */
+    public boolean placeEntityAuthoritative(BaseEntity entity) {
+        if (entity == null) return false;
+        return chunkSystem.addEntity(entity);
+    }
+
+    /**
      * Place an entity while skipping the generic solid-collision gate. Use
      * only for short-lived runtime actors (projectiles/VFX) that may occupy
      * water tiles or other solid terrain by design. Enforced via the
@@ -163,13 +151,7 @@ public final class WorldInteraction {
     }
 
     public void removeEntity(BaseEntity entity) {
-        if (entity == null) return;
-        if (!panel.authority().canRemove(entity)) return;
-        RemoveEntityIntentEvent intent = new RemoveEntityIntentEvent(
-            entity.getName(), entity.getPoint());
-        if (!panel.authority().authorize(intent)) return;
-        chunkSystem.removeEntity(entity);
-        panel.events().publish(intent);
+        removal.removeEntity(entity);
     }
 
     /** Maximum world-space distance (px) between the player's center and the
@@ -325,12 +307,7 @@ public final class WorldInteraction {
     /** Same as solidCollision, but ignores Tile entities — used for placeables
      *  whose allowed surface is gated separately (e.g. boats on water). */
     private boolean entityCollision(HitBox hitbox) {
-        for (BaseEntity be : index.entities()) {
-            if (!be.isSolid()) continue;
-            if (be.getHitBox() == hitbox) continue;
-            if (hitbox.collision(be.getHitBox())) return true;
-        }
-        return false;
+        return collision.entityCollision(hitbox);
     }
 
     /** placeEntity but skipping the world's blanket solid-collision check; the
@@ -479,36 +456,10 @@ public final class WorldInteraction {
     public void setHoveredEntity(BaseEntity entity) { this.hoveredEntity = entity; }
 
     public void addToRemovalQueue(BaseEntity entity) {
-        index.removalQueue().add(entity);
+        removal.addToRemovalQueue(entity);
     }
 
     public void clearRemovalQueue() {
-        for (BaseEntity ent : index.removalQueue()) {
-            if (!panel.authority().canRemove(ent)) continue;
-            RemoveEntityIntentEvent intent = new RemoveEntityIntentEvent(
-                ent.getName(), ent.getPoint());
-            if (!panel.authority().authorize(intent)) continue;
-            boolean removed = chunkSystem.removeEntity(ent);
-            if (!removed) removed = removeFromLoadedChunks(ent);
-            index.sortedVisible().remove(ent);
-            index.entities().remove(ent);
-            if (removed) {
-                ent.remove(); // lifecycle hook (e.g. Crop frees its FarmTile)
-                panel.events().publish(intent);
-            }
-        }
-        index.removalQueue().clear();
-    }
-
-    /**
-     * Fallback for entities whose world position moved out of their stored chunk
-     * before a chunk flush ran. Removes by object identity from loaded chunks.
-     */
-    private boolean removeFromLoadedChunks(BaseEntity entity) {
-        boolean removed = false;
-        for (Chunk chunk : index.chunks()) {
-            if (chunk.removeEntity(entity)) removed = true;
-        }
-        return removed;
+        removal.clearRemovalQueue();
     }
 }
