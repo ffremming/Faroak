@@ -9,6 +9,7 @@ import java.util.Random;
 import resources.app.GameContext;
 import resources.domain.object.Boat;
 import resources.domain.tile.Tile;
+import resources.world.placement.TileRules;
 
 /**
  * One-shot static helper that scatters boats over water near a center point.
@@ -67,7 +68,7 @@ public final class BoatSpawner {
                 Tile tile = ctx.world().getTile(world);
                 if (tile == null) continue;
                 String name = tile.getName();
-                if ("ocean".equals(name) || "river".equals(name) || "shallowWater".equals(name)) out.add(world);
+                if (TileRules.isWater(name)) out.add(world);
             }
         }
         return out;

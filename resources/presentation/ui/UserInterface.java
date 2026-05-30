@@ -1,19 +1,11 @@
 package resources.presentation.ui;
 
 import resources.app.GamePanel;
-import resources.domain.tile.Tile;
 import resources.domain.inventory.Inventory;
-import resources.domain.inventory.Item;
-import resources.domain.inventory.Stack;
-import resources.domain.inventory.ItemManager;
 
 import java.awt.Color;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.awt.Graphics2D;
-
-import resources.domain.inventory.Inventory;
-import resources.app.GamePanel;
 
 public class UserInterface extends Container{
 

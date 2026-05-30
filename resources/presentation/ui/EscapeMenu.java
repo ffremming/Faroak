@@ -213,16 +213,18 @@ public final class EscapeMenu extends Component {
 
     private void actionResume() { hide(); }
 
-    private void actionMusic() {
-        panel.audioSettings().cycleMusicVolume();
+    private void cycleAudio(Runnable cycler) {
+        cycler.run();
         panel.syncAudio();
         refreshAudioLabels();
     }
 
+    private void actionMusic() {
+        cycleAudio(() -> panel.audioSettings().cycleMusicVolume());
+    }
+
     private void actionSound() {
-        panel.audioSettings().cycleSoundVolume();
-        panel.syncAudio();
-        refreshAudioLabels();
+        cycleAudio(() -> panel.audioSettings().cycleSoundVolume());
     }
 
     private void actionRespawn() {

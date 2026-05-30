@@ -12,6 +12,7 @@ import resources.domain.entity.BaseEntity;
 import resources.domain.entity.Entity;
 import resources.domain.object.Boat;
 import resources.domain.tile.Tile;
+import resources.world.placement.TileRules;
 import resources.presentation.image.BoatCombatSpriteSheet;
 import resources.presentation.image.ImageContainer;
 
@@ -137,7 +138,7 @@ public final class BoatProjectile extends Entity implements TransientWorldEntity
         Tile tile = panel.world.getTile(new Point((int) centerX(), (int) centerY()));
         if (tile == null) return true;
         String n = tile.getName();
-        return !("ocean".equals(n) || "river".equals(n) || "shallowWater".equals(n));
+        return !TileRules.isWater(n);
     }
 
     private ArrayList<BufferedImage> orientedFrames() {

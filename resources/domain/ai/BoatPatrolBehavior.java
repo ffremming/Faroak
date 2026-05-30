@@ -6,6 +6,7 @@ import java.util.Random;
 import resources.app.GameContext;
 import resources.domain.entity.BaseEntity;
 import resources.domain.tile.Tile;
+import resources.world.placement.TileRules;
 
 /**
  * Drifts the host along a randomly chosen heading, refusing to step onto
@@ -74,6 +75,6 @@ public final class BoatPatrolBehavior implements AIBehavior {
         Tile t = ctx.world().getTile(new Point(x, y));
         if (t == null) return false;
         String name = t.getName();
-        return "ocean".equals(name) || "river".equals(name) || "shallowWater".equals(name);
+        return TileRules.isWater(name);
     }
 }

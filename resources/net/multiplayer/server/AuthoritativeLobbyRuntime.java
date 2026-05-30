@@ -75,7 +75,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         restoreWorldObjects();
     }
 
-    @Override public synchronized void onConnect(String playerId) {}
+    @Override public synchronized void onConnect(String playerId) { /* no-op: join handled in onJoin */ }
 
     @Override
     public synchronized void onDisconnect(String playerId) {

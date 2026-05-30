@@ -24,6 +24,7 @@ import resources.domain.player.Npc;
 import resources.domain.ai.IdleStrollBehavior;
 import resources.domain.spawn.BoatSpawner;
 import resources.world.DimensionService;
+import resources.world.placement.TileRules;
 import resources.world.MapHandler;
 import resources.world.ChunkSystem;
 import resources.world.WorkingMemory;
@@ -282,7 +283,7 @@ public class GenerationManager {
                 resources.domain.tile.Tile t = panel.world.getTile(new java.awt.Point(sx, sy));
                 if (t == null) return false;
                 String n = t.getName();
-                if ("ocean".equals(n) || "river".equals(n) || "shallowWater".equals(n)) return false;
+                if (TileRules.isWater(n)) return false;
             }
         }
         return true;

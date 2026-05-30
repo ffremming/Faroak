@@ -25,6 +25,7 @@ import resources.domain.entity.component.TerrainSpeedComponent;
 import resources.domain.player.Moveable;
 import resources.domain.player.Playable;
 import resources.domain.tile.Tile;
+import resources.world.placement.TileRules;
 import resources.geometry.HitBox;
 import resources.input.InputHandlingSystem;
 
@@ -416,7 +417,7 @@ public final class Boat extends Moveable {
                 Tile t = panel.world.getTile(new Point(x, y));
                 if (t == null) return false;
                 String name = t.getName();
-                if (!("ocean".equals(name) || "river".equals(name) || "shallowWater".equals(name))) return false;
+                if (!TileRules.isWater(name)) return false;
             }
         }
         return true;
@@ -594,6 +595,6 @@ public final class Boat extends Moveable {
         Tile t = panel.world.getTile(new Point(worldX, worldY));
         if (t == null) return false;
         String n = t.getName();
-        return !("ocean".equals(n) || "river".equals(n) || "shallowWater".equals(n));
+        return !TileRules.isWater(n);
     }
 }

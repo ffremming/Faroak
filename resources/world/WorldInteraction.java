@@ -354,7 +354,7 @@ public final class WorldInteraction {
                 Tile t = tileAt(new java.awt.Point(x, y));
                 if (t == null) return false;
                 String n = t.getName();
-                if (!("ocean".equals(n) || "river".equals(n) || "shallowWater".equals(n))) return false;
+                if (!TileRules.isWater(n)) return false;
             }
         }
         return true;

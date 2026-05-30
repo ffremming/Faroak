@@ -5,6 +5,7 @@ import resources.domain.object.BoatRideComponent;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.function.Consumer;
 
 public class Keys implements KeyListener{
 
@@ -165,7 +166,7 @@ public class Keys implements KeyListener{
         }
     } 
 
-    private void handleLightAttack() {
+    private void handleAttack(Consumer<BoatRideComponent> offlineAction) {
         BoatRideComponent ride = activeRide();
         if (isOnline()) {
             if (ride != null) {
@@ -175,41 +176,33 @@ public class Keys implements KeyListener{
             panel.inputHandlingSystem.enqueueAction(InputAction.ATTACK);
             return;
         }
-        if (ride != null && ride.boat() != null) {
-            ride.boat().fireBroadside();
-            return;
-        }
-        panel.player.requestLightAttack();
+        offlineAction.accept(ride);
+    }
+
+    private void handleLightAttack() {
+        handleAttack(ride -> {
+            if (ride != null && ride.boat() != null) {
+                ride.boat().fireBroadside();
+                return;
+            }
+            panel.player.requestLightAttack();
+        });
     }
 
     private void handleHeavyAttack() {
-        BoatRideComponent ride = activeRide();
-        if (isOnline()) {
-            if (ride != null) {
-                showOnlineBoatCombatToast();
-                return;
+        handleAttack(ride -> {
+            if (ride == null || ride.boat() == null) {
+                panel.player.requestHeavyAttack();
             }
-            panel.inputHandlingSystem.enqueueAction(InputAction.ATTACK);
-            return;
-        }
-        if (ride == null || ride.boat() == null) {
-            panel.player.requestHeavyAttack();
-        }
+        });
     }
 
     private void handleRangedAttack() {
-        BoatRideComponent ride = activeRide();
-        if (isOnline()) {
-            if (ride != null) {
-                showOnlineBoatCombatToast();
-                return;
+        handleAttack(ride -> {
+            if (ride == null || ride.boat() == null) {
+                panel.player.requestRangedAttack();
             }
-            panel.inputHandlingSystem.enqueueAction(InputAction.ATTACK);
-            return;
-        }
-        if (ride == null || ride.boat() == null) {
-            panel.player.requestRangedAttack();
-        }
+        });
     }
 
     private BoatRideComponent activeRide() {

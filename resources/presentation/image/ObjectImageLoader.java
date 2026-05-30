@@ -169,7 +169,7 @@ public final class ObjectImageLoader {
      * disk. A dark-grey "?" tile is visually unobtrusive and immediately
      * recognisable as "art pending".
      */
-    private static BufferedImage fallbackSwatch(String name) {
+    private static BufferedImage fallbackSwatch() {
         return PLACEHOLDER;
     }
 
@@ -224,7 +224,7 @@ public final class ObjectImageLoader {
             ArrayList<BufferedImage> potential = objectImages(name);
             if ((image == null) && !potential.isEmpty()) image = potential.get(0);
         }
-        if (image == null) image = fallbackSwatch(name);
+        if (image == null) image = fallbackSwatch();
         itemCache.put(name, image);
         return image;
     }
