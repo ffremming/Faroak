@@ -69,6 +69,8 @@ public final class TestRunner {
         probes.add(new LightingProbe());
         probes.add(new HarvestableProbe());
         probes.add(new GroundItemProbe());
+        probes.add(new CatalogProbe());
+        probes.add(new PlaceAllProbe());
         probes.add(new GrowableProbe());
         probes.add(new AIProbe());
         probes.add(new TerrainSpeedProbe());
