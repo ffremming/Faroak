@@ -86,6 +86,7 @@ public final class ShipKindRegistry {
         Map<String, Double> m = new HashMap<>();
         m.put("ocean",        1.0);
         m.put("shallowWater", 1.0);
+        m.put("midWater",     1.0);
         m.put("mediumWater",  1.0);
         m.put("river",        1.0);
         m.put("beach",        0.3);
