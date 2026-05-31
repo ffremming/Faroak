@@ -26,11 +26,22 @@ public final class ShipPilotBehavior implements AIBehavior {
     /** Fire when the target's bearing is within this many degrees of abeam. */
     private static final double ABEAM_TOLERANCE_DEG = 35.0;
     private static final int    FLEE_DURATION_TICKS = 180;
+    /** Net progress (px) toward the waypoint that resets the stuck timer. */
+    private static final double PROGRESS_EPSILON_PX = 64.0;
+    /** Ticks of no net progress after which a waypoint is deemed unreachable
+     *  and abandoned. Blindly-placed route/fishing waypoints can land behind a
+     *  landmass; without this the ship grinds the coast forever. */
+    private static final int    STUCK_LIMIT_TICKS   = 150;
 
     private final ShipGoal goal;
     private WaterNavigator navigator;
     private Boat target;
     private int rescanCooldown;
+
+    // Stuck detection for the goal layer: the closest we've gotten to the
+    // current waypoint, and how long since we last improved on it.
+    private double bestWaypointDist = Double.POSITIVE_INFINITY;
+    private int    noProgressTicks;
 
     // Provoked-reaction state.
     private Point provokeSource;
@@ -76,12 +87,14 @@ public final class ShipPilotBehavior implements AIBehavior {
             double awayX = ship.getWorldX() - (provokeSource.x - ship.getWorldX());
             double awayY = ship.getWorldY() - (provokeSource.y - ship.getWorldY());
             navigator.stepToward(ship, new Point((int) awayX, (int) awayY), ctx);
+            resetProgress(); // goal paused — start its stuck window fresh on resume
             return;
         }
 
         // --- provoked retaliation: fight the attacker if we're armed ---
         if (retaliateTarget != null && !retaliateTarget.isDestroyed() && armed) {
             engage(ship, retaliateTarget, kind, ctx);
+            resetProgress();
             return;
         }
         if (retaliateTarget != null && retaliateTarget.isDestroyed()) retaliateTarget = null;
@@ -99,20 +112,40 @@ public final class ShipPilotBehavior implements AIBehavior {
         // --- hostile override ---
         if (armed && target != null) {
             engage(ship, target, kind, ctx);
+            resetProgress();
             return;
         }
 
         // --- goal layer ---
         if (goal == null) return;
         Point wp = goal.currentWaypoint(ship, ctx);
-        if (wp == null) return;
+        if (wp == null) { resetProgress(); return; }
         double dx = wp.x - ship.getWorldX();
         double dy = wp.y - ship.getWorldY();
-        if (Math.hypot(dx, dy) <= WAYPOINT_REACH_PX) {
+        double dist = Math.hypot(dx, dy);
+        if (dist <= WAYPOINT_REACH_PX) {
             goal.onWaypointReached(ship, ctx);
+            resetProgress();
+            return;
+        }
+        // Stuck detection: if we never get meaningfully closer to this waypoint,
+        // it's unreachable (placed behind land) — abandon it so the goal moves
+        // on rather than grinding the coastline forever.
+        if (dist < bestWaypointDist - PROGRESS_EPSILON_PX) {
+            bestWaypointDist = dist;
+            noProgressTicks = 0;
+        } else if (++noProgressTicks > STUCK_LIMIT_TICKS) {
+            goal.onWaypointReached(ship, ctx); // give up on this leg, advance
+            resetProgress();
             return;
         }
         navigator.stepToward(ship, wp, ctx);
+    }
+
+    /** Reset the stuck-detection window (new waypoint / left the goal layer). */
+    private void resetProgress() {
+        bestWaypointDist = Double.POSITIVE_INFINITY;
+        noProgressTicks = 0;
     }
 
     /** Close to firing range, then fire when the target is abeam. */
