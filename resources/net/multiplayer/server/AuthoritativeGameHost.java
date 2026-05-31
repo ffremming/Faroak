@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import resources.domain.farming.CropRegistry;
+import resources.domain.combat.WeaponProfile;
 import resources.net.multiplayer.MultiplayerAction;
 import resources.net.multiplayer.protocol.ProtocolEnvelope;
 import resources.net.multiplayer.protocol.ProtocolMessageType;
@@ -34,8 +36,19 @@ final class AuthoritativeGameHost {
     private static final int PLAYER_HOTBAR_OFFSET = 27;
     private static final int CURSOR_SLOTS = 1;
     private static final int MAX_STACK = 99;
+    private static final int CRAFTING_INPUT_SLOTS = 16;
+    private static final int CRAFTING_OUTPUT_SLOT = 16;
     private static final double PLAYER_RIDER_OFFSET_X = -24.0;
     private static final double PLAYER_RIDER_OFFSET_Y = -64.0;
+    private static final int CROP_MATURE_STAGE = 3;
+    private static final long CROP_STAGE_TICKS = 150L;
+    private static final int CROP_HARVEST_AMOUNT = 1;
+    private static final double PLAYER_CENTER_OFFSET_X = 24.0;
+    private static final double PLAYER_CENTER_OFFSET_Y = 48.0;
+    private static final int PROJECTILE_SIZE = 28;
+    private static final double PROJECTILE_HIT_RADIUS = 20.0;
+    private static final long MOB_AI_TICK_INTERVAL = 2L;
+    private static final double MOB_DETECTION_RANGE = 640.0;
 
     private final WorldState world = new WorldState();
     private final ServerTerrainRules terrainRules;
@@ -50,6 +63,75 @@ final class AuthoritativeGameHost {
     WorldState world() { return world; }
     boolean dirty() { return dirty; }
     void clearDirty() { dirty = false; }
+
+    /**
+     * Add an authoritative harvestable world object (tree/rock/ore) at a position.
+     * Gets a health component so it can be attacked and drops loot via {@link #lootFor}.
+     * Used by {@link ServerWorldPopulator} at fresh-world seeding.
+     */
+    long seedHarvestable(String type, double x, double y, long tick) {
+        long revision = world.bumpRevision();
+        EntityState entity = new EntityState(world.allocateEntityId(), type, DEFAULT_DIMENSION, x, y, revision, tick);
+        int max = defaultMaxHealth(type);
+        entity.putComponent("dimension", DEFAULT_DIMENSION, revision, tick);
+        entity.putComponent("health", max + "/" + max, revision, tick);
+        entity.putComponent("max_health", Integer.toString(max), revision, tick);
+        entity.putComponent("harvestable", type, revision, tick);
+        world.putEntity(entity);
+        dirty = true;
+        return entity.entityId();
+    }
+
+    /** Spawn an authoritative mob (goblin/spider/deer) with full combat components. */
+    long spawnMob(String type, double x, double y, long tick) {
+        long revision = world.bumpRevision();
+        EntityState entity = new EntityState(world.allocateEntityId(), type, DEFAULT_DIMENSION, x, y, revision, tick);
+        int max = defaultMaxHealth(type);
+        entity.putComponent("dimension", DEFAULT_DIMENSION, revision, tick);
+        entity.putComponent("health", max + "/" + max, revision, tick);
+        entity.putComponent("max_health", Integer.toString(max), revision, tick);
+        entity.putComponent("mob", type, revision, tick);
+        entity.putComponent("attack_cooldown", "0", revision, tick);
+        world.putEntity(entity);
+        dirty = true;
+        return entity.entityId();
+    }
+
+    /** Live (non-removed) mob count, for the spawner's population cap. */
+    int mobCount() {
+        int n = 0;
+        for (EntityState e : world.entities()) {
+            if (!e.removed() && isMob(e)) n++;
+        }
+        return n;
+    }
+
+    /** Count live entities of a given type — for probes/spawner bookkeeping. */
+    int entityCountOfType(String type) {
+        int n = 0;
+        for (EntityState e : world.entities()) {
+            if (!e.removed() && e.entityType().equals(type)) n++;
+        }
+        return n;
+    }
+
+    /** Remove mobs with no session within {@code despawnRadius} — for the spawner. */
+    void despawnDistantMobs(Map<String, Session> sessions, double despawnRadius, long tick) {
+        double r2 = despawnRadius * despawnRadius;
+        for (EntityState mob : world.entities()) {
+            if (mob.removed() || !isMob(mob)) continue;
+            boolean near = false;
+            for (Session s : sessions.values()) {
+                double dx = playerCenterX(s) - mob.worldX();
+                double dy = playerCenterY(s) - mob.worldY();
+                if (dx * dx + dy * dy <= r2) { near = true; break; }
+            }
+            if (!near) {
+                mob.markRemoved(world.bumpRevision(), tick);
+                dirty = true;
+            }
+        }
+    }
 
     void setCounters(long tick, long revision, long nextEntityId) {
         world.setCounters(tick, revision, nextEntityId);
@@ -189,6 +271,13 @@ final class AuthoritativeGameHost {
         }
     }
 
+    void tickWorld(Map<String, Session> sessions, long tick) {
+        world.setTick(tick);
+        advanceCrops(tick);
+        tickProjectiles(tick);
+        if (tick % MOB_AI_TICK_INTERVAL == 0L) tickMobs(sessions, tick);
+    }
+
     CommandOutcome applyCommand(
             Session session,
             ProtocolPayloads.CommandRequest command,
@@ -207,10 +296,14 @@ final class AuthoritativeGameHost {
                 || ProtocolPayloads.CommandRequest.INTERACT_AT.equals(command.commandType)) {
             return applyInteractCommand(session, command, sequence, tick, events);
         }
-        if (ProtocolPayloads.CommandRequest.ATTACK_AT.equals(command.commandType)) {
-            ProtocolPayloads.ActionRequest attack = new ProtocolPayloads.ActionRequest(
-                MultiplayerAction.ATTACK, command.hasTarget, command.targetX, command.targetY, "");
-            if (!applyAttack(session, attack, tick, events)) return CommandOutcome.reject("nothing to attack");
+        if (isCombatCommand(command.commandType)) {
+            CommandOutcome harvest = harvestCrop(session, command.targetX, command.targetY, "", tick, events);
+            if (harvest.accepted && !ProtocolPayloads.CommandRequest.ATTACK_RANGED_AT.equals(command.commandType)) {
+                markSequence(session, sequence, tick);
+                return CommandOutcome.accept();
+            }
+            CommandOutcome combat = applyCombatCommand(session, command, sequence, tick, events);
+            if (!combat.accepted) return combat;
             markSequence(session, sequence, tick);
             return CommandOutcome.accept();
         }
@@ -294,6 +387,7 @@ final class AuthoritativeGameHost {
         LinkedHashMap<Long, ChunkPayloadBuilder> chunks = new LinkedHashMap<>();
         for (EntityState entity : world.entities()) {
             if (entity.removed()) continue;
+            if (isTransientEntity(entity)) continue;
             long key = chunkKeyForWorld(entity.dimensionId(), entity.worldX(), entity.worldY());
             ChunkPayloadBuilder builder = chunks.computeIfAbsent(key, ignored -> new ChunkPayloadBuilder());
             builder.compatibilityObjects.add(new ProtocolPayloads.WorldObjectState(
@@ -388,6 +482,209 @@ final class AuthoritativeGameHost {
         return true;
     }
 
+    private CommandOutcome applyCombatCommand(
+            Session session,
+            ProtocolPayloads.CommandRequest command,
+            long sequence,
+            long tick,
+            ActionResolver.EventSink events) {
+        if (session == null || command == null || !command.hasTarget) return CommandOutcome.reject("missing target");
+        if (!withinRange(playerCenterX(session), playerCenterY(session),
+                command.targetX, command.targetY, maxActionRange * 2.0)) {
+            return CommandOutcome.reject("too far away");
+        }
+        String weaponType = selectedWeaponType(session, command);
+        WeaponProfile weapon = WeaponProfile.forItem(weaponType);
+        if (ProtocolPayloads.CommandRequest.ATTACK_RANGED_AT.equals(command.commandType)) {
+            return fireCombatProjectile(session, command, weapon, weaponType, tick, events);
+        }
+        return applyMeleeCombat(session, command, weapon, weaponType, tick, events);
+    }
+
+    private CommandOutcome applyMeleeCombat(
+            Session session,
+            ProtocolPayloads.CommandRequest command,
+            WeaponProfile weapon,
+            String weaponType,
+            long tick,
+            ActionResolver.EventSink events) {
+        boolean heavy = ProtocolPayloads.CommandRequest.ATTACK_HEAVY_AT.equals(command.commandType);
+        int damage = heavy ? weapon.heavyDamage : weapon.lightDamage;
+        int range = heavy ? weapon.heavyRangePx : weapon.lightRangePx;
+        double arc = heavy ? weapon.heavyArcDegrees : weapon.lightArcDegrees;
+        EntityState target = targetInArc(session, command.targetX, command.targetY, range, arc);
+        if (target == null) {
+            if (events != null) events.event(session.playerId, "combat", "melee:none");
+            return CommandOutcome.reject("nothing to attack");
+        }
+        DamageResult result = applyDamageToEntity(session.playerId, target, damage, tick, events);
+        if (!result.hit) return CommandOutcome.reject("target cannot be damaged");
+        if (events != null) {
+            events.event(session.playerId, "combat",
+                "melee:" + weaponType + ":" + target.entityId() + ":" + result.currentHealth);
+        }
+        dirty = true;
+        return CommandOutcome.accept();
+    }
+
+    private CommandOutcome fireCombatProjectile(
+            Session session,
+            ProtocolPayloads.CommandRequest command,
+            WeaponProfile weapon,
+            String weaponType,
+            long tick,
+            ActionResolver.EventSink events) {
+        double sx = playerCenterX(session);
+        double sy = playerCenterY(session);
+        double[] dir = normalizedDirection(sx, sy, command.targetX, command.targetY, session);
+        long revision = world.bumpRevision();
+        EntityState projectile = new EntityState(
+            world.allocateEntityId(), "combat_bolt", DEFAULT_DIMENSION, sx, sy, revision, tick);
+        projectile.putComponent("projectile", "true", revision, tick);
+        projectile.putComponent("owner", session.playerId, revision, tick);
+        projectile.putComponent("weapon", weaponType == null ? "" : weaponType, revision, tick);
+        projectile.putComponent("damage", Integer.toString(Math.max(1, weapon.rangedDamage)), revision, tick);
+        projectile.putComponent("vx", Double.toString(dir[0] * Math.max(1.0, weapon.projectileSpeedPxPerTick)), revision, tick);
+        projectile.putComponent("vy", Double.toString(dir[1] * Math.max(1.0, weapon.projectileSpeedPxPerTick)), revision, tick);
+        projectile.putComponent("life", Integer.toString(Math.max(1, weapon.projectileLifeTicks)), revision, tick);
+        projectile.putComponent("age", "0", revision, tick);
+        projectile.putComponent("radius", Double.toString(PROJECTILE_HIT_RADIUS), revision, tick);
+        projectile.putComponent("transient", "true", revision, tick);
+        world.putEntity(projectile);
+        dirty = true;
+        if (events != null) events.event(session.playerId, "combat", "projectile:" + projectile.entityId());
+        return CommandOutcome.accept();
+    }
+
+    private void tickProjectiles(long tick) {
+        ArrayList<EntityState> projectiles = new ArrayList<>();
+        for (EntityState entity : world.entities()) {
+            if (entity.removed()) continue;
+            if (isProjectile(entity)) projectiles.add(entity);
+        }
+        for (EntityState projectile : projectiles) {
+            int age = parseInt(projectile.component("age"), 0) + 1;
+            int life = parseInt(projectile.component("life"), 1);
+            if (age > life) {
+                projectile.markRemoved(world.bumpRevision(), tick);
+                dirty = true;
+                continue;
+            }
+            double vx = parseDouble(projectile.component("vx"), 0.0);
+            double vy = parseDouble(projectile.component("vy"), 0.0);
+            double nextX = projectile.worldX() + vx;
+            double nextY = projectile.worldY() + vy;
+            long revision = world.bumpRevision();
+            projectile.moveTo(projectile.dimensionId(), nextX, nextY, revision, tick);
+            projectile.putComponent("age", Integer.toString(age), revision, tick);
+
+            EntityState target = projectileImpactTarget(projectile);
+            if (target != null) {
+                String owner = projectile.component("owner");
+                int damage = parseInt(projectile.component("damage"), 1);
+                applyDamageToEntity(owner, target, damage, tick, null);
+                projectile.markRemoved(world.bumpRevision(), tick);
+            }
+            dirty = true;
+        }
+    }
+
+    private EntityState projectileImpactTarget(EntityState projectile) {
+        double radius = parseDouble(projectile.component("radius"), PROJECTILE_HIT_RADIUS);
+        EntityState nearest = null;
+        double best = Double.POSITIVE_INFINITY;
+        for (EntityState target : world.entities()) {
+            if (target == null || target.removed() || target == projectile) continue;
+            if (isProjectile(target) || !isDamageable(target)) continue;
+            double max = radius + entityRadius(target);
+            double dx = target.worldX() - projectile.worldX();
+            double dy = target.worldY() - projectile.worldY();
+            double dist2 = dx * dx + dy * dy;
+            if (dist2 > max * max || dist2 >= best) continue;
+            best = dist2;
+            nearest = target;
+        }
+        return nearest;
+    }
+
+    private void tickMobs(Map<String, Session> sessions, long tick) {
+        for (EntityState mob : world.entities()) {
+            if (mob.removed() || !isMob(mob)) continue;
+            if (!isDamageable(mob)) continue;
+            Session target = nearestSession(mob, sessions);
+            if (target == null) continue;
+            double tx = playerCenterX(target);
+            double ty = playerCenterY(target);
+            double dx = tx - mob.worldX();
+            double dy = ty - mob.worldY();
+            double dist = Math.hypot(dx, dy);
+            if (dist > MOB_DETECTION_RANGE || dist < 0.0001) continue;
+
+            int cooldown = Math.max(0, parseInt(mob.component("attack_cooldown"), 0) - (int) MOB_AI_TICK_INTERVAL);
+            long revision = world.bumpRevision();
+            mob.putComponent("attack_cooldown", Integer.toString(cooldown), revision, tick);
+
+            int meleeRange = mobAttackRange(mob.entityType());
+            if (dist <= meleeRange && cooldown <= 0) {
+                mob.putComponent("attack_cooldown", Integer.toString(mobAttackCooldown(mob.entityType())), world.bumpRevision(), tick);
+                damageSession(target, mobDamage(mob.entityType()), tick);
+                mob.putComponent("last_hit_player", target.playerId, world.bumpRevision(), tick);
+                dirty = true;
+                continue;
+            }
+
+            double speed = mobSpeed(mob.entityType()) * MOB_AI_TICK_INTERVAL;
+            double nx = mob.worldX() + (dx / dist) * speed;
+            double ny = mob.worldY() + (dy / dist) * speed;
+            if (terrainRules == null || !terrainRules.isWaterAt(nx, ny)) {
+                mob.moveTo(mob.dimensionId(), nx, ny, world.bumpRevision(), tick);
+                dirty = true;
+            }
+        }
+    }
+
+    private DamageResult applyDamageToEntity(
+            String sourcePlayerId,
+            EntityState target,
+            int damage,
+            long tick,
+            ActionResolver.EventSink events) {
+        if (target == null || target.removed() || damage <= 0 || !isDamageable(target)) return DamageResult.NONE;
+        int maxHealth = maxHealth(target);
+        int health = currentHealth(target, maxHealth);
+        int next = Math.max(0, health - damage);
+        long revision = world.bumpRevision();
+        target.putComponent("health", next + "/" + maxHealth, revision, tick);
+        target.putComponent("last_damage", Integer.toString(damage), revision, tick);
+        if (sourcePlayerId != null) target.putComponent("last_attacker", sourcePlayerId, revision, tick);
+        if (next <= 0) {
+            target.markRemoved(world.bumpRevision(), tick);
+            awardDeathLoot(sourcePlayerId, target, tick);
+            if (events != null) events.event(sourcePlayerId, "combat", "death:" + target.entityId());
+        }
+        dirty = true;
+        return new DamageResult(true, next, maxHealth, next <= 0);
+    }
+
+    private void damageSession(Session session, int damage, long tick) {
+        if (session == null || damage <= 0 || session.health <= 0) return;
+        session.health = Math.max(0, session.health - damage);
+        session.lastChangedTick = Math.max(session.lastChangedTick, tick);
+        dirty = true;
+    }
+
+    private void awardDeathLoot(String playerId, EntityState target, long tick) {
+        if (playerId == null || playerId.isBlank() || target == null) return;
+        InventoryState inventory = playerInventory(playerId);
+        if (inventory == null) return;
+        for (ItemStackState loot : lootFor(target.entityType())) {
+            if (loot == null || loot.isEmpty()) continue;
+            if (canFitStack(inventory, loot.itemType(), loot.amount())) {
+                addStackToInventory(inventory, loot.itemType(), loot.amount(), world.bumpRevision(), tick);
+            }
+        }
+    }
+
     private boolean applyInteract(Session session, ProtocolPayloads.ActionRequest action, long tick, ActionResolver.EventSink events) {
         double targetX = action.hasTarget ? action.targetX : session.x;
         double targetY = action.hasTarget ? action.targetY : session.y;
@@ -419,18 +716,38 @@ final class AuthoritativeGameHost {
         int slotIndex = command.selectedSlot;
         if (slotIndex < 0 || slotIndex >= inventory.slotCount()) return CommandOutcome.reject("invalid selected slot");
         ItemStackState selected = inventory.slot(slotIndex);
-        if (selected.isEmpty()) return CommandOutcome.reject("empty hand");
+        if (selected.isEmpty()) {
+            CommandOutcome harvest = harvestCrop(session, command.targetX, command.targetY, "", tick, events);
+            if (harvest.accepted) {
+                markSequence(session, sequence, tick);
+                return CommandOutcome.accept();
+            }
+            return CommandOutcome.reject("empty hand");
+        }
         if (!command.itemType.isBlank() && !command.itemType.equals(selected.itemType())) {
             return CommandOutcome.reject("selected item changed");
         }
         String type = selected.itemType();
+        CommandOutcome harvest = harvestCrop(session, command.targetX, command.targetY, type, tick, events);
+        if (harvest.accepted) {
+            markSequence(session, sequence, tick);
+            return CommandOutcome.accept();
+        }
         if (!isServerUsableItem(type)) {
-            ProtocolPayloads.ActionRequest attack = new ProtocolPayloads.ActionRequest(
-                MultiplayerAction.ATTACK, true, command.targetX, command.targetY, "");
-            return applyAttack(session, attack, tick, events) ? CommandOutcome.accept() : CommandOutcome.reject("nothing to use");
+            ProtocolPayloads.CommandRequest attack = new ProtocolPayloads.CommandRequest(
+                ProtocolPayloads.CommandRequest.ATTACK_LIGHT_AT,
+                true, command.targetX, command.targetY, 0L, type, slotIndex, 0L, -1, 0);
+            return applyCombatCommand(session, attack, sequence, tick, events);
         }
         boolean applied = applyPlaceType(session, type, command.targetX, command.targetY, tick, events);
-        if (!applied) return CommandOutcome.reject("cannot use item here");
+        if (!applied) {
+            harvest = harvestCrop(session, command.targetX, command.targetY, type, tick, events);
+            if (harvest.accepted) {
+                markSequence(session, sequence, tick);
+                return CommandOutcome.accept();
+            }
+            return CommandOutcome.reject("cannot use item here");
+        }
         if (consumesOnUse(type)) {
             decrementSlot(inventory, slotIndex, 1, world.bumpRevision(), tick);
         } else {
@@ -476,6 +793,9 @@ final class AuthoritativeGameHost {
         if (target == null || cursor == null) return CommandOutcome.reject("inventory not found");
         if (!canAccessInventory(session, target)) return CommandOutcome.reject("inventory too far away");
         if (command.slotIndex < 0 || command.slotIndex >= target.slotCount()) return CommandOutcome.reject("invalid slot");
+        if ("crafting_table".equals(target.inventoryType())) {
+            return applyCraftingTableClick(session, command, sequence, tick, events, target, cursor);
+        }
 
         long revision = world.bumpRevision();
         boolean changed = command.button == 3
@@ -570,11 +890,97 @@ final class AuthoritativeGameHost {
         return true;
     }
 
+    private void advanceCrops(long tick) {
+        for (TileMutationState tile : world.tileMutations()) {
+            if (tile == null || tile.cropType().isBlank()) continue;
+            if (!tile.watered()) continue;
+            if (tile.cropStage() >= CROP_MATURE_STAGE) continue;
+            if ((tick - tile.lastChangedTick()) < CROP_STAGE_TICKS) continue;
+            tile.advanceCrop(tile.cropStage() + 1, world.bumpRevision(), tick);
+            dirty = true;
+        }
+    }
+
+    private CommandOutcome harvestCrop(
+            Session session,
+            double x,
+            double y,
+            String toolType,
+            long tick,
+            ActionResolver.EventSink events) {
+        int tx = tileCoord(x);
+        int ty = tileCoord(y);
+        TileMutationState tile = world.tileMutation(DEFAULT_DIMENSION, tx, ty);
+        if (tile == null || tile.cropType().isBlank()) return CommandOutcome.reject("no crop here");
+        if (tile.cropStage() < CROP_MATURE_STAGE) return CommandOutcome.reject("crop is not mature");
+
+        CropRegistry.Entry crop = CropRegistry.get(tile.cropType());
+        String requiredTool = crop == null ? null : crop.requiredTool;
+        if (requiredTool != null && !requiredTool.equals(toolType)) {
+            return CommandOutcome.reject("wrong harvest tool");
+        }
+        String produce = crop == null ? produceForCrop(tile.cropType()) : crop.produceName;
+        InventoryState inventory = playerInventory(session.playerId);
+        if (inventory == null) return CommandOutcome.reject("missing inventory");
+        if (!canFitStack(inventory, produce, CROP_HARVEST_AMOUNT)) {
+            return CommandOutcome.reject("inventory full");
+        }
+
+        long revision = world.bumpRevision();
+        addStackToInventory(inventory, produce, CROP_HARVEST_AMOUNT, revision, tick);
+        tile.clearCrop(revision, tick);
+        dirty = true;
+        if (events != null) events.event(session.playerId, "action", "harvest:" + produce + ":" + tx + "," + ty);
+        return CommandOutcome.accept();
+    }
+
+    private String produceForCrop(String cropType) {
+        if (cropType == null || cropType.isBlank()) return "crop";
+        String value = cropType.trim().toLowerCase();
+        return value.startsWith("crop_") ? value.substring("crop_".length()) : value;
+    }
+
+    private boolean canFitStack(InventoryState inventory, String itemType, int amount) {
+        if (inventory == null || itemType == null || itemType.isBlank() || amount <= 0) return false;
+        int remaining = amount;
+        for (ItemStackState slot : inventory.slots()) {
+            if (slot == null || slot.isEmpty()) {
+                remaining -= MAX_STACK;
+            } else if (itemType.equals(slot.itemType())) {
+                remaining -= Math.max(0, MAX_STACK - slot.amount());
+            }
+            if (remaining <= 0) return true;
+        }
+        return false;
+    }
+
+    private boolean addStackToInventory(InventoryState inventory, String itemType, int amount, long revision, long tick) {
+        if (!canFitStack(inventory, itemType, amount)) return false;
+        int remaining = amount;
+        for (int i = 0; i < inventory.slotCount() && remaining > 0; i++) {
+            ItemStackState slot = inventory.slot(i);
+            if (slot.isEmpty() || !itemType.equals(slot.itemType())) continue;
+            int moved = Math.min(remaining, Math.max(0, MAX_STACK - slot.amount()));
+            if (moved <= 0) continue;
+            inventory.setSlot(i, slot.withAmount(slot.amount() + moved), revision, tick);
+            remaining -= moved;
+        }
+        for (int i = 0; i < inventory.slotCount() && remaining > 0; i++) {
+            ItemStackState slot = inventory.slot(i);
+            if (!slot.isEmpty()) continue;
+            int moved = Math.min(remaining, MAX_STACK);
+            inventory.setSlot(i, new ItemStackState(itemType, moved), revision, tick);
+            remaining -= moved;
+        }
+        return remaining <= 0;
+    }
+
     private void attachDefaultComponents(EntityState entity, long revision, long tick) {
         entity.putComponent("dimension", entity.dimensionId(), revision, tick);
         if ("boat".equals(entity.entityType())) {
             entity.putComponent("movement", "water_only", revision, tick);
-            entity.putComponent("health", "100", revision, tick);
+            entity.putComponent("health", "100/100", revision, tick);
+            entity.putComponent("max_health", "100", revision, tick);
             entity.putComponent("rider", "", revision, tick);
         } else if ("chest".equals(entity.entityType()) || "barrel".equals(entity.entityType())) {
             entity.putComponent("container", entity.entityType(), revision, tick);
@@ -582,6 +988,12 @@ final class AuthoritativeGameHost {
             entity.putComponent("crafting", "table", revision, tick);
         } else if (entity.entityType().contains("portal") || "door".equals(entity.entityType())) {
             entity.putComponent("portal", "pending_destination", revision, tick);
+        } else if (isMob(entity)) {
+            int max = defaultMaxHealth(entity.entityType());
+            entity.putComponent("health", max + "/" + max, revision, tick);
+            entity.putComponent("max_health", Integer.toString(max), revision, tick);
+            entity.putComponent("mob", entity.entityType(), revision, tick);
+            entity.putComponent("attack_cooldown", "0", revision, tick);
         }
     }
 
@@ -658,6 +1070,9 @@ final class AuthoritativeGameHost {
         setSlot(inventory, 8, "block", 99, revision, tick);
         setSlot(inventory, 9, "torch", 10, revision, tick);
         setSlot(inventory, 10, "seeds_carrot", 16, revision, tick);
+        setSlot(inventory, 11, "wheat", 6, revision, tick);
+        setSlot(inventory, 12, "stone", 4, revision, tick);
+        setSlot(inventory, 13, "crafting_table", 1, revision, tick);
         setSlot(inventory, PLAYER_HOTBAR_OFFSET, "hoe", 1, revision, tick);
         setSlot(inventory, PLAYER_HOTBAR_OFFSET + 1, "watering_can", 1, revision, tick);
         setSlot(inventory, PLAYER_HOTBAR_OFFSET + 2, "seeds_wheat", 16, revision, tick);
@@ -729,6 +1144,111 @@ final class AuthoritativeGameHost {
         inventory.setSlot(slot, mine.withAmount(mine.amount() + 1), revision, tick);
         cursor.setSlot(0, hand.withAmount(hand.amount() - 1), revision, tick);
         return true;
+    }
+
+    private CommandOutcome applyCraftingTableClick(
+            Session session,
+            ProtocolPayloads.CommandRequest command,
+            long sequence,
+            long tick,
+            ActionResolver.EventSink events,
+            InventoryState table,
+            InventoryState cursor) {
+        if (command.slotIndex == CRAFTING_OUTPUT_SLOT) {
+            CommandOutcome outcome = takeCraftingOutput(table, cursor, tick);
+            if (!outcome.accepted) return outcome;
+            dirty = true;
+            markSequence(session, sequence, tick);
+            if (events != null) events.event(session.playerId, "crafting", table.inventoryId() + ":output");
+            return CommandOutcome.accept();
+        }
+        if (command.slotIndex >= CRAFTING_INPUT_SLOTS) {
+            return CommandOutcome.reject("invalid crafting slot");
+        }
+
+        long revision = world.bumpRevision();
+        boolean changed = command.button == 3
+            ? rightClickSlot(table, cursor, command.slotIndex, revision, tick)
+            : leftClickSlot(table, cursor, command.slotIndex, revision, tick);
+        if (changed) {
+            refreshCraftingOutput(table, world.bumpRevision(), tick);
+            dirty = true;
+            if (events != null) events.event(session.playerId, "crafting", table.inventoryId() + ":" + command.slotIndex);
+        }
+        markSequence(session, sequence, tick);
+        return CommandOutcome.accept();
+    }
+
+    private CommandOutcome takeCraftingOutput(InventoryState table, InventoryState cursor, long tick) {
+        CraftRecipe recipe = matchingCraftRecipe(table);
+        if (recipe == null) {
+            refreshCraftingOutput(table, world.bumpRevision(), tick);
+            return CommandOutcome.reject("no matching recipe");
+        }
+        ItemStackState hand = cursor.slot(0);
+        if (!hand.isEmpty() && !recipe.outputType.equals(hand.itemType())) {
+            return CommandOutcome.reject("cursor holds another item");
+        }
+        int cursorRoom = hand.isEmpty() ? MAX_STACK : Math.max(0, MAX_STACK - hand.amount());
+        if (cursorRoom < recipe.outputAmount) return CommandOutcome.reject("cursor full");
+
+        long revision = world.bumpRevision();
+        if (hand.isEmpty()) {
+            cursor.setSlot(0, new ItemStackState(recipe.outputType, recipe.outputAmount), revision, tick);
+        } else {
+            cursor.setSlot(0, hand.withAmount(hand.amount() + recipe.outputAmount), revision, tick);
+        }
+        consumeCraftingInputs(table, recipe, revision, tick);
+        refreshCraftingOutput(table, world.bumpRevision(), tick);
+        return CommandOutcome.accept();
+    }
+
+    private void refreshCraftingOutput(InventoryState table, long revision, long tick) {
+        if (table == null || table.slotCount() <= CRAFTING_OUTPUT_SLOT) return;
+        CraftRecipe recipe = matchingCraftRecipe(table);
+        if (recipe == null) {
+            table.setSlot(CRAFTING_OUTPUT_SLOT, ItemStackState.EMPTY, revision, tick);
+        } else {
+            table.setSlot(CRAFTING_OUTPUT_SLOT,
+                new ItemStackState(recipe.outputType, recipe.outputAmount), revision, tick);
+        }
+    }
+
+    private CraftRecipe matchingCraftRecipe(InventoryState table) {
+        if (table == null) return null;
+        LinkedHashMap<String, Integer> bag = craftingInputBag(table);
+        if (bag.isEmpty()) return null;
+        for (CraftRecipe recipe : CRAFT_RECIPES) {
+            if (recipe.matches(bag)) return recipe;
+        }
+        return null;
+    }
+
+    private LinkedHashMap<String, Integer> craftingInputBag(InventoryState table) {
+        LinkedHashMap<String, Integer> bag = new LinkedHashMap<>();
+        int limit = Math.min(CRAFTING_INPUT_SLOTS, table.slotCount());
+        for (int i = 0; i < limit; i++) {
+            ItemStackState slot = table.slot(i);
+            if (slot == null || slot.isEmpty()) continue;
+            bag.merge(slot.itemType(), slot.amount(), Integer::sum);
+        }
+        return bag;
+    }
+
+    private void consumeCraftingInputs(InventoryState table, CraftRecipe recipe, long revision, long tick) {
+        LinkedHashMap<String, Integer> remaining = new LinkedHashMap<>(recipe.ingredients);
+        int limit = Math.min(CRAFTING_INPUT_SLOTS, table.slotCount());
+        for (int i = 0; i < limit; i++) {
+            ItemStackState slot = table.slot(i);
+            if (slot == null || slot.isEmpty()) continue;
+            Integer need = remaining.get(slot.itemType());
+            if (need == null || need <= 0) continue;
+            int consumed = Math.min(need, slot.amount());
+            table.setSlot(i, slot.withAmount(slot.amount() - consumed), revision, tick);
+            int left = need - consumed;
+            if (left <= 0) remaining.remove(slot.itemType());
+            else remaining.put(slot.itemType(), left);
+        }
     }
 
     private void decrementSlot(InventoryState inventory, int slot, int amount, long revision, long tick) {
@@ -879,6 +1399,202 @@ final class AuthoritativeGameHost {
             nearest = entity;
         }
         return nearest;
+    }
+
+    private EntityState targetInArc(Session session, double targetX, double targetY, int rangePx, double arcDegrees) {
+        double sx = playerCenterX(session);
+        double sy = playerCenterY(session);
+        double[] dir = normalizedDirection(sx, sy, targetX, targetY, session);
+        double halfArc = Math.max(1.0, arcDegrees) / 2.0;
+        EntityState best = null;
+        double bestDist2 = Double.POSITIVE_INFINITY;
+        for (EntityState entity : world.entities()) {
+            if (entity == null || entity.removed() || !isDamageable(entity) || isProjectile(entity)) continue;
+            double dx = entity.worldX() - sx;
+            double dy = entity.worldY() - sy;
+            double dist2 = dx * dx + dy * dy;
+            double maxRange = rangePx + entityRadius(entity);
+            if (dist2 > maxRange * maxRange) continue;
+            double dist = Math.sqrt(Math.max(0.0001, dist2));
+            double dot = ((dx * dir[0]) + (dy * dir[1])) / dist;
+            dot = Math.max(-1.0, Math.min(1.0, dot));
+            double angle = Math.toDegrees(Math.acos(dot));
+            if (angle > halfArc) continue;
+            if (dist2 < bestDist2) {
+                bestDist2 = dist2;
+                best = entity;
+            }
+        }
+        return best;
+    }
+
+    private String selectedWeaponType(Session session, ProtocolPayloads.CommandRequest command) {
+        InventoryState inventory = playerInventory(session.playerId);
+        if (inventory != null && command.selectedSlot >= 0 && command.selectedSlot < inventory.slotCount()) {
+            ItemStackState selected = inventory.slot(command.selectedSlot);
+            if (!selected.isEmpty()) {
+                if (command.itemType == null || command.itemType.isBlank() || command.itemType.equals(selected.itemType())) {
+                    return selected.itemType();
+                }
+            }
+        }
+        return command.itemType == null || command.itemType.isBlank() ? "sword" : command.itemType;
+    }
+
+    private double[] normalizedDirection(double fromX, double fromY, double toX, double toY, Session session) {
+        double dx = toX - fromX;
+        double dy = toY - fromY;
+        double len = Math.hypot(dx, dy);
+        if (len > 0.0001) return new double[] { dx / len, dy / len };
+        if (session != null && Math.hypot(session.vx, session.vy) > 0.0001) {
+            double vLen = Math.hypot(session.vx, session.vy);
+            return new double[] { session.vx / vLen, session.vy / vLen };
+        }
+        return new double[] { 1.0, 0.0 };
+    }
+
+    private Session nearestSession(EntityState entity, Map<String, Session> sessions) {
+        if (sessions == null || sessions.isEmpty()) return null;
+        Session nearest = null;
+        double best = MOB_DETECTION_RANGE * MOB_DETECTION_RANGE;
+        for (Session session : sessions.values()) {
+            if (session == null || session.health <= 0) continue;
+            double dx = playerCenterX(session) - entity.worldX();
+            double dy = playerCenterY(session) - entity.worldY();
+            double dist2 = dx * dx + dy * dy;
+            if (dist2 >= best) continue;
+            best = dist2;
+            nearest = session;
+        }
+        return nearest;
+    }
+
+    private boolean isCombatCommand(String commandType) {
+        return ProtocolPayloads.CommandRequest.ATTACK_AT.equals(commandType)
+            || ProtocolPayloads.CommandRequest.ATTACK_LIGHT_AT.equals(commandType)
+            || ProtocolPayloads.CommandRequest.ATTACK_HEAVY_AT.equals(commandType)
+            || ProtocolPayloads.CommandRequest.ATTACK_RANGED_AT.equals(commandType);
+    }
+
+    private boolean isDamageable(EntityState entity) {
+        return entity != null && !entity.removed() && entity.component("health") != null;
+    }
+
+    private boolean isProjectile(EntityState entity) {
+        return entity != null && ("true".equals(entity.component("projectile"))
+            || "combat_bolt".equals(entity.entityType())
+            || "boat_projectile".equals(entity.entityType()));
+    }
+
+    private boolean isTransientEntity(EntityState entity) {
+        return entity != null && ("true".equals(entity.component("transient")) || isProjectile(entity));
+    }
+
+    private boolean isMob(EntityState entity) {
+        if (entity == null) return false;
+        String type = entity.entityType();
+        return "goblin".equals(type) || "spider".equals(type) || "deer".equals(type);
+    }
+
+    private double entityRadius(EntityState entity) {
+        if (entity == null) return 32.0;
+        String type = entity.entityType();
+        if ("boat".equals(type)) return 96.0;
+        if ("combat_bolt".equals(type) || "boat_projectile".equals(type)) return PROJECTILE_SIZE / 2.0;
+        if ("goblin".equals(type) || "spider".equals(type) || "deer".equals(type)) return 34.0;
+        return 32.0;
+    }
+
+    private int maxHealth(EntityState entity) {
+        int parsed = parseInt(entity.component("max_health"), -1);
+        if (parsed > 0) return parsed;
+        String health = entity.component("health");
+        int slash = health == null ? -1 : health.indexOf('/');
+        if (slash >= 0) return parseInt(health.substring(slash + 1), defaultMaxHealth(entity.entityType()));
+        return Math.max(parseInt(health, defaultMaxHealth(entity.entityType())), defaultMaxHealth(entity.entityType()));
+    }
+
+    private int currentHealth(EntityState entity, int fallbackMax) {
+        String health = entity.component("health");
+        if (health == null || health.isBlank()) return fallbackMax;
+        int slash = health.indexOf('/');
+        if (slash >= 0) return parseInt(health.substring(0, slash), fallbackMax);
+        return parseInt(health, fallbackMax);
+    }
+
+    private int defaultMaxHealth(String type) {
+        if ("boat".equals(type)) return 100;
+        if ("goblin".equals(type)) return 10;
+        if ("spider".equals(type)) return 5;
+        if ("deer".equals(type)) return 8;
+        if ("tree".equals(type)) return 5;
+        if ("rock".equals(type)) return 6;
+        if ("ore".equals(type)) return 8;
+        return 1;
+    }
+
+    private int mobAttackRange(String type) {
+        if ("spider".equals(type)) return 40;
+        if ("goblin".equals(type)) return 50;
+        return 34;
+    }
+
+    private int mobAttackCooldown(String type) {
+        if ("spider".equals(type)) return 28;
+        if ("goblin".equals(type)) return 24;
+        return 45;
+    }
+
+    private int mobDamage(String type) {
+        if ("spider".equals(type)) return 1;
+        if ("goblin".equals(type)) return 2;
+        return 0;
+    }
+
+    private double mobSpeed(String type) {
+        if ("spider".equals(type)) return 1.2;
+        if ("goblin".equals(type)) return 0.9;
+        if ("deer".equals(type)) return 0.7;
+        return 0.6;
+    }
+
+    private List<ItemStackState> lootFor(String entityType) {
+        ArrayList<ItemStackState> loot = new ArrayList<>();
+        if ("deer".equals(entityType)) {
+            loot.add(new ItemStackState("hide", 1));
+            loot.add(new ItemStackState("meat", 1));
+        } else if ("goblin".equals(entityType)) {
+            loot.add(new ItemStackState("stone", 1));
+        } else if ("spider".equals(entityType)) {
+            loot.add(new ItemStackState("stone", 1));
+        } else if ("tree".equals(entityType)) {
+            loot.add(new ItemStackState("wood", 3));
+        } else if ("rock".equals(entityType)) {
+            loot.add(new ItemStackState("stone", 3));
+        } else if ("ore".equals(entityType)) {
+            loot.add(new ItemStackState("iron", 2));
+        }
+        return loot;
+    }
+
+    private double playerCenterX(Session session) {
+        return session == null ? 0.0 : session.x + PLAYER_CENTER_OFFSET_X;
+    }
+
+    private double playerCenterY(Session session) {
+        return session == null ? 0.0 : session.y + PLAYER_CENTER_OFFSET_Y;
+    }
+
+    private int parseInt(String raw, int fallback) {
+        if (raw == null || raw.isBlank()) return fallback;
+        try { return Integer.parseInt(raw.trim()); }
+        catch (NumberFormatException ignored) { return fallback; }
+    }
+
+    private double parseDouble(String raw, double fallback) {
+        if (raw == null || raw.isBlank()) return fallback;
+        try { return Double.parseDouble(raw.trim()); }
+        catch (NumberFormatException ignored) { return fallback; }
     }
 
     private boolean placementBlocked(double x, double y) {
@@ -1073,6 +1789,56 @@ final class AuthoritativeGameHost {
         return value;
     }
 
+    private static final List<CraftRecipe> CRAFT_RECIPES = craftRecipes();
+
+    private static List<CraftRecipe> craftRecipes() {
+        ArrayList<CraftRecipe> recipes = new ArrayList<>();
+        recipes.add(recipe("axe", 1, "stone", 3, "wheat", 2));
+        recipes.add(recipe("pickaxe", 1, "stone", 3, "iron_ore", 1));
+        recipes.add(recipe("hammer", 1, "stone", 4, "hide", 1));
+        recipes.add(recipe("barrel", 1, "wheat", 6));
+        recipes.add(recipe("fence", 2, "wheat", 2));
+        recipes.add(recipe("torch", 4, "meat", 1, "wheat", 1));
+        recipes.add(recipe("sword", 1, "iron_ore", 2, "wheat", 1));
+        recipes.add(recipe("crafting_table", 1, "wheat", 4));
+        return java.util.Collections.unmodifiableList(recipes);
+    }
+
+    private static CraftRecipe recipe(String outputType, int outputAmount, Object... ingredients) {
+        LinkedHashMap<String, Integer> bag = new LinkedHashMap<>();
+        for (int i = 0; i + 1 < ingredients.length; i += 2) {
+            String itemType = String.valueOf(ingredients[i]).trim().toLowerCase();
+            int amount = ((Number) ingredients[i + 1]).intValue();
+            bag.merge(itemType, amount, Integer::sum);
+        }
+        return new CraftRecipe(outputType, outputAmount, bag);
+    }
+
+    private static final class CraftRecipe {
+        final String outputType;
+        final int outputAmount;
+        final LinkedHashMap<String, Integer> ingredients;
+
+        CraftRecipe(String outputType, int outputAmount, LinkedHashMap<String, Integer> ingredients) {
+            this.outputType = sanitizeRecipeName(outputType);
+            this.outputAmount = Math.max(1, outputAmount);
+            this.ingredients = new LinkedHashMap<>(ingredients);
+        }
+
+        boolean matches(Map<String, Integer> bag) {
+            if (bag == null || bag.size() != ingredients.size()) return false;
+            for (Map.Entry<String, Integer> entry : ingredients.entrySet()) {
+                Integer have = bag.get(entry.getKey());
+                if (have == null || have.intValue() != entry.getValue().intValue()) return false;
+            }
+            return true;
+        }
+
+        private static String sanitizeRecipeName(String raw) {
+            return raw == null || raw.isBlank() ? "empty" : raw.trim().toLowerCase();
+        }
+    }
+
     private static final class MoveResult {
         static final MoveResult NONE = new MoveResult(0.0, 0.0);
         final double movedX;
@@ -1081,6 +1847,21 @@ final class AuthoritativeGameHost {
         MoveResult(double movedX, double movedY) {
             this.movedX = movedX;
             this.movedY = movedY;
+        }
+    }
+
+    private static final class DamageResult {
+        static final DamageResult NONE = new DamageResult(false, 0, 0, false);
+        final boolean hit;
+        final int currentHealth;
+        final int maxHealth;
+        final boolean killed;
+
+        DamageResult(boolean hit, int currentHealth, int maxHealth, boolean killed) {
+            this.hit = hit;
+            this.currentHealth = currentHealth;
+            this.maxHealth = maxHealth;
+            this.killed = killed;
         }
     }
 

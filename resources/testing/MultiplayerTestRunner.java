@@ -21,6 +21,7 @@ import resources.testing.probes.WebSocketTwoClientMovementProbe;
 import resources.testing.probes.MpPersistenceFileProbe;
 import resources.testing.probes.MpAppearanceCodecProbe;
 import resources.testing.probes.MpAppearanceServerProbe;
+import resources.testing.probes.MpWorldPopulationProbe;
 
 /**
  * Focused runner for multiplayer probes only.
@@ -49,6 +50,7 @@ public final class MultiplayerTestRunner {
         probes.add(new MpPersistenceFileProbe());
         probes.add(new MpAppearanceCodecProbe());
         probes.add(new MpAppearanceServerProbe());
+        probes.add(new MpWorldPopulationProbe());
 
         int failures = 0;
         try (TestHarness harness = new TestHarness()) {

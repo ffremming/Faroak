@@ -27,6 +27,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
     private static final String META_WORLD_NEXT_OBJECT_ID = "world_next_object_id";
     private static final String META_WORLD_REVISION = "world_revision";
     private static final String META_WORLD_CHUNK_KEYS = "world_chunk_keys";
+    private static final String META_WORLD_POPULATED = "world_populated";
 
     private final int maxPlayers;
     private final int protocolVersion;
@@ -41,6 +42,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
     private final SnapshotCodec snapshotCodec;
     private final ServerTerrainRules terrainRules;
     private final AuthoritativeGameHost gameHost;
+    private final ServerMobSpawner mobSpawner;
     private final SnapshotPublisher snapshotPublisher;
     private final ProtocolPayloadCodec payloadCodec = new ProtocolPayloadCodec();
     private final ArrayDeque<ProtocolEnvelope> inbound = new ArrayDeque<>();
@@ -71,6 +73,11 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         this.snapshotCodec = snapshotCodec;
         this.terrainRules = new ServerTerrainRules();
         this.gameHost = new AuthoritativeGameHost(this.terrainRules, this.maxActionRange);
+        long worldSeed = ServerParse.parseLong(System.getProperty("game.world.seed", "424242"), 424242L);
+        int mobCap = (int) ServerParse.parseLong(System.getProperty("game.multiplayer.mobCap", "12"), 12L);
+        this.mobSpawner = new ServerMobSpawner(
+            this.terrainRules, mobCap, 384.0, 768.0, 1600.0,
+            Math.max(1L, config.serverTickRate() / 2L), worldSeed);
         this.snapshotPublisher = new SnapshotPublisher(snapshotCodec, this.protocolVersion, this.interestRadius);
         this.tombstoneTtlTicks = Math.max(1L, config.serverTickRate() * 10L);
         this.tick = ServerParse.parseLong(persistence.getMeta(META_SERVER_TICK, "0"), 0L);
@@ -78,6 +85,29 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         this.worldRevision = Math.max(0L, ServerParse.parseLong(persistence.getMeta(META_WORLD_REVISION, "0"), 0L));
         this.gameHost.setCounters(this.tick, this.worldRevision, this.nextObjectId);
         restoreWorldObjects();
+        populateFreshWorld(worldSeed);
+    }
+
+    /**
+     * Seed the authoritative world with harvestable objects the first time it is
+     * created. Guarded by a persisted meta flag so a restarted server does not
+     * re-seed on top of persisted state.
+     */
+    private void populateFreshWorld(long worldSeed) {
+        boolean alreadyPopulated = "true".equals(persistence.getMeta(META_WORLD_POPULATED, "false"));
+        if (alreadyPopulated) return;
+        int count = (int) ServerParse.parseLong(
+            System.getProperty("game.multiplayer.worldObjectCount", "120"), 120L);
+        int radiusTiles = (int) ServerParse.parseLong(
+            System.getProperty("game.multiplayer.worldRadiusTiles", "40"), 40L);
+        ServerWorldPopulator populator = new ServerWorldPopulator(
+            terrainRules, worldSeed, radiusTiles, 64, count);
+        int placed = populator.populate(gameHost, tick);
+        nextObjectId = gameHost.nextEntityId();
+        worldRevision = gameHost.revision();
+        worldDirty = true;
+        persistence.putMeta(META_WORLD_POPULATED, "true");
+        System.out.println("[Lobby] seeded " + placed + " harvestable world objects");
     }
 
     @Override public synchronized void onConnect(String playerId) { /* no-op: join handled in onJoin */ }
@@ -104,6 +134,11 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         tick++;
         processInbound();
         gameHost.integratePlayers(sessions, authority, moveSpeedPerTick, tick);
+        mobSpawner.tick(gameHost, sessions, tick);
+        gameHost.tickWorld(sessions, tick);
+        nextObjectId = gameHost.nextEntityId();
+        worldRevision = gameHost.revision();
+        worldDirty = worldDirty || gameHost.dirty();
         pruneTombstones();
         if (tick % snapshotEveryTicks == 0L) {
             gameHost.publishSnapshots(sessions, tick, protocolVersion, interestRadius, snapshotCodec, this::send);
