@@ -10,8 +10,12 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.imageio.ImageIO;
 
+import resources.domain.ship.ShipKind;
 import resources.presentation.image.LazyImageCache;
 
 /**
@@ -69,12 +73,57 @@ final class BoatSprites {
         return SHARED_DIRECTIONAL_IMAGES.get();
     }
 
+    /** Per-kind directional sprite cache, keyed by kind id. */
+    private static final Map<String, ArrayList<BufferedImage>> BY_KIND = new HashMap<>();
+
+    /**
+     * Directional sprites for a specific ship kind. The bundled starter-ship
+     * (the player sloop) keeps using the legacy filename map; other kinds load
+     * {@code <spriteDir>/<dir>.png}. Anything missing falls back to a procedural
+     * placeholder sized to the kind.
+     */
+    static synchronized ArrayList<BufferedImage> directionalImagesFor(ShipKind kind) {
+        // Preserve the exact legacy path for the player sloop so its visuals
+        // are byte-for-byte identical after the refactor.
+        if (kind.spriteDir() != null && kind.spriteDir().endsWith("starterShip/")
+                && kind.width() == WIDTH && kind.height() == HEIGHT) {
+            return directionalImages();
+        }
+        return BY_KIND.computeIfAbsent(kind.id(), k -> loadForKind(kind));
+    }
+
+    private static ArrayList<BufferedImage> loadForKind(ShipKind kind) {
+        ArrayList<BufferedImage> out = new ArrayList<>(8);
+        for (int i = 0; i < DIR_NAMES.length; i++) {
+            BufferedImage img = null;
+            if (kind.spriteDir() != null) img = readKindSprite(kind.spriteDir(), i);
+            if (img == null) img = placeholderBoat(i, kind.width(), kind.height());
+            out.add(img);
+        }
+        return out;
+    }
+
+    /** Load {@code <spriteDir>/<dir>.png} for direction index i; derive s/sw by
+     *  vertical flip of n/ne when those files are absent. Falls back to the
+     *  starterShip filename map when pointed at that directory. */
+    private static BufferedImage readKindSprite(String dir, int i) {
+        BufferedImage direct = readAbs(dir + DIR_NAMES[i] + ".png");
+        if (direct != null) return direct;
+        if (dir.endsWith("starterShip/")) {
+            BufferedImage legacy = loadShipSprite(i);
+            if (legacy != null) return legacy;
+        }
+        if (i == 2) { BufferedImage s = readAbs(dir + "n.png");  return s == null ? null : flipVertical(s); }
+        if (i == 3) { BufferedImage s = readAbs(dir + "ne.png"); return s == null ? null : flipVertical(s); }
+        return null;
+    }
+
     private static ArrayList<BufferedImage> loadDirectionalImages() {
         ArrayList<BufferedImage> out = new ArrayList<>(8);
         for (int i = 0; i < DIR_NAMES.length; i++) {
             BufferedImage img = loadShipSprite(i);
             if (img == null) img = readBoatImage(DIR_NAMES[i]);
-            if (img == null) img = placeholderBoat(i);
+            if (img == null) img = placeholderBoat(i, WIDTH, HEIGHT);
             out.add(img);
         }
         return out;
@@ -121,24 +170,26 @@ final class BoatSprites {
         catch (Exception e) { return null; }
     }
 
-    /** Procedurally-painted boat that visually points along the given direction index. */
-    private static BufferedImage placeholderBoat(int dirIndex) {
-        BufferedImage img = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    /** Procedurally-painted boat that visually points along the given direction
+     *  index, sized {@code w} x {@code h} so any ship kind gets a proportionate
+     *  placeholder until real art ships. */
+    private static BufferedImage placeholderBoat(int dirIndex, int w, int h) {
+        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         // Hull (brown) + deck (lighter)
         g.setColor(new Color(110, 70, 35));
         Polygon hull = new Polygon();
-        hull.addPoint(8, HEIGHT/2);
-        hull.addPoint(20, HEIGHT - 6);
-        hull.addPoint(WIDTH - 20, HEIGHT - 6);
-        hull.addPoint(WIDTH - 8, HEIGHT/2);
-        hull.addPoint(WIDTH - 20, 10);
+        hull.addPoint(8, h/2);
+        hull.addPoint(20, h - 6);
+        hull.addPoint(w - 20, h - 6);
+        hull.addPoint(w - 8, h/2);
+        hull.addPoint(w - 20, 10);
         hull.addPoint(20, 10);
         g.fillPolygon(hull);
         g.setColor(new Color(165, 120, 75));
-        g.fillRect(WIDTH/2 - 14, HEIGHT/2 - 8, 28, 16);
+        g.fillRect(w/2 - 14, h/2 - 8, 28, 16);
 
         // Direction arrow pointing along DIR_NAMES[dirIndex]
         double angle = -Math.PI / 4.0 * dirIndex; // e=0, ccw
@@ -146,9 +197,9 @@ final class BoatSprites {
         double dx = Math.cos(angle);
         double dy = -Math.sin(angle);
 
-        int cx = WIDTH / 2;
-        int cy = HEIGHT / 2;
-        int len = 24;
+        int cx = w / 2;
+        int cy = h / 2;
+        int len = Math.max(24, Math.min(w, h) / 4);
         g.setStroke(new BasicStroke(3f));
         g.setColor(new Color(240, 230, 200));
         int tipX = (int) (cx + dx * len);

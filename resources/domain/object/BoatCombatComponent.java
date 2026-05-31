@@ -7,6 +7,7 @@ import resources.domain.entity.Tickable;
 import resources.domain.entity.component.EntityComponent;
 import resources.domain.entity.component.HealthComponent;
 import resources.domain.player.Playable;
+import resources.domain.ship.WeaponLoadout;
 import resources.input.InputHandlingSystem;
 
 /**
@@ -26,9 +27,18 @@ public final class BoatCombatComponent implements EntityComponent, Tickable {
     private static final double SIDE_MUZZLE_MAX_OFFSET_PX = 42.0;
     private static final double BROADSIDE_FORWARD_LEAD_PX = 16.0;
 
+    private final WeaponLoadout loadout;
     private Boat boat;
     private int cooldownTicks;
     private boolean destroyed;
+
+    /** Legacy/default ctor: the classic player broadside. */
+    public BoatCombatComponent() { this(WeaponLoadout.BROADSIDE); }
+
+    /** Kind-driven ctor: weapon stats come from the ship kind's loadout. */
+    public BoatCombatComponent(WeaponLoadout loadout) {
+        this.loadout = loadout != null ? loadout : WeaponLoadout.BROADSIDE;
+    }
 
     @Override
     public void onAttach(BaseEntity owner) {
@@ -37,7 +47,8 @@ public final class BoatCombatComponent implements EntityComponent, Tickable {
         }
         this.boat = (Boat) owner;
         if (!boat.hasComponent(HealthComponent.class)) {
-            boat.addComponent(new HealthComponent(BOAT_MAX_HEALTH));
+            int hp = boat.kind() != null ? boat.kind().maxHealth() : BOAT_MAX_HEALTH;
+            boat.addComponent(new HealthComponent(hp));
         }
     }
 
@@ -56,6 +67,7 @@ public final class BoatCombatComponent implements EntityComponent, Tickable {
 
     public boolean fireBroadside() {
         if (boat == null || destroyed || cooldownTicks > 0) return false;
+        if (!loadout.armed()) return false;
 
         int[] facing = Boat.directionVectorForIndex(boat.facingIndex());
         double fx = facing[0];
@@ -87,7 +99,7 @@ public final class BoatCombatComponent implements EntityComponent, Tickable {
                            cy + leadY + rightY * rightOffset,
                            rightX, rightY);
 
-        cooldownTicks = BROADSIDE_COOLDOWN_TICKS;
+        cooldownTicks = loadout.cooldownTicks();
         return true;
     }
 
@@ -124,10 +136,10 @@ public final class BoatCombatComponent implements EntityComponent, Tickable {
 
     private void spawnBroadsideShot(double muzzleX, double muzzleY, double dirX, double dirY) {
         BoatCombatFx.spawnMuzzleFlash(boat.panel, muzzleX, muzzleY);
-        double maxRange = PROJECTILE_RANGE_TILES * boat.panel.tileSize;
+        double maxRange = loadout.rangeTiles() * boat.panel.tileSize;
         BoatProjectile projectile = new BoatProjectile(
             boat.panel, boat, muzzleX, muzzleY, dirX, dirY,
-            PROJECTILE_SPEED, maxRange, BROADSIDE_DAMAGE);
+            loadout.projectileSpeed(), maxRange, loadout.damage());
         boat.panel.world().placeEntityIgnoringTerrainCollision(projectile);
     }
 
@@ -139,9 +151,11 @@ public final class BoatCombatComponent implements EntityComponent, Tickable {
         double cy = boat.getWorldY() + boat.getHeight() / 2.0;
         BoatCombatFx.spawnSinkBurst(boat.panel, cx, cy);
 
+        HealthComponent maxHp = boat.getComponent(HealthComponent.class);
+        int lethal = maxHp != null ? maxHp.max() : BOAT_MAX_HEALTH;
         Playable rider = boat.rider();
         if (rider != null && rider.lifecycle() != null) {
-            rider.lifecycle().damage(BOAT_MAX_HEALTH);
+            rider.lifecycle().damage(lethal);
         }
 
         boat.clearRiderForSink();

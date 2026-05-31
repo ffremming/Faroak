@@ -15,6 +15,8 @@ import resources.domain.entity.component.EntityComponent;
 import resources.domain.entity.component.TerrainSpeedComponent;
 import resources.domain.player.Moveable;
 import resources.domain.player.Playable;
+import resources.domain.ship.ShipKind;
+import resources.domain.ship.ShipKindRegistry;
 import resources.domain.tile.Tile;
 import resources.world.placement.TileRules;
 import resources.geometry.HitBox;
@@ -50,7 +52,6 @@ public final class Boat extends Moveable {
     private static final short HITBOX_REL_X  = (short) ((WIDTH  - HITBOX_WIDTH)  / 2);
     private static final short HITBOX_REL_Y  = (short) ((HEIGHT - HITBOX_HEIGHT) / 2);
 
-    private static final double BOAT_SPEED        = 4.0;
     /** Maximum tile distance from the boat at which a shore tile counts as
      *  "adjacent" for dismount. Two tiles ≈ a player's body length out from
      *  the boat — close enough that hopping off looks like stepping onto the
@@ -81,13 +82,16 @@ public final class Boat extends Moveable {
     /** Last non-zero heading index into DIR_NAMES so a stopped boat keeps facing where it was. */
     private int facingIndex = 0;
     private Playable rider;
+    /** Data definition for this vessel: footprint, speed, HP, loadout, faction,
+     *  boardability. The legacy player boat is {@link ShipKindRegistry#PLAYER_SLOOP}. */
+    private final ShipKind kind;
 
     /**
      * Default constructor: a wild, drifting boat — used by {@link resources.domain.spawn.BoatSpawner}
      * for the patrol boats that decorate ocean tiles at world-gen.
      */
     public Boat(GamePanel panel, int worldX, int worldY) {
-        this(panel, worldX, worldY, true);
+        this(panel, ShipKindRegistry.PLAYER_SLOOP, worldX, worldY, true);
     }
 
     /**
@@ -97,22 +101,38 @@ public final class Boat extends Moveable {
      *     for the inventory/preview templates (which never tick).
      */
     public Boat(GamePanel panel, int worldX, int worldY, boolean autoPatrol) {
-        super(panel, "boat", worldX, worldY,
-            WIDTH, HEIGHT, HITBOX_WIDTH, HITBOX_HEIGHT,
-            HITBOX_REL_X, HITBOX_REL_Y);
-        this.solid = true;
-        setMovementSpeed(BOAT_SPEED);
+        this(panel, ShipKindRegistry.PLAYER_SLOOP, worldX, worldY, autoPatrol);
+    }
 
-        directionalImages = BoatSprites.directionalImages();
+    /**
+     * Kind-driven constructor. All geometry/stats come from {@code kind}: the
+     * legacy player boat is {@link ShipKindRegistry#PLAYER_SLOOP}, NPC ships
+     * pass their own kind. {@code autoPatrol} attaches the simple drift
+     * behaviour; NPC ships pass false and have a {@code ShipPilotBehavior}
+     * attached by their spawner instead.
+     */
+    public Boat(GamePanel panel, ShipKind kind, int worldX, int worldY, boolean autoPatrol) {
+        super(panel, kind.id(), worldX, worldY,
+            (short) kind.width(), (short) kind.height(),
+            (short) kind.hitboxWidth(), (short) kind.hitboxHeight(),
+            (short) kind.hitboxRelX(), (short) kind.hitboxRelY());
+        this.kind = kind;
+        this.solid = true;
+        setMovementSpeed(kind.speed());
+
+        directionalImages = BoatSprites.directionalImagesFor(kind);
         // Mirror images into the entity's image list so legacy paths still find one.
         this.images = directionalImages;
 
-        addComponent(new TerrainSpeedComponent(buildTerrainTable()));
-        addComponent(new BoatCombatComponent());
+        addComponent(new TerrainSpeedComponent(kind.terrainTable()));
+        addComponent(new BoatCombatComponent(kind.loadout()));
         if (autoPatrol) {
             addComponent(new AIComponent((GameContext) panel, new BoatPatrolBehavior(System.nanoTime())));
         }
     }
+
+    /** Data definition for this vessel. */
+    public ShipKind kind() { return kind; }
 
     /**
      * Cheap pre-flight: would a Boat placed at {@code (worldX, worldY)} fit
@@ -125,18 +145,6 @@ public final class Boat extends Moveable {
         HitBox hb = new HitBox(worldX + HITBOX_REL_X, worldY + HITBOX_REL_Y,
                                HITBOX_WIDTH, HITBOX_HEIGHT);
         return !ctx.world().solidCollision(hb);
-    }
-
-    private static Map<String, Double> buildTerrainTable() {
-        Map<String, Double> m = new HashMap<>();
-        m.put("ocean",        1.0);
-        m.put("shallowWater", 1.0);
-        m.put("river",        1.0);
-        m.put("beach",        0.3);
-        m.put("wetBeach",     0.3);
-        m.put("tidalSand",    0.3);
-        m.put("riverbank",    0.3);
-        return m;
     }
 
     @Override
@@ -188,8 +196,8 @@ public final class Boat extends Moveable {
         if (ix == 0 && iy == 0) return; // idle, keep last facing
 
         double scale = (ix != 0 && iy != 0) ? DIAGONAL_FACTOR : 1.0;
-        double stepX = ix * BOAT_SPEED * scale;
-        double stepY = iy * BOAT_SPEED * scale;
+        double stepX = ix * kind.speed() * scale;
+        double stepY = iy * kind.speed() * scale;
 
         facingIndex = directionIndexFor(ix, iy);
 
@@ -245,6 +253,18 @@ public final class Boat extends Moveable {
 
     int facingIndex() { return facingIndex; }
 
+    /** Public read of the current 8-direction facing slot, for AI geometry. */
+    public int facingIndexPublic() { return facingIndex; }
+
+    /** Point the 8-direction sprite along the given heading (screen space, y down).
+     *  Used by {@link resources.domain.ai.WaterNavigator} so AI ships face travel. */
+    public void faceToward(double dx, double dy) {
+        int ix = (dx > 0.3 ? 1 : 0) - (dx < -0.3 ? 1 : 0);
+        int iy = (dy > 0.3 ? 1 : 0) - (dy < -0.3 ? 1 : 0);
+        if (ix == 0 && iy == 0) return;
+        facingIndex = directionIndexFor(ix, iy);
+    }
+
     void clearRiderForSink() { rider = null; }
 
     private BoatCombatComponent combat() {
@@ -254,9 +274,9 @@ public final class Boat extends Moveable {
     /** Boat may enter a cell iff every hitbox corner sits on a water tile. */
     private boolean canEnter(double newWorldX, double newWorldY) {
         HitBox candidate = new HitBox(
-            (int) (newWorldX + HITBOX_REL_X),
-            (int) (newWorldY + HITBOX_REL_Y),
-            HITBOX_WIDTH, HITBOX_HEIGHT);
+            (int) (newWorldX + kind.hitboxRelX()),
+            (int) (newWorldY + kind.hitboxRelY()),
+            kind.hitboxWidth(), kind.hitboxHeight());
         int[] xs = { candidate.x, candidate.x + candidate.width - 1 };
         int[] ys = { candidate.y, candidate.y + candidate.height - 1 };
         for (int x : xs) {
@@ -272,8 +292,8 @@ public final class Boat extends Moveable {
 
     private void syncRider() {
         if (rider == null) return;
-        rider.setWorldX(getWorldX() + (WIDTH - rider.getWidth()) / 2.0);
-        rider.setWorldY(getWorldY() + (HEIGHT - rider.getHeight()) / 2.0 - 16);
+        rider.setWorldX(getWorldX() + (getWidth() - rider.getWidth()) / 2.0);
+        rider.setWorldY(getWorldY() + (getHeight() - rider.getHeight()) / 2.0 - 16);
         rider.getHitBox().updateCoords();
     }
 
@@ -306,9 +326,9 @@ public final class Boat extends Moveable {
 
     private boolean withinBoardingRange(Playable player) {
         double dx = (player.getWorldX() + player.getWidth()/2.0)
-                  - (getWorldX() + WIDTH/2.0);
+                  - (getWorldX() + getWidth()/2.0);
         double dy = (player.getWorldY() + player.getHeight()/2.0)
-                  - (getWorldY() + HEIGHT/2.0);
+                  - (getWorldY() + getHeight()/2.0);
         return Math.hypot(dx, dy) <= BOARDING_RADIUS;
     }
 
@@ -397,8 +417,8 @@ public final class Boat extends Moveable {
      */
     private Point findShoreNear() {
         int ts = panel.tileSize;
-        int cx = (int) (getWorldX() + WIDTH/2.0);
-        int cy = (int) (getWorldY() + HEIGHT/2.0);
+        int cx = (int) (getWorldX() + getWidth()/2.0);
+        int cy = (int) (getWorldY() + getHeight()/2.0);
         for (int r = 1; r <= DISMOUNT_SHORE_RADIUS_TILES; r++) {
             for (int dy = -r; dy <= r; dy++) {
                 for (int dx = -r; dx <= r; dx++) {
