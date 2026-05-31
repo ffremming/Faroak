@@ -60,6 +60,13 @@ public interface WorldRuntime {
      * Implementations may reject non-transient entities.
      */
     boolean placeEntityIgnoringTerrainCollision(BaseEntity entity);
+    /**
+     * Place a boat/ship on water: validates that its whole hull sits on water
+     * and no other entity occupies the spot, then inserts it bypassing the
+     * blanket solid-collision gate (water tiles are marked solid). The single
+     * supported spawn path for both player-placed boats and NPC ships.
+     */
+    boolean placeShipOnWater(resources.domain.object.Boat ship);
     void removeEntity(BaseEntity entity);
     boolean solidCollision(HitBox hitbox);
     boolean solidCollision(HitBox hitbox, BaseEntity mover);

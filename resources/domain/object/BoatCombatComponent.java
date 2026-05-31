@@ -109,6 +109,8 @@ public final class BoatCombatComponent implements EntityComponent, Tickable {
         if (hp == null || hp.isDead()) return;
         hp.takeDamage(amount);
         BoatCombatFx.spawnHitBurst(boat.panel, hitX, hitY);
+        // Let neutral ships react (flee/retaliate) to being struck.
+        boat.notifyAttacked(hitX, hitY, null);
         if (hp.isDead()) sink();
     }
 

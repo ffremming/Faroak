@@ -241,13 +241,25 @@ public final class Boat extends Moveable {
         if (combat != null) combat.takeDamage(amount, hitX, hitY);
     }
 
+    /** Forward an attack notification to the pilot AI so neutral ships can flee
+     *  or retaliate. No-op for player-driven or AI-less boats. */
+    public void notifyAttacked(double srcX, double srcY, Boat attacker) {
+        resources.domain.entity.component.AIComponent ai =
+            getComponent(resources.domain.entity.component.AIComponent.class);
+        if (ai == null) return;
+        if (ai.behavior() instanceof resources.domain.ai.ShipPilotBehavior) {
+            ((resources.domain.ai.ShipPilotBehavior) ai.behavior()).onAttacked(this, srcX, srcY, attacker);
+        }
+    }
+
     public boolean isDestroyed() {
         BoatCombatComponent combat = combat();
         return combat != null && combat.isDestroyed();
     }
 
-    /** Direction vector for one of the 8 facing slots in {@link #DIR_NAMES}. */
-    static int[] directionVectorForIndex(int index) {
+    /** Direction vector for one of the 8 facing slots. Public so AI geometry
+     *  (e.g. {@link resources.domain.ai.ShipPilotBehavior}) can use it. */
+    public static int[] directionVectorForIndex(int index) {
         return DIR_VECTORS[Math.floorMod(index, DIR_VECTORS.length)];
     }
 

@@ -190,6 +190,9 @@ public class WorkingMemory implements WorldRuntime {
     @Override public boolean        placeEntityIgnoringTerrainCollision(BaseEntity e) {
         return interaction.placeEntityIgnoringTerrainCollision(e);
     }
+    @Override public boolean        placeShipOnWater(resources.domain.object.Boat s) {
+        return interaction.placeShipOnWater(s);
+    }
     @Override public void           removeEntity(BaseEntity e)           { interaction.removeEntity(e); }
     @Override public void           addToRemovalQueue(BaseEntity e)      { interaction.addToRemovalQueue(e); }
     @Override public BaseEntity     getHoveredEntity()                   { return interaction.getHoveredEntity(); }

@@ -150,6 +150,19 @@ public final class WorldInteraction {
         return placeEntityNoSolidCheck(entity);
     }
 
+    /**
+     * Place a boat/ship on water. Validates the whole hull is on water and the
+     * spot is free of other entities, then inserts bypassing the blanket
+     * solid-collision gate (water tiles are solid by design). Used by player
+     * boat placement, BoatSpawner and ShipSpawner alike.
+     */
+    public boolean placeShipOnWater(Boat ship) {
+        if (ship == null) return false;
+        if (!isAllWater(ship.getHitBox())) return false;
+        if (entityCollision(ship.getHitBox())) return false;
+        return placeEntityNoSolidCheck(ship);
+    }
+
     public void removeEntity(BaseEntity entity) {
         removal.removeEntity(entity);
     }
