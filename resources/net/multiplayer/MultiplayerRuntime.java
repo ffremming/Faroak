@@ -70,9 +70,6 @@ public final class MultiplayerRuntime {
     private long pingCounter;
     private long lastAckedSeq;
     private boolean localAlive = true;
-    private boolean hasPredictedAtAck;
-    private double predictedAtAckX;
-    private double predictedAtAckY;
     private final java.util.ArrayDeque<String> chatLog = new java.util.ArrayDeque<>();
     private final java.util.Set<String> roster = new java.util.LinkedHashSet<>();
     private final ArrayDeque<PredictedInput> pendingInputs = new ArrayDeque<>();
@@ -271,7 +268,7 @@ public final class MultiplayerRuntime {
             if (lastMovementMask != 0L) {
                 long seq = ++sequence;
                 adapter.submit(new ClientInputMessage(config.playerId(), seq, false, false, false, false));
-                pendingInputs.addLast(new PredictedInput(seq, localPlayerX(), localPlayerY()));
+                pendingInputs.addLast(new PredictedInput(seq));
                 lastMovementMask = 0L;
             }
             return;
@@ -281,10 +278,7 @@ public final class MultiplayerRuntime {
         long seq = ++sequence;
         adapter.submit(new ClientInputMessage(config.playerId(), seq,
             input.isUp(), input.isLeft(), input.isDown(), input.isRight()));
-        // Record where local prediction had us when this input was issued, so
-        // reconciliation can correct by the residual error at the ack rather than
-        // yanking us to a stale absolute server position.
-        pendingInputs.addLast(new PredictedInput(seq, localPlayerX(), localPlayerY()));
+        pendingInputs.addLast(new PredictedInput(seq));
         lastMovementMask = mask;
     }
 
@@ -378,12 +372,7 @@ public final class MultiplayerRuntime {
         if (!config.playerId().equals(ack.playerId())) return;
         lastAckedSeq = Math.max(lastAckedSeq, ack.acknowledgedSequence());
         while (!pendingInputs.isEmpty() && pendingInputs.peekFirst().sequence <= lastAckedSeq) {
-            PredictedInput acked = pendingInputs.removeFirst();
-            // Remember where local prediction had us at the acked input, so we can
-            // measure the residual error against the server's authoritative pose.
-            predictedAtAckX = acked.predictedX;
-            predictedAtAckY = acked.predictedY;
-            hasPredictedAtAck = true;
+            pendingInputs.removeFirst();
         }
     }
 
@@ -418,22 +407,21 @@ public final class MultiplayerRuntime {
     }
 
     /**
-     * Predict-and-correct reconciliation. The local player already moves immediately
-     * from input (client-side prediction via the normal movement system). Here we
-     * measure the residual error between the server's authoritative pose at the last
-     * acked input and where local prediction had us at that same input, then nudge the
-     * current position by that error. This removes the rubber-band of pulling toward a
-     * stale absolute server position while leaving ongoing prediction untouched.
+     * Reconcile the local player toward the latest authoritative server pose. The
+     * local player moves immediately from input (client-side prediction); each frame
+     * we nudge it a fraction of the way toward the most recent server position. Because
+     * the correction is measured against the current pose it CONVERGES — it shrinks to
+     * zero as the client aligns with the server and then stops, so the player does not
+     * drift when no input is held. Large divergence (teleport/desync) snaps directly.
      */
     private void applyLocalAuthoritativePose() {
-        if (ctx.player() == null || localSamples.isEmpty() || !hasPredictedAtAck) return;
+        if (ctx.player() == null || localSamples.isEmpty()) return;
         LocalSnapshotSample server = localSamples.peekLast();
         if (server == null) return;
 
         double[] corrected = reconcileStep(
             ctx.player().getWorldX(), ctx.player().getWorldY(),
             server.x, server.y,
-            predictedAtAckX, predictedAtAckY,
             localReconcileBlend, localReconcileWarpDistance);
         ctx.player().setWorldX(corrected[0]);
         ctx.player().setWorldY(corrected[1]);
@@ -692,35 +680,29 @@ public final class MultiplayerRuntime {
     }
 
     /**
-     * Pure reconciliation step, extracted for testing. Given the current predicted
-     * pose, the server pose at the ack, and the pose local prediction had at that
-     * ack, returns the corrected pose. Within the dead-zone it returns the current
-     * pose unchanged (no jitter); beyond the warp distance it snaps to the server
-     * pose; otherwise it applies {@code blend} of the residual error.
+     * Pure reconciliation step, extracted for testing. Moves the current pose a
+     * fraction ({@code blend}) of the way TOWARD the authoritative {@code target}
+     * pose. Because the delta is measured against the current pose, repeated
+     * application converges to the target and then settles — no perpetual drift.
+     * Within the dead-zone it returns the current pose unchanged (no jitter);
+     * beyond {@code warpDistance} it snaps straight to the target.
      * Result layout: [x, y].
      */
     public static double[] reconcileStep(
             double curX, double curY,
-            double serverX, double serverY,
-            double predictedAtAckX, double predictedAtAckY,
+            double targetX, double targetY,
             double blend, double warpDistance) {
-        double errX = serverX - predictedAtAckX;
-        double errY = serverY - predictedAtAckY;
-        double err2 = (errX * errX) + (errY * errY);
-        if (err2 < 0.25) return new double[] { curX, curY };
-        if (err2 >= warpDistance * warpDistance) return new double[] { serverX, serverY };
-        return new double[] { curX + (errX * blend), curY + (errY * blend) };
+        double dx = targetX - curX;
+        double dy = targetY - curY;
+        double dist2 = (dx * dx) + (dy * dy);
+        if (dist2 < 0.25) return new double[] { curX, curY };
+        if (dist2 >= warpDistance * warpDistance) return new double[] { targetX, targetY };
+        return new double[] { curX + (dx * blend), curY + (dy * blend) };
     }
 
     private static final class PredictedInput {
         final long sequence;
-        final double predictedX;
-        final double predictedY;
-        PredictedInput(long sequence, double predictedX, double predictedY) {
-            this.sequence = sequence;
-            this.predictedX = predictedX;
-            this.predictedY = predictedY;
-        }
+        PredictedInput(long sequence) { this.sequence = sequence; }
     }
 
     private static final class LocalSnapshotSample {
