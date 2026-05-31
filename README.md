@@ -36,3 +36,55 @@ The working directory must be the project root so `resources/images/...` paths r
 2. Mark `resources` as a **sources root** (IntelliJ: right-click → *Mark Directory as → Sources Root*).
 3. Set the run configuration's **working directory** to the project root.
 4. Run `resources.app.Main` — entry point: [resources/app/Main.java](resources/app/Main.java).
+
+## Online multiplayer
+
+The game is server-authoritative. In the title screen, **Host Game** runs an
+embedded server for a quick local session, and **Join Game** connects to a host
+by address. For a persistent, shared world, run a **dedicated server**.
+
+### Dedicated server
+
+```bash
+java -cp out \
+  -Dgame.multiplayer.gatewayPort=7777 \
+  -Dgame.multiplayer.dataDir=world-data \
+  resources.net.multiplayer.server.ServerMain
+```
+
+It binds on all interfaces and prints `gateway listening on :7777`. The world is
+seeded with harvestable objects on first run and saved to `world-data/`
+(pure-JDK file store — no external database needed); it reloads on restart.
+
+Players connect with **Join Game** in the title screen (host address + port), or
+from the command line:
+
+```bash
+java -cp out \
+  -Dgame.multiplayer.mode=client \
+  -Dgame.multiplayer.backend=websocket \
+  -Dgame.multiplayer.serverUrl=ws://<server-host>:7777/ws \
+  resources.app.Main
+```
+
+### Server configuration flags
+
+| Property | Default | Meaning |
+|----------|---------|---------|
+| `game.multiplayer.gatewayPort` | `8080` | TCP/WebSocket listen port |
+| `game.multiplayer.dataDir` | `multiplayer-data` | World save directory (file store) |
+| `game.multiplayer.persistence` | `file` | `file` \| `memory` \| `sqlite` |
+| `game.multiplayer.maxPlayers` | `10` | Player cap |
+| `game.multiplayer.pvp` | `true` | Allow player-vs-player damage |
+| `game.multiplayer.respawnSeconds` | `5` | Auto-respawn delay after death |
+| `game.multiplayer.mobCap` | `12` | Max simultaneous spawned mobs near players |
+| `game.multiplayer.worldObjectCount` | `120` | Harvestable objects seeded on a fresh world |
+| `game.world.seed` | `424242` | Shared world seed (client and server must match) |
+
+### Multiplayer tests
+
+```bash
+java -cp out resources.testing.MultiplayerTestRunner          # 23 headless probes
+java -cp out resources.testing.DedicatedServerAcceptance \    # two real clients vs a
+  ws://127.0.0.1:7777/ws                                      # running ServerMain
+```
