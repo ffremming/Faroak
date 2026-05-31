@@ -175,6 +175,14 @@ def main():
             cleaned_cell(row, f, TIER_ALPHA[tier]).save(
                 os.path.join(TILE_OUT, f"{tier_name[tier]}{f}.png"))
 
+    # Opaque tier-color swatches (full alpha) — used by TransitionTileGenerator as
+    # the color source for the procedural depth-transition crescents, so the blend
+    # band reads crisply instead of translucent. Only shallow/medium need these
+    # (they are the alpha-baked tiers); deep ocean is already opaque.
+    for tier in ("medium", "shallow"):
+        cleaned_cell(tier_rows[tier], 0, 1.0).save(
+            os.path.join(TILE_OUT, f"{tier_name[tier]}_opaque.png"))
+
     # Seabed variants: row 0 (light), first 8 columns -> seabed0..7.
     for i in range(8):
         cleaned_cell(0, i, 1.0).save(os.path.join(TILE_OUT, f"seabed{i}.png"))

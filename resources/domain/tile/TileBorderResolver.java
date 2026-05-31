@@ -50,11 +50,6 @@ public final class TileBorderResolver {
     private static Map<String, String> buildHostOverlayFamilyMap() {
         Map<String, String> m = new HashMap<>();
         m.put("tidalSand|wetBeach", "wetBeachDry");
-        // Foam crescents where water meets sand and at internal depth boundaries.
-        m.put("shallowWater|tidalSand", "oceanFoam");
-        m.put("shallowWater|wetBeach", "oceanFoam");
-        m.put("mediumWater|shallowWater", "oceanFoam");
-        m.put("ocean|mediumWater", "oceanFoam");
         return m;
     }
 

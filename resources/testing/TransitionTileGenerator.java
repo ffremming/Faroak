@@ -35,15 +35,18 @@ public final class TransitionTileGenerator {
     private TransitionTileGenerator() {}
 
     public static void main(String[] args) throws IOException {
-        // shallowWater borders (drawn on ocean tiles).
-        // Color = lighter ocean variant; mask = the crescent already used for wet-beach edges.
-        generatePair("shallowWater", "oceanT_light.png", "wetBeachB1.png", "WetBeachC0.png", false);
-
-        // Animation frames for shallowWater. ocean0_light is a textured wave frame;
-        // oceanT_light is a flat color swatch — using it would give a blank middle frame.
-        copyAs("ocean0_light.png", "shallowWater0.png");
-        copyAs("ocean1_light.png", "shallowWater1.png");
-        copyAs("ocean2_light.png", "shallowWater2.png");
+        // --- Procedural ocean depth transitions ---
+        // A shallower tier's color creeps onto the deeper neighbour using the same
+        // crescent mask as the beach edges. The resolver draws "<neighbour>B<side>"
+        // on the lower tile, so:
+        //   ocean (deepest)  draws  mediumWaterB*  where it borders mediumWater
+        //   mediumWater      draws  shallowWaterB* where it borders shallowWater
+        // Color source = the OPAQUE tier swatch (emitted by clean_ocean_spritesheet.py)
+        // so the blend band reads crisply rather than translucent.
+        // NOTE: do not regenerate shallowWater0..2.png here — those are the new
+        // alpha-baked animation frames; this only writes the B1/C0 border crescents.
+        generatePair("shallowWater", "shallowWater_opaque.png", "wetBeachB1.png", "WetBeachC0.png", false);
+        generatePair("mediumWater",  "mediumWater_opaque.png",  "wetBeachB1.png", "WetBeachC0.png", false);
 
         // Darkened sand source for the wetBeach BODY (×0.85 of beach reads as "wet sand").
         // The 4 border/corner sprites (wetBeachB1, WetBeachC0, wetBeach1B1, wetBeach1C0)
