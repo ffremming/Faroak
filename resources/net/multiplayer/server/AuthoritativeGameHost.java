@@ -53,11 +53,22 @@ final class AuthoritativeGameHost {
     private final WorldState world = new WorldState();
     private final ServerTerrainRules terrainRules;
     private final double maxActionRange;
+    private long respawnDelayTicks = 150L; // ~5s at 30Hz; overridden by the lobby
+    private boolean pvpEnabled = true;
     private boolean dirty;
 
     AuthoritativeGameHost(ServerTerrainRules terrainRules, double maxActionRange) {
         this.terrainRules = terrainRules;
         this.maxActionRange = Math.max(1.0, maxActionRange);
+    }
+
+    void setRespawnDelayTicks(long ticks) { this.respawnDelayTicks = Math.max(1L, ticks); }
+    void setPvpEnabled(boolean enabled) { this.pvpEnabled = enabled; }
+
+    /** Live sessions map (owned by the lobby) so combat can target players for PvP. */
+    private Map<String, Session> activeSessions = java.util.Collections.emptyMap();
+    void setActiveSessions(Map<String, Session> sessions) {
+        this.activeSessions = (sessions == null) ? java.util.Collections.emptyMap() : sessions;
     }
 
     WorldState world() { return world; }
@@ -250,6 +261,11 @@ final class AuthoritativeGameHost {
         world.setTick(tick);
         for (Session session : sessions.values()) {
             PlayerReplicaState player = ensurePlayer(session.playerId, true, session.x, session.y, session.lastAcceptedSeq, tick);
+            if (!session.alive) {
+                // Dead players freeze in place until respawned.
+                player.setInput(false, false, false, false, session.lastAcceptedSeq, tick);
+                continue;
+            }
             player.setInput(session.up, session.left, session.down, session.right, session.lastAcceptedSeq, tick);
             if (player.ridingEntityId() > 0L) {
                 integrateRidingPlayer(session, player, authority, moveSpeedPerTick, tick);
@@ -309,6 +325,11 @@ final class AuthoritativeGameHost {
         }
         if (ProtocolPayloads.CommandRequest.INVENTORY_CLICK.equals(command.commandType)) {
             return applyInventoryClick(session, command, sequence, tick, events);
+        }
+        if (ProtocolPayloads.CommandRequest.RESPAWN.equals(command.commandType)) {
+            if (!session.alive) session.respawnRequested = true;
+            markSequence(session, sequence, tick);
+            return CommandOutcome.accept();
         }
         return CommandOutcome.reject("unsupported command");
     }
@@ -514,6 +535,16 @@ final class AuthoritativeGameHost {
         double arc = heavy ? weapon.heavyArcDegrees : weapon.lightArcDegrees;
         EntityState target = targetInArc(session, command.targetX, command.targetY, range, arc);
         if (target == null) {
+            // No entity in range — try a player (PvP).
+            Session victim = pvpTargetNear(session, command.targetX, command.targetY, range);
+            if (victim != null) {
+                damageSession(victim, damage, tick);
+                if (events != null) {
+                    events.event(session.playerId, "combat", "pvp:" + victim.playerId + ":" + victim.health);
+                }
+                dirty = true;
+                return CommandOutcome.accept();
+            }
             if (events != null) events.event(session.playerId, "combat", "melee:none");
             return CommandOutcome.reject("nothing to attack");
         }
@@ -666,10 +697,61 @@ final class AuthoritativeGameHost {
         return new DamageResult(true, next, maxHealth, next <= 0);
     }
 
+    /** Nearest living OTHER player whose center is within {@code range} of the
+     *  attack point, when PvP is enabled. Null otherwise. */
+    private Session pvpTargetNear(Session attacker, double targetX, double targetY, int range) {
+        if (!pvpEnabled) return null;
+        Session best = null;
+        double bestDist2 = (double) range * range;
+        for (Session s : activeSessions.values()) {
+            if (s == attacker || !s.alive) continue;
+            double dx = playerCenterX(s) - targetX;
+            double dy = playerCenterY(s) - targetY;
+            double d2 = dx * dx + dy * dy;
+            if (d2 <= bestDist2) { bestDist2 = d2; best = s; }
+        }
+        return best;
+    }
+
     private void damageSession(Session session, int damage, long tick) {
-        if (session == null || damage <= 0 || session.health <= 0) return;
+        if (session == null || damage <= 0 || !session.alive || session.health <= 0) return;
         session.health = Math.max(0, session.health - damage);
         session.lastChangedTick = Math.max(session.lastChangedTick, tick);
+        if (session.health <= 0) {
+            session.alive = false;
+            session.respawnAtTick = tick + respawnDelayTicks;
+            session.up = session.left = session.down = session.right = false;
+            session.vx = 0.0; session.vy = 0.0;
+        }
+        dirty = true;
+    }
+
+    /**
+     * Advance player death/respawn each tick: respawn dead players whose timer has
+     * elapsed or who requested it, restoring them to full health at a valid spawn.
+     */
+    void tickPlayerLifecycle(Map<String, Session> sessions, long tick) {
+        for (Session s : sessions.values()) {
+            if (s.alive) continue;
+            if (s.respawnRequested || tick >= s.respawnAtTick) {
+                respawnSession(s, tick);
+            }
+        }
+    }
+
+    private void respawnSession(Session session, long tick) {
+        double[] spawn = nearestLand(0.0, 0.0);
+        session.x = spawn[0];
+        session.y = spawn[1];
+        session.vx = 0.0; session.vy = 0.0;
+        session.up = session.left = session.down = session.right = false;
+        session.health = session.maxHealth;
+        session.alive = true;
+        session.respawnRequested = false;
+        session.respawnAtTick = 0L;
+        session.lastChangedTick = Math.max(session.lastChangedTick, tick);
+        PlayerReplicaState player = world.player(session.playerId);
+        if (player != null) player.moveTo(DEFAULT_DIMENSION, session.x, session.y, 0.0, 0.0, tick);
         dirty = true;
     }
 
@@ -1714,6 +1796,7 @@ final class AuthoritativeGameHost {
 
     private boolean isTileSnappedPlacement(String type) {
         return "fence".equals(type)
+            || "stone_wall".equals(type)
             || "barrel".equals(type)
             || "chest".equals(type)
             || "crafting_table".equals(type)

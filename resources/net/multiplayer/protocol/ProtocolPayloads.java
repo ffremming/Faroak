@@ -61,6 +61,7 @@ public final class ProtocolPayloads {
         public static final String ATTACK_HEAVY_AT = "attack_heavy_at";
         public static final String ATTACK_RANGED_AT = "attack_ranged_at";
         public static final String INVENTORY_CLICK = "inventory_click";
+        public static final String RESPAWN = "respawn";
 
         public final String commandType;
         public final boolean hasTarget;
@@ -126,6 +127,10 @@ public final class ProtocolPayloads {
 
         public static CommandRequest inventoryClick(long inventoryId, int slotIndex, int button) {
             return new CommandRequest(INVENTORY_CLICK, false, 0.0, 0.0, 0L, "", -1, inventoryId, slotIndex, button);
+        }
+
+        public static CommandRequest respawn() {
+            return new CommandRequest(RESPAWN, false, 0.0, 0.0, 0L, "", -1, 0L, -1, 0);
         }
 
         private static String normalize(String raw) {

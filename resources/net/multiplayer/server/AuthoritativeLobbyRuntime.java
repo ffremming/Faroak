@@ -83,6 +83,10 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         this.tick = ServerParse.parseLong(persistence.getMeta(META_SERVER_TICK, "0"), 0L);
         this.nextObjectId = Math.max(1L, ServerParse.parseLong(persistence.getMeta(META_WORLD_NEXT_OBJECT_ID, "1"), 1L));
         this.worldRevision = Math.max(0L, ServerParse.parseLong(persistence.getMeta(META_WORLD_REVISION, "0"), 0L));
+        long respawnSeconds = ServerParse.parseLong(System.getProperty("game.multiplayer.respawnSeconds", "5"), 5L);
+        this.gameHost.setRespawnDelayTicks(Math.max(1L, respawnSeconds * config.serverTickRate()));
+        this.gameHost.setPvpEnabled(!"false".equalsIgnoreCase(System.getProperty("game.multiplayer.pvp", "true")));
+        this.gameHost.setActiveSessions(this.sessions);
         this.gameHost.setCounters(this.tick, this.worldRevision, this.nextObjectId);
         restoreWorldObjects();
         populateFreshWorld(worldSeed);
@@ -134,6 +138,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         tick++;
         processInbound();
         gameHost.integratePlayers(sessions, authority, moveSpeedPerTick, tick);
+        gameHost.tickPlayerLifecycle(sessions, tick);
         mobSpawner.tick(gameHost, sessions, tick);
         gameHost.tickWorld(sessions, tick);
         nextObjectId = gameHost.nextEntityId();

@@ -22,6 +22,7 @@ import resources.testing.probes.MpPersistenceFileProbe;
 import resources.testing.probes.MpAppearanceCodecProbe;
 import resources.testing.probes.MpAppearanceServerProbe;
 import resources.testing.probes.MpWorldPopulationProbe;
+import resources.testing.probes.MpDeathRespawnProbe;
 
 /**
  * Focused runner for multiplayer probes only.
@@ -51,6 +52,7 @@ public final class MultiplayerTestRunner {
         probes.add(new MpAppearanceCodecProbe());
         probes.add(new MpAppearanceServerProbe());
         probes.add(new MpWorldPopulationProbe());
+        probes.add(new MpDeathRespawnProbe());
 
         int failures = 0;
         try (TestHarness harness = new TestHarness()) {

@@ -9,6 +9,7 @@ import java.awt.Point;
 import resources.app.GameContext;
 import resources.app.GamePanel;
 import resources.domain.entity.BaseEntity;
+import resources.domain.entity.component.HealthComponent;
 import resources.domain.inventory.Inventory;
 import resources.domain.inventory.Item;
 import resources.domain.inventory.Stack;
@@ -66,6 +67,7 @@ public final class MultiplayerRuntime {
     private long lastMovementMask = -1L;
     private long pingCounter;
     private long lastAckedSeq;
+    private boolean localAlive = true;
     private final ArrayDeque<PredictedInput> pendingInputs = new ArrayDeque<>();
     private final ArrayDeque<LocalSnapshotSample> localSamples = new ArrayDeque<>();
     private final Map<Long, Runnable> commandAcceptedHandlers = new HashMap<>();
@@ -256,6 +258,17 @@ public final class MultiplayerRuntime {
 
     private void publishMovement() {
         InputHandlingSystem input = ctx.input();
+        // While dead, force a stopped input so the corpse doesn't drift, and don't
+        // resend until alive again.
+        if (!localAlive) {
+            if (lastMovementMask != 0L) {
+                long seq = ++sequence;
+                adapter.submit(new ClientInputMessage(config.playerId(), seq, false, false, false, false));
+                pendingInputs.addLast(new PredictedInput(seq));
+                lastMovementMask = 0L;
+            }
+            return;
+        }
         long mask = movementMask(input);
         if (mask == lastMovementMask) return;
         long seq = ++sequence;
@@ -267,15 +280,33 @@ public final class MultiplayerRuntime {
 
     private void publishActions() {
         List<InputAction> actions = ctx.input().drainActions();
+        if (!localAlive) {
+            // Dead: any interact press requests a respawn; all other actions ignored.
+            for (InputAction action : actions) {
+                if (InputAction.INTERACT.equals(action)) {
+                    submitCommand(ProtocolPayloads.CommandRequest.respawn());
+                    break;
+                }
+            }
+            return;
+        }
         for (InputAction action : actions) {
+            if (InputAction.ATTACK.equals(action) || InputAction.ATTACK_LIGHT.equals(action)) {
+                submitAttackCommand(ProtocolPayloads.CommandRequest.ATTACK_LIGHT_AT);
+                continue;
+            }
+            if (InputAction.ATTACK_HEAVY.equals(action)) {
+                submitAttackCommand(ProtocolPayloads.CommandRequest.ATTACK_HEAVY_AT);
+                continue;
+            }
+            if (InputAction.ATTACK_RANGED.equals(action)) {
+                submitAttackCommand(ProtocolPayloads.CommandRequest.ATTACK_RANGED_AT);
+                continue;
+            }
             MultiplayerAction mapped = MultiplayerAction.fromInput(action);
             if (mapped == null) continue;
             if (MultiplayerAction.PLACE.equals(mapped) && ctx.mouse() != null) {
                 submitWorldClick(ctx.mouse().getMouseWorldX(), ctx.mouse().getMouseWorldY());
-            } else if (MultiplayerAction.ATTACK.equals(mapped)) {
-                double x = ctx.mouse() == null ? localPlayerX() : ctx.mouse().getMouseWorldX();
-                double y = ctx.mouse() == null ? localPlayerY() : ctx.mouse().getMouseWorldY();
-                submitCommand(ProtocolPayloads.CommandRequest.attackAt(x, y));
             } else if (MultiplayerAction.INTERACT.equals(mapped)) {
                 submitCommand(ProtocolPayloads.CommandRequest.interactAt(localPlayerX(), localPlayerY()));
             }
@@ -300,6 +331,7 @@ public final class MultiplayerRuntime {
                     snapshot.inventories(),
                     snapshot.tileMutations());
                 applyLocalPlayerInventorySnapshot();
+                applyLocalPlayerHealthSnapshot(snapshot.players());
                 if (localReconcileEnabled) {
                     reconcileLocal(snapshot.players(), snapshot.acknowledgedSequence());
                 }
@@ -439,6 +471,14 @@ public final class MultiplayerRuntime {
         return seq;
     }
 
+    private long submitAttackCommand(String commandType) {
+        double x = ctx.mouse() == null ? localPlayerX() : ctx.mouse().getMouseWorldX();
+        double y = ctx.mouse() == null ? localPlayerY() : ctx.mouse().getMouseWorldY();
+        Stack equipped = ctx.player() == null ? null : ctx.player().getEquipped();
+        return submitCommand(new ProtocolPayloads.CommandRequest(
+            commandType, true, x, y, 0L, stackName(equipped), selectedInventorySlot(), 0L, -1, 0));
+    }
+
     private BaseEntity entityAt(double worldX, double worldY) {
         if (ctx.world() == null) return null;
         ArrayDeque<BaseEntity> hits = new ArrayDeque<>();
@@ -509,6 +549,47 @@ public final class MultiplayerRuntime {
         if (cursor != null && !cursor.slots.isEmpty()) {
             ProtocolPayloads.ItemStackPayload held = cursor.slots.get(0);
             ctx.player().setTempInHand(toCursorStack(panel, held));
+        }
+    }
+
+    private void applyLocalPlayerHealthSnapshot(List<PlayerStateMessage> players) {
+        if (players == null || ctx.player() == null) return;
+        for (PlayerStateMessage state : players) {
+            if (state == null || !config.playerId().equals(state.playerId())) continue;
+            HealthComponent health = ctx.player().getComponent(HealthComponent.class);
+            if (health == null) health = ctx.player().addComponent(new HealthComponent(Math.max(1, state.maxHealth())));
+            int current = health.current();
+            if (state.health() < current) {
+                health.takeDamage(current - state.health());
+            } else if (state.health() > current) {
+                health.heal(state.health() - current);
+            }
+            updateLocalAliveState(state.alive());
+            break;
+        }
+    }
+
+    /** Track local death/respawn transitions and notify the player. */
+    private void updateLocalAliveState(boolean alive) {
+        if (alive == localAlive) return;
+        localAlive = alive;
+        if (!alive) {
+            toast("You died — press the interact key to respawn", 6000L);
+        } else {
+            toast("Respawned", 2000L);
+        }
+    }
+
+    /** True while the local player is dead (server-authoritative); input is suppressed. */
+    public boolean localPlayerDead() {
+        return config.online() && !localAlive;
+    }
+
+    private void toast(String text, long durationMs) {
+        try {
+            if (ctx.userInterface() != null) ctx.userInterface().showToast(text, durationMs);
+        } catch (RuntimeException ignored) {
+            // UI not ready yet (early frames) — a missed toast is harmless.
         }
     }
 
