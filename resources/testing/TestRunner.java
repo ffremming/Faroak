@@ -17,6 +17,7 @@ import resources.testing.probes.ShipGoalProbe;
 import resources.testing.probes.ShipPilotProbe;
 import resources.testing.probes.ShipReactionProbe;
 import resources.testing.probes.ShipBoardingProbe;
+import resources.testing.probes.ShipSpawnProbe;
 import resources.testing.probes.CaveEntryProbe;
 import resources.testing.probes.CaveProbe;
 import resources.testing.probes.CaveWallSpriteProbe;
@@ -117,6 +118,7 @@ public final class TestRunner {
         probes.add(new ShipPilotProbe());
         probes.add(new ShipReactionProbe());
         probes.add(new ShipBoardingProbe());
+        probes.add(new ShipSpawnProbe());
         probes.add(new CaveEntryProbe());
         probes.add(new CaveProbe());
         probes.add(new CaveWallVariantProbe());

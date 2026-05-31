@@ -148,8 +148,10 @@ public class GenerationManager {
         // location for now (v1: exact ship position isn't tracked yet).
         InteriorManager shipInteriors = resources.generation.interior.ShipInteriorBootstrap.lastBuilt();
         if (shipInteriors != null) shipInteriors.setOverworldArrival(overworldDoor);
-        // Scatter a handful of boats on the nearest patch of water.
+        // Scatter a handful of drifting boats on the nearest patch of water.
         BoatSpawner.spawnBoatsNear(panel, p, 3);
+        // A handful of purposeful NPC ships: a pirate hunter, a fisher, a galleon.
+        resources.domain.spawn.ShipSpawner.spawnFleetNear(panel, p);
         // A small welcoming committee: a few NPCs strolling near spawn.
         spawnStartingNpcs(p);
         // Demo: place every procedural plant in a tidy grid near spawn so the
