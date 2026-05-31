@@ -30,22 +30,40 @@ public final class ShipKindRegistry {
         .faction(Faction.NEUTRAL)
         .build();
 
-    /** Hostile hunter: armed, fast, mid HP, sweeps for prey. */
-    public static final ShipKind PIRATE_BRIG = ShipKind.builder("pirate_brig")
-        .displayName("Pirate Brig")
-        .spriteDir("resources/images/objects/vehicles/watercraft/ships/pirateBrig/")
-        .size(192, 192).hitbox(144, 144)
-        .speed(4.4).maxHealth(40)
-        .loadout(WeaponLoadout.BROADSIDE)
-        .faction(Faction.PIRATE)
-        .goal(ctx -> new PirateHuntGoal(System.nanoTime()))
+    // Shared art root for the new sliced ship sets (frames 0..7, 0=N clockwise).
+    private static final String SHIP_ART = "resources/images/objects/ships/";
+
+    /** Tiny civilian rowboat-with-sail: unarmed, pootles between spots, flees.
+     *  Footprint follows the dinghy art aspect (186x219 ≈ 0.85). */
+    public static final ShipKind DINGHY = ShipKind.builder("dinghy")
+        .displayName("Dinghy")
+        .spriteDir(SHIP_ART + "dinghy/")
+        .size(96, 112).hitbox(60, 76)
+        .speed(3.0).maxHealth(14)
+        .loadout(WeaponLoadout.NONE)
+        .faction(Faction.NEUTRAL)
+        .reaction(ShipReaction.FLEE)
+        .goal(ctx -> new FishingGoal(fishingSpotsAround(ctx), 180))
         .build();
 
-    /** Neutral worker: unarmed, works fishing grounds, flees if struck. */
+    /** Small civilian rowboat: unarmed, wanders, flees. (299x319 ≈ 0.94) */
+    public static final ShipKind ROWBOAT = ShipKind.builder("rowboat")
+        .displayName("Rowboat")
+        .spriteDir(SHIP_ART + "rowboat/")
+        .size(120, 128).hitbox(84, 96)
+        .speed(2.8).maxHealth(16)
+        .loadout(WeaponLoadout.NONE)
+        .faction(Faction.NEUTRAL)
+        .reaction(ShipReaction.FLEE)
+        .goal(ctx -> new FishingGoal(fishingSpotsAround(ctx), 200))
+        .build();
+
+    /** Neutral worker: unarmed, works fishing grounds, flees if struck.
+     *  Sailboat art (237x254 ≈ 0.93). */
     public static final ShipKind FISHER = ShipKind.builder("fisher")
         .displayName("Fishing Boat")
-        .spriteDir("resources/images/objects/vehicles/watercraft/ships/fisher/")
-        .size(128, 128).hitbox(96, 96)
+        .spriteDir(SHIP_ART + "sailboat/")
+        .size(136, 144).hitbox(100, 108)
         .speed(3.2).maxHealth(20)
         .loadout(WeaponLoadout.NONE)
         .faction(Faction.FISHER)
@@ -53,11 +71,37 @@ public final class ShipKindRegistry {
         .goal(ctx -> new FishingGoal(fishingSpotsAround(ctx), 240))
         .build();
 
-    /** Huge boardable warship: heavy guns, patrols, interior wired in Task 10. */
+    /** Merchant trader: unarmed cargo hauler, crosses real distance on trade
+     *  routes, retaliates if struck. Crewboat art (332x469 ≈ 0.71, tall). */
+    public static final ShipKind CREWBOAT = ShipKind.builder("crewboat")
+        .displayName("Merchant Crewboat")
+        .spriteDir(SHIP_ART + "crewboat/")
+        .size(160, 224).hitbox(112, 168)
+        .speed(3.0).maxHealth(45)
+        .loadout(WeaponLoadout.NONE)
+        .faction(Faction.MERCHANT)
+        .reaction(ShipReaction.RETALIATE)
+        .goal(ctx -> new SailRouteGoal(galleonRouteAround(ctx), true))
+        .build();
+
+    /** Hostile hunter: armed, fast, mid HP, sweeps for prey. Galleon art
+     *  (926x742 ≈ 1.25, wide). */
+    public static final ShipKind PIRATE_BRIG = ShipKind.builder("pirate_brig")
+        .displayName("Pirate Galleon")
+        .spriteDir(SHIP_ART + "galleon/")
+        .size(288, 232).hitbox(216, 176)
+        .speed(4.4).maxHealth(40)
+        .loadout(WeaponLoadout.BROADSIDE)
+        .faction(Faction.PIRATE)
+        .goal(ctx -> new PirateHuntGoal(System.nanoTime()))
+        .build();
+
+    /** Huge boardable flagship: heavy guns, patrols, has an interior deck.
+     *  galleon_large art (1166x1089 ≈ 1.07). */
     public static final ShipKind GALLEON = ShipKind.builder("galleon")
-        .displayName("Galleon")
-        .spriteDir("resources/images/objects/vehicles/watercraft/ships/galleon/")
-        .size(320, 320).hitbox(240, 240)
+        .displayName("Galleon Flagship")
+        .spriteDir(SHIP_ART + "galleon_large/")
+        .size(384, 360).hitbox(288, 272)
         .speed(2.4).maxHealth(140)
         .loadout(WeaponLoadout.HEAVY)
         .faction(Faction.NAVY)
@@ -67,7 +111,7 @@ public final class ShipKindRegistry {
 
     public static final java.util.List<ShipKind> ALL =
         java.util.Collections.unmodifiableList(java.util.Arrays.asList(
-            PLAYER_SLOOP, PIRATE_BRIG, FISHER, GALLEON));
+            PLAYER_SLOOP, DINGHY, ROWBOAT, FISHER, CREWBOAT, PIRATE_BRIG, GALLEON));
 
     private static final Map<String, ShipKind> BY_ID;
     static {

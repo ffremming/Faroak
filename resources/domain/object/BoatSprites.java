@@ -103,10 +103,25 @@ final class BoatSprites {
         return out;
     }
 
-    /** Load {@code <spriteDir>/<dir>.png} for direction index i; derive s/sw by
-     *  vertical flip of n/ne when those files are absent. Falls back to the
-     *  starterShip filename map when pointed at that directory. */
+    /**
+     * Maps the engine's facing slot (index into {@link #DIR_NAMES} =
+     * {e,se,s,sw,w,nw,n,ne}) onto the numbered art frame in the new ship sets.
+     * Those sets are authored as {@code 0.png..7.png} starting at North and
+     * rotating clockwise (0=N, 1=NE, 2=E, 3=SE, 4=S, 5=SW, 6=W, 7=NW). So the
+     * engine's E slot (index 0) wants art frame 2, SE wants 3, … N wants 0.
+     */
+    private static final int[] ENGINE_TO_ART_FRAME = { 2, 3, 4, 5, 6, 7, 0, 1 };
+
+    /** Load the sprite for engine direction slot {@code i} from {@code dir}.
+     *  Tries, in order:
+     *    1. The new numbered set: {@code <frame>.png} via {@link #ENGINE_TO_ART_FRAME}.
+     *    2. The named set: {@code <dir-name>.png} (e.g. e.png) with s/sw flip fallback.
+     *    3. The starterShip legacy filename map. */
     private static BufferedImage readKindSprite(String dir, int i) {
+        // New numbered art (0..7, 0=N clockwise) — used by the ships/<name>/ sets.
+        BufferedImage numbered = readAbs(dir + ENGINE_TO_ART_FRAME[i] + ".png");
+        if (numbered != null) return numbered;
+
         BufferedImage direct = readAbs(dir + DIR_NAMES[i] + ".png");
         if (direct != null) return direct;
         if (dir.endsWith("starterShip/")) {

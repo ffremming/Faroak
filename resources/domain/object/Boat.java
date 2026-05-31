@@ -356,7 +356,11 @@ public final class Boat extends Moveable {
                   - (getWorldX() + getWidth()/2.0);
         double dy = (player.getWorldY() + player.getHeight()/2.0)
                   - (getWorldY() + getHeight()/2.0);
-        return Math.hypot(dx, dy) <= BOARDING_RADIUS;
+        // Measure reach from the hull edge, not a fixed distance to the center:
+        // a 384px flagship must be boardable from its side the same way a small
+        // boat is. Add the ship's half-extent to the base proximity radius.
+        double halfExtent = Math.max(getWidth(), getHeight()) / 2.0;
+        return Math.hypot(dx, dy) <= BOARDING_RADIUS + halfExtent;
     }
 
     private void board(Playable player) {

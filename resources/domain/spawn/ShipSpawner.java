@@ -37,9 +37,14 @@ public final class ShipSpawner {
         if (water.isEmpty()) return;
         Collections.shuffle(water, new Random(center.x * 73856093L ^ center.y * 19349663L));
 
+        // A varied mix: civilians, a fisher, a merchant, a pirate hunter, and a
+        // boardable flagship — one of each so the world reads as populated.
         ShipKind[] fleet = {
-            ShipKindRegistry.PIRATE_BRIG,
+            ShipKindRegistry.DINGHY,
+            ShipKindRegistry.ROWBOAT,
             ShipKindRegistry.FISHER,
+            ShipKindRegistry.CREWBOAT,
+            ShipKindRegistry.PIRATE_BRIG,
             ShipKindRegistry.GALLEON
         };
         List<Point> used = new ArrayList<>();
