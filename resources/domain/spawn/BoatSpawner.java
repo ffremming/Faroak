@@ -48,7 +48,9 @@ public final class BoatSpawner {
             // more boats than it kept.
             if (!Boat.canPlaceAt(ctx, p.x, p.y)) continue;
             Boat boat = new Boat(ctx.player().panel, p.x, p.y);
-            if (ctx.world().placeEntity(boat)) placed++;
+            // Water tiles are solid, so the generic placeEntity gate always
+            // rejects ocean — use the dedicated ship-on-water path.
+            if (ctx.world().placeShipOnWater(boat)) placed++;
         }
     }
 

@@ -306,13 +306,8 @@ public final class WorldInteraction {
         // Player-placed boats sit still until boarded. AI patrol re-attaches
         // automatically on dismount via Boat.dismount().
         Boat placed = new Boat(panel, x, y, false);
-        if (!isAllWater(placed.getHitBox())) return false;
-        // Don't use solidCollision here — water tiles are marked solid (to
-        // block the player from walking on water), so it would always reject
-        // every spot of ocean. We only care that no *entity* (another boat,
-        // a mob) occupies the spot.
-        if (entityCollision(placed.getHitBox())) return false;
-        if (!placeEntityNoSolidCheck(placed)) return false;
+        // placeShipOnWater enforces all-water + entity-free + no-solid-gate.
+        if (!placeShipOnWater(placed)) return false;
         equipped.removeOneItem();
         return true;
     }
