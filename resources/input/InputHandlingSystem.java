@@ -22,16 +22,19 @@ public class InputHandlingSystem {
     }
 
     public void update(double delta){
-        boolean onlineAuthoritative = panel.multiplayer() != null && panel.multiplayer().isOnline();
         // While the player is riding a boat, the boat reads these flags
         // directly to steer; routing them into player velocity too would
         // both drift the player off the boat and double-handle the input.
         boolean riding = panel.player() != null
-            && panel.player().hasComponent(BoatRideComponent.class);
+            && (panel.player().hasComponent(BoatRideComponent.class)
+                || (panel.multiplayer() != null && panel.multiplayer().isOnline()
+                    && panel.multiplayer().localPlayerRiding()));
 
-        // Online movement is server-authoritative: do not integrate local
-        // player velocity in parallel, or we get visible rubber-banding.
-        if (!riding && !onlineAuthoritative) {
+        // Online play uses client-side prediction: local input moves the player
+        // immediately, then MultiplayerRuntime reconciles against the server.
+        // Single-player uses the same path, which keeps collision behaviour in
+        // parity instead of special-casing online movement.
+        if (!riding) {
             if (up){
                 panel.player().addVelocity(new Vector(0,-2*delta));
             }

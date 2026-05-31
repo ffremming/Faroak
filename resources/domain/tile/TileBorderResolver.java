@@ -63,22 +63,25 @@ public final class TileBorderResolver {
 
     private boolean isSeabedRevealing() {
         String n = tile.getName();
-        return "shallowWater".equals(n) || "mediumWater".equals(n);
+        return "shallowWater".equals(n) || "midWater".equals(n) || "mediumWater".equals(n);
     }
 
     private boolean isWaterTile() {
         String n = tile.getName();
         return "ocean".equals(n) || "river".equals(n)
-            || "mediumWater".equals(n) || "shallowWater".equals(n);
+            || "mediumWater".equals(n) || "midWater".equals(n) || "shallowWater".equals(n);
     }
 
     /**
      * Family used for the soil-plot edge drawn around a tilled {@link
-     * resources.domain.farming.FarmTile}. Reuses the procedurally generated
-     * {@code mudB1/mudC0} shapes (see {@code TileMaskGenerator}); the tile
-     * loader derives the other sides/corners by rotation.
+     * resources.domain.farming.FarmTile}. Uses the dedicated {@code
+     * farmEdgeB1/farmEdgeC0} shapes (see {@code TileMaskGenerator}) — a dark
+     * tilled-earth ridge that contrasts against both the brown soil it sits on
+     * and the green grass around it. (The old {@code mud} family was the same
+     * brown as the soil, so the border was technically drawn but invisible.)
+     * The tile loader derives the other sides/corners by rotation.
      */
-    private static final String FARM_BORDER_FAMILY = "mud";
+    private static final String FARM_BORDER_FAMILY = "farmEdge";
 
     /** Replace {@code tile.images} with the full stack for the given animation frame. */
     public void resolveInto(ArrayList<BufferedImage> sink, int frame) {
@@ -90,13 +93,24 @@ public final class TileBorderResolver {
             sink.add(images.getTileImage(
                 SeabedPicker.seabedFor((int) tile.worldX, (int) tile.worldY)));
         }
-        sink.add(baseFrame(frame));
-        // Tilled soil draws its own plot edge against any non-farm neighbour,
-        // independent of elevation. Other tiles keep the higher-neighbour rule.
-        boolean[] borders = tile instanceof resources.domain.farming.FarmTile
-                ? addFarmBorders(sink, frame)
-                : addBorders(sink, frame);
-        addCorners(sink, frame, borders);
+
+        // Seabed-revealing water flattens its base + depth crescents into ONE
+        // translucent layer so the crescent region doesn't stack alpha on the base
+        // (which read as a darker band / hard step). See WaterLayerFlattener.
+        if (isSeabedRevealing()) {
+            ArrayList<BufferedImage> crescents = new ArrayList<>();
+            boolean[] borders = addBorders(crescents, frame);
+            addCorners(crescents, frame, borders);
+            sink.add(WaterLayerFlattener.flatten(baseFrame(frame), crescents));
+        } else {
+            sink.add(baseFrame(frame));
+            // Tilled soil draws its own plot edge against any non-farm neighbour,
+            // independent of elevation. Other tiles keep the higher-neighbour rule.
+            boolean[] borders = tile instanceof resources.domain.farming.FarmTile
+                    ? addFarmBorders(sink, frame)
+                    : addBorders(sink, frame);
+            addCorners(sink, frame, borders);
+        }
         // Sparse surface details (bubbles/sparkles/ripples) on top of any water.
         if (isWaterTile()) {
             String detail = SeabedPicker.detailFor((int) tile.worldX, (int) tile.worldY);

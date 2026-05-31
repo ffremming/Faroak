@@ -35,8 +35,16 @@ public class UserInterface extends Container{
         height = panel.getFrameHeight();
         hud = new HealthHUD(panel);
 
-        setBackground(new Color(100,0,0,50));
-        setForeGround(new Color(0,0,0,100));
+        // The UserInterface is a full-screen *host* container: its rect spans the
+        // whole panel and is repainted every frame (Container.draw -> drawRect),
+        // so any non-transparent background tints the entire scene. A leftover
+        // translucent red (100,0,0,50) was doing exactly that — it only became
+        // visible once EnvironmentManager's first updatePanelDimensions tick gave
+        // the panel a non-zero width/height (~1s in), which is why the scene
+        // "darkened" right after the camera settled on the player. Keep it fully
+        // transparent; child widgets (HUD, inventory, menu) draw their own fills.
+        setBackground(new Color(0,0,0,0));
+        setForeGround(new Color(0,0,0,0));
 
         menu = new EscapeMenu(panel);
         menu.hide();

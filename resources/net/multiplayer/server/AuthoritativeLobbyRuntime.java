@@ -26,6 +26,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
     private static final String META_SERVER_TICK = "server_tick";
     private static final String META_WORLD_NEXT_OBJECT_ID = "world_next_object_id";
     private static final String META_WORLD_REVISION = "world_revision";
+    private static final String META_WORLD_CHUNK_KEYS = "world_chunk_keys";
 
     private final int maxPlayers;
     private final int protocolVersion;
@@ -39,14 +40,12 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
     private final PersistenceStore persistence;
     private final SnapshotCodec snapshotCodec;
     private final ServerTerrainRules terrainRules;
-    private final ActionResolver actionResolver;
+    private final AuthoritativeGameHost gameHost;
     private final SnapshotPublisher snapshotPublisher;
     private final ProtocolPayloadCodec payloadCodec = new ProtocolPayloadCodec();
     private final ArrayDeque<ProtocolEnvelope> inbound = new ArrayDeque<>();
     private final Map<String, Session> sessions = new HashMap<>();
     private final Map<String, ArrayDeque<ProtocolEnvelope>> outbound = new HashMap<>();
-    private final Map<Long, SimObject> worldObjects = new HashMap<>();
-    private final Map<Long, SimObject> tombstones = new HashMap<>();
     private final long tombstoneTtlTicks;
 
     private long tick;
@@ -71,12 +70,13 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         this.persistence = persistence;
         this.snapshotCodec = snapshotCodec;
         this.terrainRules = new ServerTerrainRules();
-        this.actionResolver = new ActionResolver(this.maxActionRange, this.terrainRules);
+        this.gameHost = new AuthoritativeGameHost(this.terrainRules, this.maxActionRange);
         this.snapshotPublisher = new SnapshotPublisher(snapshotCodec, this.protocolVersion, this.interestRadius);
         this.tombstoneTtlTicks = Math.max(1L, config.serverTickRate() * 10L);
         this.tick = ServerParse.parseLong(persistence.getMeta(META_SERVER_TICK, "0"), 0L);
         this.nextObjectId = Math.max(1L, ServerParse.parseLong(persistence.getMeta(META_WORLD_NEXT_OBJECT_ID, "1"), 1L));
         this.worldRevision = Math.max(0L, ServerParse.parseLong(persistence.getMeta(META_WORLD_REVISION, "0"), 0L));
+        this.gameHost.setCounters(this.tick, this.worldRevision, this.nextObjectId);
         restoreWorldObjects();
     }
 
@@ -88,6 +88,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         Session removed = sessions.remove(playerId);
         if (removed != null) {
             persist(removed);
+            gameHost.removePlayer(playerId);
             presence(playerId, false);
             event(playerId, "disconnect", "");
         }
@@ -102,10 +103,10 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
     public synchronized void tick() {
         tick++;
         processInbound();
-        integratePlayers();
+        gameHost.integratePlayers(sessions, authority, moveSpeedPerTick, tick);
         pruneTombstones();
         if (tick % snapshotEveryTicks == 0L) {
-            snapshotPublisher.publishSnapshots(sessions, worldObjects, tombstones, tick, this::send);
+            gameHost.publishSnapshots(sessions, tick, protocolVersion, interestRadius, snapshotCodec, this::send);
         }
         if (tick % playerFlushEveryTicks == 0L) flushPlayers();
         if (tick % worldFlushEveryTicks == 0L) {
@@ -134,8 +135,6 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         sessions.clear();
         inbound.clear();
         outbound.clear();
-        worldObjects.clear();
-        tombstones.clear();
     }
 
     private void processInbound() {
@@ -150,6 +149,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
             else if (ProtocolMessageType.LEAVE.equals(type)) onDisconnect(envelope.playerId());
             else if (ProtocolMessageType.INPUT_STATE.equals(type)) onInput(envelope);
             else if (ProtocolMessageType.ACTION.equals(type)) onAction(envelope);
+            else if (ProtocolMessageType.COMMAND.equals(type)) onCommand(envelope);
             else if (ProtocolMessageType.PING.equals(type)) ack(envelope.playerId(), envelope.sequence());
         }
     }
@@ -172,8 +172,14 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
                 session.y = join.spawnY;
                 session.lastChangedTick = tick;
             }
+            gameHost.syncPlayerFromPersistence(
+                playerId, session.x, session.y, session.vx, session.vy, session.lastAcceptedSeq, tick);
+            gameHost.syncToSession(session);
         }
         ensureSpawnOnLand(session);
+        gameHost.syncPlayerFromPersistence(
+            playerId, session.x, session.y, session.vx, session.vy, session.lastAcceptedSeq, tick);
+        gameHost.syncToSession(session);
         session.baselineSent = false;
         session.lastSentTick = 0L;
         session.lastChangedTick = tick;
@@ -190,6 +196,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         boolean changed = s.up != input.up || s.left != input.left || s.down != input.down || s.right != input.right;
         s.lastAcceptedSeq = envelope.sequence();
         s.up = input.up; s.left = input.left; s.down = input.down; s.right = input.right;
+        gameHost.setInput(s, input, envelope.sequence(), tick);
         if (changed) s.lastChangedTick = tick;
         ack(s.playerId, s.lastAcceptedSeq);
     }
@@ -201,17 +208,35 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         ProtocolPayloads.ActionRequest action = payloadCodec.decodeAction(envelope.payload());
         if (action.action == null || !authority.canPerformAction(s.playerId, action.action, tick)) return;
         if (action.hasTarget && !authority.withinRange(s.x, s.y, action.targetX, action.targetY, maxActionRange)) return;
-        ActionResolver.Mutation mutation =
-            new ActionResolver.Mutation(nextObjectId, worldRevision, worldDirty, tick, this::event);
-        boolean applied = actionResolver.applyAction(s, action, worldObjects, tombstones, mutation);
-        nextObjectId = mutation.nextObjectId;
-        worldRevision = mutation.worldRevision;
-        worldDirty = mutation.worldDirty;
+        boolean applied = gameHost.applyAction(s, action, tick, this::event);
+        nextObjectId = gameHost.nextEntityId();
+        worldRevision = gameHost.revision();
+        worldDirty = gameHost.dirty();
         if (!applied) return;
         s.lastAcceptedSeq = envelope.sequence();
         s.lastAction = action.action;
         s.lastChangedTick = tick;
         ack(s.playerId, s.lastAcceptedSeq);
+    }
+
+    private void onCommand(ProtocolEnvelope envelope) {
+        Session s = sessions.get(envelope.playerId());
+        if (s == null) return;
+        if (!authority.acceptsSequence(envelope.sequence(), s.lastAcceptedSeq)) {
+            commandResult(s.playerId, envelope.sequence(), false, "stale command");
+            return;
+        }
+        ProtocolPayloads.CommandRequest command = payloadCodec.decodeCommand(envelope.payload());
+        AuthoritativeGameHost.CommandOutcome outcome = gameHost.applyCommand(
+            s, command, envelope.sequence(), tick, this::event);
+        nextObjectId = gameHost.nextEntityId();
+        worldRevision = gameHost.revision();
+        worldDirty = gameHost.dirty();
+        if (outcome.accepted) {
+            s.lastAcceptedSeq = envelope.sequence();
+            s.lastChangedTick = tick;
+        }
+        commandResult(s.playerId, envelope.sequence(), outcome.accepted, outcome.reason);
     }
 
     private void integratePlayers() {
@@ -279,6 +304,9 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         PersistenceStore.PersistedPlayer persisted = persistence.loadPlayer(playerId)
             .orElse(new PersistenceStore.PersistedPlayer(playerId, 0.0, 0.0, 0.0, 0.0, 0L));
         Session session = new Session(persisted);
+        gameHost.syncPlayerFromPersistence(
+            playerId, persisted.worldX, persisted.worldY, persisted.velocityX, persisted.velocityY, persisted.lastSequence, tick);
+        gameHost.syncToSession(session);
         ensureSpawnOnLand(session);
         return session;
     }
@@ -327,6 +355,12 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         send(playerId, new ProtocolEnvelope(protocolVersion, playerId, 0L, seq, tick, ProtocolMessageType.ACK, payload));
     }
 
+    private void commandResult(String playerId, long seq, boolean accepted, String reason) {
+        byte[] payload = payloadCodec.encodeCommandResult(new ProtocolPayloads.CommandResult(seq, accepted, reason));
+        send(playerId, new ProtocolEnvelope(
+            protocolVersion, playerId, 0L, accepted ? seq : 0L, tick, ProtocolMessageType.COMMAND_RESULT, payload));
+    }
+
     private void send(String playerId, ProtocolEnvelope envelope) {
         if (playerId == null || playerId.isBlank() || envelope == null) return;
         outbound.computeIfAbsent(playerId, ignored -> new ArrayDeque<>()).addLast(envelope);
@@ -346,46 +380,56 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
     }
 
     private void flushWorld() {
-        if (!worldDirty && worldObjects.isEmpty() && nextObjectId <= 1L && worldRevision <= 0L) return;
-        ArrayList<ProtocolPayloads.WorldObjectState> objects = new ArrayList<>(worldObjects.size());
-        for (SimObject object : worldObjects.values()) {
-            if (!object.removed) objects.add(object.toPayloadState());
+        if (!worldDirty && !gameHost.dirty() && nextObjectId <= 1L && worldRevision <= 0L) return;
+        Map<Long, ProtocolPayloads.Snapshot> chunks = gameHost.persistenceSnapshotsByChunk();
+        StringBuilder keys = new StringBuilder();
+        for (Map.Entry<Long, ProtocolPayloads.Snapshot> entry : chunks.entrySet()) {
+            persistence.saveWorldChunk(entry.getKey().longValue(), payloadCodec.encodeSnapshot(entry.getValue()));
+            if (keys.length() > 0) keys.append(',');
+            keys.append(entry.getKey().longValue());
         }
-        byte[] bytes = payloadCodec.encodeSnapshot(
-            new ProtocolPayloads.Snapshot(true, 0L, new ArrayList<>(), objects));
-        persistence.saveWorldChunk(WORLD_CHUNK_KEY, bytes);
+        nextObjectId = gameHost.nextEntityId();
+        worldRevision = gameHost.revision();
         persistence.putMeta(META_WORLD_NEXT_OBJECT_ID, Long.toString(Math.max(1L, nextObjectId)));
         persistence.putMeta(META_WORLD_REVISION, Long.toString(Math.max(0L, worldRevision)));
+        persistence.putMeta(META_WORLD_CHUNK_KEYS, keys.toString());
         worldDirty = false;
+        gameHost.clearDirty();
     }
 
     private void restoreWorldObjects() {
-        byte[] bytes = persistence.loadWorldChunk(WORLD_CHUNK_KEY).orElse(null);
-        if (bytes == null || bytes.length == 0) return;
-        ProtocolPayloads.Snapshot snapshot = payloadCodec.decodeSnapshot(bytes);
-        long maxId = 0L;
-        long maxRevision = worldRevision;
-        for (ProtocolPayloads.WorldObjectState state : snapshot.worldObjects) {
-            if (state == null || state.removed) continue;
-            SimObject object = new SimObject(
-                state.objectId, state.objectType, state.worldX, state.worldY, false, state.revision, tick);
-            worldObjects.put(object.objectId, object);
-            maxId = Math.max(maxId, object.objectId);
-            maxRevision = Math.max(maxRevision, object.revision);
+        List<Long> keys = restoredChunkKeys();
+        for (Long key : keys) {
+            if (key == null) continue;
+            byte[] bytes = persistence.loadWorldChunk(key.longValue()).orElse(null);
+            if (bytes == null || bytes.length == 0) continue;
+            ProtocolPayloads.Snapshot snapshot = payloadCodec.decodeSnapshot(bytes);
+            gameHost.restoreFromSnapshot(snapshot, tick);
         }
-        if (nextObjectId <= maxId) nextObjectId = maxId + 1L;
-        worldRevision = Math.max(worldRevision, maxRevision);
+        nextObjectId = gameHost.nextEntityId();
+        worldRevision = gameHost.revision();
+    }
+
+    private List<Long> restoredChunkKeys() {
+        ArrayList<Long> keys = new ArrayList<>();
+        String encoded = persistence.getMeta(META_WORLD_CHUNK_KEYS, "");
+        if (encoded != null && !encoded.isBlank()) {
+            String[] parts = encoded.split(",");
+            for (String part : parts) {
+                if (part == null || part.isBlank()) continue;
+                try { keys.add(Long.parseLong(part.trim())); }
+                catch (NumberFormatException ignored) {}
+            }
+        }
+        if (!keys.isEmpty()) return keys;
+        keys.addAll(persistence.listWorldChunkKeys());
+        if (!keys.isEmpty()) return keys;
+        keys.add(WORLD_CHUNK_KEY);
+        return keys;
     }
 
     private void pruneTombstones() {
-        ArrayList<Long> expired = new ArrayList<>();
-        for (Map.Entry<Long, SimObject> entry : tombstones.entrySet()) {
-            SimObject tombstone = entry.getValue();
-            if ((tick - tombstone.lastChangedTick) > tombstoneTtlTicks) {
-                expired.add(entry.getKey());
-            }
-        }
-        for (Long key : expired) tombstones.remove(key);
+        gameHost.pruneTombstones(tick, tombstoneTtlTicks);
     }
 
     private void event(String playerId, String type, String payload) {

@@ -1,6 +1,7 @@
 package resources.net.multiplayer.server.persistence;
 
 import java.util.Optional;
+import java.util.List;
 
 /**
  * Server persistence port.
@@ -14,6 +15,10 @@ public interface PersistenceStore extends AutoCloseable {
     Optional<byte[]> loadWorldChunk(long chunkKey);
 
     void saveWorldChunk(long chunkKey, byte[] snapshotBytes);
+
+    default List<Long> listWorldChunkKeys() {
+        return java.util.Collections.emptyList();
+    }
 
     void putMeta(String key, String value);
 

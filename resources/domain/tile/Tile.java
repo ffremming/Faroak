@@ -62,6 +62,11 @@ public class Tile extends BaseEntity {
             lightSource = true;
             AnimationClip waves = panel.animations().require(Animations.SHALLOW_WATER_WAVES);
             addComponent(new AnimationComponent(waves, panel.clock()));
+        } else if ("midWater".equals(getName())) {
+            solid = true;
+            lightSource = true;
+            AnimationClip waves = panel.animations().require(Animations.MID_WATER_WAVES);
+            addComponent(new AnimationComponent(waves, panel.clock()));
         } else if ("mediumWater".equals(getName())) {
             solid = true;
             lightSource = true;

@@ -93,9 +93,9 @@ public class Mouse implements MouseListener, MouseMotionListener, MouseWheelList
                 (int) panel.camera().getWorldY() + e.getY());
             if (clickRouter.route(panel, worldPoint)) lastPlaceMs = now;
         } else {
-            // Online: the server applies the intent. Stamp the cooldown either
-            // way so a rejected intent can't open rapid-fire retries.
-            panel.input().enqueueAction(InputAction.PLACE);
+            // Online: preserve the exact click coordinate and let the server
+            // decide whether this is placement, boarding, or container open.
+            panel.multiplayer().submitWorldClick(getMouseWorldX(), getMouseWorldY());
             lastPlaceMs = now;
         }
     }

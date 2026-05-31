@@ -122,6 +122,11 @@ public class ItemContainerSlot extends Component {
 
     @Override
     public void mousePressed(MouseEvent e) {
+        if (panel.multiplayer() != null
+                && panel.multiplayer().isOnline()
+                && panel.multiplayer().submitInventoryClick(inventory, number, e.getButton())) {
+            return;
+        }
         if (e.getButton() == MouseEvent.BUTTON3) {
             splitWithPlayerHand();
             return;

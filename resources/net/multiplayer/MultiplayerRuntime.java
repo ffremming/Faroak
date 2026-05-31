@@ -2,21 +2,36 @@ package resources.net.multiplayer;
 
 import java.util.List;
 import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.Map;
+import java.awt.Point;
 
 import resources.app.GameContext;
+import resources.app.GamePanel;
+import resources.domain.entity.BaseEntity;
+import resources.domain.inventory.Inventory;
+import resources.domain.inventory.Item;
+import resources.domain.inventory.Stack;
+import resources.domain.object.Barrel;
+import resources.domain.object.Boat;
+import resources.domain.object.Chest;
+import resources.domain.object.CraftingTable;
 import resources.input.InputAction;
 import resources.input.InputHandlingSystem;
-import resources.net.multiplayer.message.ClientActionMessage;
+import resources.net.multiplayer.message.ClientCommandMessage;
 import resources.net.multiplayer.message.ClientInputMessage;
 import resources.net.multiplayer.message.ClientJoinMessage;
 import resources.net.multiplayer.message.ClientLeaveMessage;
 import resources.net.multiplayer.message.ClientPingMessage;
 import resources.net.multiplayer.message.PlayerStateMessage;
 import resources.net.multiplayer.message.ServerAckMessage;
+import resources.net.multiplayer.message.ServerCommandResultMessage;
 import resources.net.multiplayer.message.ServerMessage;
 import resources.net.multiplayer.message.ServerPlayerPresenceMessage;
 import resources.net.multiplayer.message.ServerSnapshotMessage;
 import resources.net.multiplayer.message.ServerWelcomeMessage;
+import resources.net.multiplayer.protocol.ProtocolPayloads;
+import resources.presentation.ui.NetworkContainerUIBridge;
 
 /**
  * Coordinates multiplayer networking in the client runtime.
@@ -34,11 +49,13 @@ public final class MultiplayerRuntime {
     private final MultiplayerConfig config;
     private final MultiplayerServerAdapter adapter;
     private final RemotePlayerDirectory remotes;
-    private final ReplicatedObjectDirectory worldObjects;
+    private final ReplicatedWorldState replicatedWorld;
     private final boolean reconnectEnabled;
     private final long reconnectDelayMs;
     private final boolean localReconcileEnabled;
     private final int localInterpolationDelayMs;
+    private final double localReconcileWarpDistance;
+    private final double localReconcileBlend;
 
     private long sequence;
     private boolean started;
@@ -51,13 +68,14 @@ public final class MultiplayerRuntime {
     private long lastAckedSeq;
     private final ArrayDeque<PredictedInput> pendingInputs = new ArrayDeque<>();
     private final ArrayDeque<LocalSnapshotSample> localSamples = new ArrayDeque<>();
+    private final Map<Long, Runnable> commandAcceptedHandlers = new HashMap<>();
 
     private MultiplayerRuntime(GameContext ctx, MultiplayerConfig config, MultiplayerServerAdapter adapter) {
         this.ctx = ctx;
         this.config = config;
         this.adapter = adapter;
         this.remotes = new RemotePlayerDirectory(ctx);
-        this.worldObjects = new ReplicatedObjectDirectory(ctx);
+        this.replicatedWorld = new ReplicatedWorldState(ctx);
         this.reconnectEnabled = parseBoolean(
             "game.multiplayer.reconnect.enabled", true);
         this.reconnectDelayMs = parseLong(
@@ -66,6 +84,10 @@ public final class MultiplayerRuntime {
             "game.multiplayer.reconcileLocal", true);
         this.localInterpolationDelayMs = (int) parseLong(
             "game.multiplayer.localInterpolationDelayMs", 0L, 0L, 250L);
+        this.localReconcileWarpDistance = parseDouble(
+            "game.multiplayer.localReconcileWarpDistance", 96.0, 1.0, 2048.0);
+        this.localReconcileBlend = parseDouble(
+            "game.multiplayer.localReconcileBlend", 0.15, 0.01, 1.0);
     }
 
     public static MultiplayerRuntime createDefault(GameContext ctx) {
@@ -93,7 +115,15 @@ public final class MultiplayerRuntime {
     }
 
     public int replicatedObjectCount() {
-        return worldObjects.size();
+        return replicatedWorld.entityCount();
+    }
+
+    public int replicatedInventoryCount() {
+        return replicatedWorld.inventoryCount();
+    }
+
+    public int replicatedTileMutationCount() {
+        return replicatedWorld.tileMutationCount();
     }
 
     public double remotePlayersMeanX() {
@@ -110,6 +140,45 @@ public final class MultiplayerRuntime {
 
     public long localSequence() {
         return sequence;
+    }
+
+    public boolean localPlayerRiding() {
+        return replicatedWorld.ridingEntityIdFor(config.playerId()) > 0L;
+    }
+
+    public boolean submitWorldClick(double worldX, double worldY) {
+        if (closed || !config.online() || !joined) return false;
+        BaseEntity clicked = entityAt(worldX, worldY);
+        Stack equipped = ctx.player() == null ? null : ctx.player().getEquipped();
+        String itemType = stackName(equipped);
+        int selectedSlot = selectedInventorySlot();
+
+        if (clicked instanceof Boat && !"boat".equals(itemType)) {
+            long entityId = replicatedWorld.entityIdFor(clicked);
+            long seq = submitCommand(ProtocolPayloads.CommandRequest.interactEntity(entityId, worldX, worldY));
+            return seq > 0L;
+        }
+
+        if (isContainer(clicked)) {
+            long entityId = replicatedWorld.entityIdFor(clicked);
+            long seq = submitCommand(ProtocolPayloads.CommandRequest.interactEntity(entityId, worldX, worldY));
+            if (seq > 0L) {
+                commandAcceptedHandlers.put(seq, () -> openNetworkContainer(clicked, entityId));
+                return true;
+            }
+            return false;
+        }
+
+        long seq = submitCommand(ProtocolPayloads.CommandRequest.useEquippedAt(worldX, worldY, itemType, selectedSlot));
+        return seq > 0L;
+    }
+
+    public boolean submitInventoryClick(Inventory inventory, int slotIndex, int button) {
+        if (closed || !config.online() || !joined || inventory == null) return false;
+        long inventoryId = inventoryIdFor(inventory);
+        if (inventoryId < 0L) return false;
+        long seq = submitCommand(ProtocolPayloads.CommandRequest.inventoryClick(inventoryId, slotIndex, button));
+        return seq > 0L;
     }
 
     public void update(double delta) {
@@ -201,17 +270,14 @@ public final class MultiplayerRuntime {
         for (InputAction action : actions) {
             MultiplayerAction mapped = MultiplayerAction.fromInput(action);
             if (mapped == null) continue;
-            long seq = ++sequence;
             if (MultiplayerAction.PLACE.equals(mapped) && ctx.mouse() != null) {
-                String placeType = "";
-                if (ctx.player() != null && ctx.player().getEquipped() != null) {
-                    placeType = ctx.player().getEquipped().getName();
-                }
-                adapter.submit(new ClientActionMessage(
-                    config.playerId(), seq, mapped, true,
-                    ctx.mouse().getMouseWorldX(), ctx.mouse().getMouseWorldY(), placeType));
-            } else {
-                adapter.submit(new ClientActionMessage(config.playerId(), seq, mapped));
+                submitWorldClick(ctx.mouse().getMouseWorldX(), ctx.mouse().getMouseWorldY());
+            } else if (MultiplayerAction.ATTACK.equals(mapped)) {
+                double x = ctx.mouse() == null ? localPlayerX() : ctx.mouse().getMouseWorldX();
+                double y = ctx.mouse() == null ? localPlayerY() : ctx.mouse().getMouseWorldY();
+                submitCommand(ProtocolPayloads.CommandRequest.attackAt(x, y));
+            } else if (MultiplayerAction.INTERACT.equals(mapped)) {
+                submitCommand(ProtocolPayloads.CommandRequest.interactAt(localPlayerX(), localPlayerY()));
             }
         }
         pingCounter++;
@@ -227,12 +293,20 @@ public final class MultiplayerRuntime {
             } else if (message instanceof ServerSnapshotMessage) {
                 ServerSnapshotMessage snapshot = (ServerSnapshotMessage) message;
                 remotes.applySnapshot(snapshot.tick(), snapshot.baseline(), snapshot.players(), config.playerId());
-                worldObjects.applySnapshot(snapshot.baseline(), snapshot.worldObjects());
+                replicatedWorld.applySnapshot(
+                    snapshot.baseline(),
+                    snapshot.worldObjects(),
+                    snapshot.entities(),
+                    snapshot.inventories(),
+                    snapshot.tileMutations());
+                applyLocalPlayerInventorySnapshot();
                 if (localReconcileEnabled) {
                     reconcileLocal(snapshot.players(), snapshot.acknowledgedSequence());
                 }
             } else if (message instanceof ServerAckMessage) {
                 onAck((ServerAckMessage) message);
+            } else if (message instanceof ServerCommandResultMessage) {
+                onCommandResult((ServerCommandResultMessage) message);
             } else if (message instanceof ServerPlayerPresenceMessage) {
                 // Presence events are consumed by UI later; current runtime only
                 // needs snapshots for simulation.
@@ -261,6 +335,19 @@ public final class MultiplayerRuntime {
         lastAckedSeq = Math.max(lastAckedSeq, ack.acknowledgedSequence());
         while (!pendingInputs.isEmpty() && pendingInputs.peekFirst().sequence <= lastAckedSeq) {
             pendingInputs.removeFirst();
+        }
+    }
+
+    private void onCommandResult(ServerCommandResultMessage result) {
+        if (!config.playerId().equals(result.playerId())) return;
+        lastAckedSeq = Math.max(lastAckedSeq, result.commandSequence());
+        Runnable accepted = commandAcceptedHandlers.remove(result.commandSequence());
+        if (result.accepted()) {
+            if (accepted != null) accepted.run();
+            return;
+        }
+        if (ctx.userInterface() != null && result.reason() != null && !result.reason().isBlank()) {
+            ctx.userInterface().showToast(result.reason(), 1200L);
         }
     }
 
@@ -312,8 +399,18 @@ public final class MultiplayerRuntime {
             nextY = only.y + (only.vy * ticksAhead);
         }
 
-        ctx.player().setWorldX(nextX);
-        ctx.player().setWorldY(nextY);
+        double currentX = ctx.player().getWorldX();
+        double currentY = ctx.player().getWorldY();
+        double dx = nextX - currentX;
+        double dy = nextY - currentY;
+        double dist2 = (dx * dx) + (dy * dy);
+        if (dist2 >= localReconcileWarpDistance * localReconcileWarpDistance) {
+            ctx.player().setWorldX(nextX);
+            ctx.player().setWorldY(nextY);
+        } else if (dist2 > 0.01) {
+            ctx.player().setWorldX(currentX + (dx * localReconcileBlend));
+            ctx.player().setWorldY(currentY + (dy * localReconcileBlend));
+        }
         ctx.player().getHitBox().updateCoords();
     }
 
@@ -333,6 +430,106 @@ public final class MultiplayerRuntime {
         if (input.isDown()) mask |= 4L;
         if (input.isRight()) mask |= 8L;
         return mask;
+    }
+
+    private long submitCommand(ProtocolPayloads.CommandRequest command) {
+        if (command == null || command.commandType == null || command.commandType.isBlank()) return 0L;
+        long seq = ++sequence;
+        adapter.submit(new ClientCommandMessage(config.playerId(), seq, command));
+        return seq;
+    }
+
+    private BaseEntity entityAt(double worldX, double worldY) {
+        if (ctx.world() == null) return null;
+        ArrayDeque<BaseEntity> hits = new ArrayDeque<>();
+        for (BaseEntity entity : ctx.world().getEntitiesCollidedWith(new Point((int) Math.round(worldX), (int) Math.round(worldY)))) {
+            if (entity == null || entity == ctx.player()) continue;
+            hits.addLast(entity);
+        }
+        BaseEntity fallback = null;
+        for (BaseEntity entity : hits) {
+            if (isContainer(entity) || entity instanceof Boat) return entity;
+            fallback = entity;
+        }
+        return fallback;
+    }
+
+    private boolean isContainer(BaseEntity entity) {
+        return entity instanceof Chest || entity instanceof Barrel || entity instanceof CraftingTable;
+    }
+
+    private String stackName(Stack stack) {
+        if (stack == null || stack.isEmpty()) return "";
+        String name = stack.getName();
+        return name == null ? "" : name.trim().toLowerCase();
+    }
+
+    private int selectedInventorySlot() {
+        if (ctx.player() == null || ctx.player().getInventory() == null) return -1;
+        return Inventory.HOTBAR_OFFSET + ctx.player().getInventory().getIndex();
+    }
+
+    private long inventoryIdFor(Inventory inventory) {
+        if (inventory instanceof NetworkInventory) return ((NetworkInventory) inventory).inventoryId();
+        if (ctx.player() != null && inventory == ctx.player().getInventory()) {
+            ProtocolPayloads.InventoryStatePayload playerInv = replicatedWorld.inventoryForPlayer(config.playerId());
+            return playerInv == null ? -1L : playerInv.inventoryId;
+        }
+        return -1L;
+    }
+
+    private void openNetworkContainer(BaseEntity clicked, long entityId) {
+        if (!(ctx instanceof GamePanel) || clicked == null || entityId <= 0L) return;
+        ProtocolPayloads.InventoryStatePayload container = replicatedWorld.inventoryForOwner(entityId);
+        ProtocolPayloads.InventoryStatePayload player = replicatedWorld.inventoryForPlayer(config.playerId());
+        if (container == null || player == null) {
+            if (ctx.userInterface() != null) ctx.userInterface().showToast("Container state not ready", 1200L);
+            return;
+        }
+        GamePanel panel = (GamePanel) ctx;
+        NetworkInventory containerInv = new NetworkInventory(
+            panel, container.inventoryId, () -> replicatedWorld.inventory(container.inventoryId));
+        NetworkInventory playerInv = new NetworkInventory(
+            panel, player.inventoryId, () -> replicatedWorld.inventory(player.inventoryId));
+        NetworkContainerUIBridge.open(panel, clicked, container.inventoryType, containerInv, playerInv);
+    }
+
+    private void applyLocalPlayerInventorySnapshot() {
+        if (ctx.player() == null || ctx.player().getInventory() == null || !(ctx instanceof GamePanel)) return;
+        ProtocolPayloads.InventoryStatePayload snapshot = replicatedWorld.inventoryForPlayer(config.playerId());
+        if (snapshot == null) return;
+        Inventory local = ctx.player().getInventory();
+        int limit = Math.min(local.getSize(), snapshot.slots.size());
+        GamePanel panel = (GamePanel) ctx;
+        for (int i = 0; i < limit; i++) {
+            ProtocolPayloads.ItemStackPayload slot = snapshot.slots.get(i);
+            local.setStack(i, toLocalStack(panel, slot));
+        }
+        ProtocolPayloads.InventoryStatePayload cursor = replicatedWorld.cursorForPlayer(config.playerId());
+        if (cursor != null && !cursor.slots.isEmpty()) {
+            ProtocolPayloads.ItemStackPayload held = cursor.slots.get(0);
+            ctx.player().setTempInHand(toCursorStack(panel, held));
+        }
+    }
+
+    private Stack toLocalStack(GamePanel panel, ProtocolPayloads.ItemStackPayload slot) {
+        if (slot == null || slot.amount <= 0 || "empty".equals(slot.itemType)) {
+            return new Stack(panel, "empty");
+        }
+        return new Stack(panel, new Item(panel, slot.itemType), slot.amount);
+    }
+
+    private Stack toCursorStack(GamePanel panel, ProtocolPayloads.ItemStackPayload slot) {
+        if (slot == null || slot.amount <= 0 || "empty".equals(slot.itemType)) return null;
+        return new Stack(panel, new Item(panel, slot.itemType), slot.amount);
+    }
+
+    private double localPlayerX() {
+        return ctx.player() == null ? 0.0 : ctx.player().getWorldX();
+    }
+
+    private double localPlayerY() {
+        return ctx.player() == null ? 0.0 : ctx.player().getWorldY();
     }
 
     private static boolean isWebSocketBackend(String backend) {
@@ -363,6 +560,17 @@ public final class MultiplayerRuntime {
             return Math.max(min, Math.min(max, value));
         } catch (NumberFormatException ignored) {
             return fallback; // expected: non-numeric config value falls back to default
+        }
+    }
+
+    private static double parseDouble(String key, double fallback, double min, double max) {
+        String raw = System.getProperty(key);
+        if (raw == null || raw.isBlank()) return fallback;
+        try {
+            double value = Double.parseDouble(raw.trim());
+            return Math.max(min, Math.min(max, value));
+        } catch (NumberFormatException ignored) {
+            return fallback;
         }
     }
 

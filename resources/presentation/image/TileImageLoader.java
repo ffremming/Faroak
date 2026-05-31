@@ -52,6 +52,7 @@ public final class TileImageLoader {
         loadTile("seasonal forest", "seasonal forest.png");
         loadTile("ocean",           "ocean0.png");
         loadTile("shallowWater",    "shallowWater0.png");
+        loadTile("midWater",        "midWater0.png");
         loadTile("mediumWater",     "mediumWater0.png");
         loadTile("savanna",         "savanna.png");
         loadTile("desert",          "desert.png");

@@ -21,6 +21,9 @@ public final class BiomeRegistry {
     // sandy belts instead of a one-tile rim.
     public static final double OCEAN_LVL          = -0.175;
     public static final double MEDIUM_WATER_LVL   = -0.1375;
+    // Thin transition band between medium and shallow so the depth step ramps
+    // shallow → midWater → medium instead of jumping in one go.
+    public static final double MID_WATER_LVL      = -0.105;
     public static final double SHALLOW_WATER_LVL  = -0.10;
     public static final double TIDAL_SAND_LVL     = -0.09;
     public static final double WET_BEACH_LVL      = -0.025;
@@ -93,6 +96,7 @@ public final class BiomeRegistry {
 
     public static final Biome OCEAN            = new Biome("ocean",           "ocean",           true,  Collections.emptyList());
     public static final Biome SHALLOW_WATER    = new Biome("shallowWater",    "shallowWater",    true,  Collections.emptyList());
+    public static final Biome MID_WATER        = new Biome("midWater",        "midWater",        true,  Collections.emptyList());
     public static final Biome MEDIUM_WATER     = new Biome("mediumWater",     "mediumWater",     true,  Collections.emptyList());
     public static final Biome RIVER            = new Biome("river",           "ocean",           true,  Collections.emptyList());
     public static final Biome WET_BEACH        = new Biome("wetBeach",        "wetBeach",        false, Collections.emptyList());
@@ -156,6 +160,7 @@ public final class BiomeRegistry {
     public static Biome classify(double height, double temperature, double humidity, double river) {
         if (height <= OCEAN_LVL)         return OCEAN;
         if (height <= MEDIUM_WATER_LVL)  return MEDIUM_WATER;
+        if (height <= MID_WATER_LVL)     return MID_WATER;
         if (height <= SHALLOW_WATER_LVL) return SHALLOW_WATER;
         if (height <= TIDAL_SAND_LVL)    return TIDAL_SAND;
         if (height <= WET_BEACH_LVL)     return WET_BEACH;

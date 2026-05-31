@@ -3,6 +3,7 @@ package resources.net.multiplayer;
 import java.util.ArrayList;
 
 import resources.net.multiplayer.message.ClientActionMessage;
+import resources.net.multiplayer.message.ClientCommandMessage;
 import resources.net.multiplayer.message.ClientInputMessage;
 import resources.net.multiplayer.message.ClientJoinMessage;
 import resources.net.multiplayer.message.ClientLeaveMessage;
@@ -10,6 +11,7 @@ import resources.net.multiplayer.message.ClientMessage;
 import resources.net.multiplayer.message.ClientPingMessage;
 import resources.net.multiplayer.message.PlayerStateMessage;
 import resources.net.multiplayer.message.ServerAckMessage;
+import resources.net.multiplayer.message.ServerCommandResultMessage;
 import resources.net.multiplayer.message.ServerMessage;
 import resources.net.multiplayer.message.ServerPlayerPresenceMessage;
 import resources.net.multiplayer.message.ServerSnapshotMessage;
@@ -53,6 +55,11 @@ final class ProtocolMessageTranslator {
                 action.action(), action.hasTarget(), action.targetX(), action.targetY(), action.argument()));
             return envelope(action.playerId(), action.sequence(), 0L, 0L, ProtocolMessageType.ACTION, payload);
         }
+        if (message instanceof ClientCommandMessage) {
+            ClientCommandMessage command = (ClientCommandMessage) message;
+            byte[] payload = payloadCodec.encodeCommand(command.command());
+            return envelope(command.playerId(), command.sequence(), 0L, 0L, ProtocolMessageType.COMMAND, payload);
+        }
         if (message instanceof ClientPingMessage) {
             ClientPingMessage ping = (ClientPingMessage) message;
             byte[] payload = payloadCodec.encodeAck(new ProtocolPayloads.Ack(ping.clientTimeMillis()));
@@ -77,6 +84,11 @@ final class ProtocolMessageTranslator {
             ProtocolPayloads.Ack ack = payloadCodec.decodeAck(envelope.payload());
             return new ServerAckMessage(envelope.playerId(), ack.acknowledgedSequence, envelope.serverTick());
         }
+        if (ProtocolMessageType.COMMAND_RESULT.equals(type)) {
+            ProtocolPayloads.CommandResult result = payloadCodec.decodeCommandResult(envelope.payload());
+            return new ServerCommandResultMessage(
+                envelope.playerId(), result.commandSequence, result.accepted, result.reason, envelope.serverTick());
+        }
         if (ProtocolMessageType.PLAYER_JOIN_LEAVE.equals(type)) {
             ProtocolPayloads.Presence p = payloadCodec.decodePresence(envelope.payload());
             return new ServerPlayerPresenceMessage(p.playerId, p.joined, envelope.serverTick());
@@ -93,7 +105,8 @@ final class ProtocolMessageTranslator {
                     s.objectId, s.objectType, s.worldX, s.worldY, s.removed, s.revision));
             }
             return new ServerSnapshotMessage(
-                envelope.serverTick(), snapshot.baseline, snapshot.acknowledgedSequence, players, objects);
+                envelope.serverTick(), snapshot.baseline, snapshot.acknowledgedSequence,
+                players, objects, snapshot.entities, snapshot.inventories, snapshot.tileMutations);
         }
         return null;
     }

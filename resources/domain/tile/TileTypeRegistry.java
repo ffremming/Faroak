@@ -27,6 +27,7 @@ public final class TileTypeRegistry {
     public static final TileType SWAMP           = define("swamp",           70,  false, false, false);
     public static final TileType OCEAN           = define("ocean",           0,   true,  true,  true);
     public static final TileType SHALLOW_WATER   = define("shallowWater",    3,   true,  true,  true);
+    public static final TileType MID_WATER       = define("midWater",        2,   true,  true,  true);
     public static final TileType MEDIUM_WATER    = define("mediumWater",     1,   true,  true,  true);
     public static final TileType MOUNTAIN        = define("mountain",        200, false, true,  false);
     public static final TileType SNOWY_TAIGA     = define("snowy taiga",     102, false, false, false);

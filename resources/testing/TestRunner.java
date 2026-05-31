@@ -42,6 +42,7 @@ import resources.testing.probes.LightingProbe;
 import resources.testing.probes.MobSpawnProbe;
 import resources.testing.probes.MovementPerfProbe;
 import resources.testing.probes.MultiplayerAuthorityProbe;
+import resources.testing.probes.AuthoritativeCommandGameplayProbe;
 import resources.testing.probes.MultiplayerPersistenceProbe;
 import resources.testing.probes.MultiplayerTenClientProbe;
 import resources.testing.probes.MultiplayerWorldReplicationProbe;
@@ -96,6 +97,7 @@ public final class TestRunner {
         probes.add(new RenderPerfProbe());
         probes.add(new ProtocolCodecProbe());
         probes.add(new MultiplayerAuthorityProbe());
+        probes.add(new AuthoritativeCommandGameplayProbe());
         probes.add(new MultiplayerTenClientProbe());
         probes.add(new MultiplayerPersistenceProbe());
         probes.add(new MultiplayerWorldReplicationProbe());

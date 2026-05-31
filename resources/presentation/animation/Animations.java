@@ -14,6 +14,7 @@ public final class Animations {
 
     public static final Identifier OCEAN_WAVES         = Identifier.of("tile/ocean_waves");
     public static final Identifier SHALLOW_WATER_WAVES = Identifier.of("tile/shallow_water_waves");
+    public static final Identifier MID_WATER_WAVES     = Identifier.of("tile/mid_water_waves");
     public static final Identifier MEDIUM_WATER_WAVES  = Identifier.of("tile/medium_water_waves");
 
     private Animations() {}
@@ -22,6 +23,7 @@ public final class Animations {
     public static void bootstrap(AnimationLibrary library, ImageContainer images) {
         if (!library.contains(OCEAN_WAVES))         library.register(OCEAN_WAVES,         oceanWaves(images));
         if (!library.contains(SHALLOW_WATER_WAVES)) library.register(SHALLOW_WATER_WAVES, shallowWaterWaves(images));
+        if (!library.contains(MID_WATER_WAVES))     library.register(MID_WATER_WAVES,     midWaterWaves(images));
         if (!library.contains(MEDIUM_WATER_WAVES))  library.register(MEDIUM_WATER_WAVES,  mediumWaterWaves(images));
     }
 
@@ -39,6 +41,14 @@ public final class Animations {
             new AnimationFrame(images.getTileImage("shallowWater0"), 30),
             new AnimationFrame(images.getTileImage("shallowWater1"), 30),
             new AnimationFrame(images.getTileImage("shallowWater2"), 30));
+    }
+
+    /** Intermediate-depth wave loop (between shallow and medium) — same cadence. */
+    private static AnimationClip midWaterWaves(ImageContainer images) {
+        return new AnimationClip(MID_WATER_WAVES, true,
+            new AnimationFrame(images.getTileImage("midWater0"), 30),
+            new AnimationFrame(images.getTileImage("midWater1"), 30),
+            new AnimationFrame(images.getTileImage("midWater2"), 30));
     }
 
     /** Medium-depth wave loop — same cadence, darker sprite set. */

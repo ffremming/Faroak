@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -96,6 +98,19 @@ public final class SqlitePersistenceStore implements PersistenceStore {
         } catch (SQLException e) {
             System.err.println("[SqlitePersistenceStore] saveWorldChunk failed for key " + chunkKey + ": " + e);
         }
+    }
+
+    @Override
+    public synchronized List<Long> listWorldChunkKeys() {
+        ArrayList<Long> keys = new ArrayList<>();
+        String sql = "SELECT chunk_key FROM world_chunks ORDER BY chunk_key";
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) keys.add(rs.getLong(1));
+        } catch (SQLException e) {
+            System.err.println("[SqlitePersistenceStore] listWorldChunkKeys failed: " + e);
+        }
+        return keys;
     }
 
     @Override

@@ -33,6 +33,7 @@ public final class TileRules {
         return "ocean".equals(tileName)
             || "river".equals(tileName)
             || "mediumWater".equals(tileName)
+            || "midWater".equals(tileName)
             || "shallowWater".equals(tileName);
     }
 

@@ -30,6 +30,9 @@ public final class ProtocolPayloadCodec {
     }
 
     public ProtocolPayloads.JoinRequest decodeJoinRequest(byte[] payload) {
+        if (payload == null || payload.length < 17) {
+            return new ProtocolPayloads.JoinRequest(false, 0.0, 0.0);
+        }
         try {
             DataInputStream in = stream(payload);
             return new ProtocolPayloads.JoinRequest(
@@ -101,6 +104,48 @@ public final class ProtocolPayloadCodec {
         } catch (IOException e) {
             System.err.println("[ProtocolPayloadCodec] decodeAction failed: " + e);
             return new ProtocolPayloads.ActionRequest(null, false, 0.0, 0.0, "");
+        }
+    }
+
+    public byte[] encodeCommand(ProtocolPayloads.CommandRequest command) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DataOutputStream out = new DataOutputStream(baos);
+            BinaryEnvelopeCodec.writeString(out, command == null ? "" : command.commandType);
+            out.writeBoolean(command != null && command.hasTarget);
+            out.writeDouble(command == null ? 0.0 : command.targetX);
+            out.writeDouble(command == null ? 0.0 : command.targetY);
+            out.writeLong(command == null ? 0L : command.targetEntityId);
+            BinaryEnvelopeCodec.writeString(out, command == null ? "" : command.itemType);
+            out.writeInt(command == null ? -1 : command.selectedSlot);
+            out.writeLong(command == null ? 0L : command.inventoryId);
+            out.writeInt(command == null ? -1 : command.slotIndex);
+            out.writeInt(command == null ? 0 : command.button);
+            out.flush();
+            return baos.toByteArray();
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] encodeCommand failed: " + e);
+            return new byte[0];
+        }
+    }
+
+    public ProtocolPayloads.CommandRequest decodeCommand(byte[] payload) {
+        try {
+            DataInputStream in = stream(payload);
+            return new ProtocolPayloads.CommandRequest(
+                BinaryEnvelopeCodec.readString(in),
+                in.readBoolean(),
+                in.readDouble(),
+                in.readDouble(),
+                in.readLong(),
+                BinaryEnvelopeCodec.readString(in),
+                in.readInt(),
+                in.readLong(),
+                in.readInt(),
+                in.readInt());
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] decodeCommand failed: " + e);
+            return new ProtocolPayloads.CommandRequest("", false, 0.0, 0.0, 0L, "", -1, 0L, -1, 0);
         }
     }
 
@@ -181,6 +226,9 @@ public final class ProtocolPayloadCodec {
                 out.writeBoolean(state != null && state.removed);
                 out.writeLong((state == null) ? 0L : state.revision);
             }
+            writeEntityStates(out, snapshot);
+            writeInventoryStates(out, snapshot);
+            writeTileMutations(out, snapshot);
             out.flush();
             return baos.toByteArray();
         } catch (IOException e) {
@@ -222,11 +270,173 @@ public final class ProtocolPayloadCodec {
                 // expected: optional trailing section for backward compatibility with
                 // older payloads that only included player states.
             }
-            return new ProtocolPayloads.Snapshot(baseline, ack, players, worldObjects);
+            ArrayList<ProtocolPayloads.EntityStatePayload> entities = readEntityStates(in);
+            ArrayList<ProtocolPayloads.InventoryStatePayload> inventories = readInventoryStates(in);
+            ArrayList<ProtocolPayloads.TileMutationPayload> tileMutations = readTileMutations(in);
+            return new ProtocolPayloads.Snapshot(baseline, ack, players, worldObjects, entities, inventories, tileMutations);
         } catch (IOException e) {
             System.err.println("[ProtocolPayloadCodec] decodeSnapshot failed: " + e);
             return new ProtocolPayloads.Snapshot(false, 0L, new ArrayList<>(), new ArrayList<>());
         }
+    }
+
+    public byte[] encodeCommandResult(ProtocolPayloads.CommandResult result) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DataOutputStream out = new DataOutputStream(baos);
+            out.writeLong((result == null) ? 0L : result.commandSequence);
+            out.writeBoolean(result != null && result.accepted);
+            BinaryEnvelopeCodec.writeString(out, (result == null) ? "" : result.reason);
+            out.flush();
+            return baos.toByteArray();
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] encodeCommandResult failed: " + e);
+            return new byte[0];
+        }
+    }
+
+    public ProtocolPayloads.CommandResult decodeCommandResult(byte[] payload) {
+        try {
+            DataInputStream in = stream(payload);
+            return new ProtocolPayloads.CommandResult(
+                in.readLong(),
+                in.readBoolean(),
+                BinaryEnvelopeCodec.readString(in));
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] decodeCommandResult failed: " + e);
+            return new ProtocolPayloads.CommandResult(0L, false, "");
+        }
+    }
+
+    private void writeEntityStates(DataOutputStream out, ProtocolPayloads.Snapshot snapshot) throws IOException {
+        int count = (snapshot == null || snapshot.entities == null) ? 0 : snapshot.entities.size();
+        out.writeInt(Math.max(0, count));
+        for (int i = 0; i < count; i++) {
+            ProtocolPayloads.EntityStatePayload entity = snapshot.entities.get(i);
+            out.writeLong(entity == null ? 0L : entity.entityId);
+            BinaryEnvelopeCodec.writeString(out, entity == null ? "" : entity.entityType);
+            BinaryEnvelopeCodec.writeString(out, entity == null ? "" : entity.dimensionId);
+            out.writeDouble(entity == null ? 0.0 : entity.worldX);
+            out.writeDouble(entity == null ? 0.0 : entity.worldY);
+            out.writeBoolean(entity != null && entity.removed);
+            out.writeLong(entity == null ? 0L : entity.revision);
+            int componentCount = (entity == null || entity.components == null) ? 0 : entity.components.size();
+            out.writeInt(Math.max(0, componentCount));
+            for (int c = 0; c < componentCount; c++) {
+                ProtocolPayloads.ComponentStatePayload component = entity.components.get(c);
+                BinaryEnvelopeCodec.writeString(out, component == null ? "" : component.key);
+                BinaryEnvelopeCodec.writeString(out, component == null ? "" : component.value);
+            }
+        }
+    }
+
+    private ArrayList<ProtocolPayloads.EntityStatePayload> readEntityStates(DataInputStream in) {
+        ArrayList<ProtocolPayloads.EntityStatePayload> out = new ArrayList<>();
+        try {
+            int count = Math.max(0, in.readInt());
+            for (int i = 0; i < count; i++) {
+                long entityId = in.readLong();
+                String entityType = BinaryEnvelopeCodec.readString(in);
+                String dimensionId = BinaryEnvelopeCodec.readString(in);
+                double worldX = in.readDouble();
+                double worldY = in.readDouble();
+                boolean removed = in.readBoolean();
+                long revision = in.readLong();
+                int componentCount = Math.max(0, in.readInt());
+                ArrayList<ProtocolPayloads.ComponentStatePayload> components = new ArrayList<>(componentCount);
+                for (int c = 0; c < componentCount; c++) {
+                    components.add(new ProtocolPayloads.ComponentStatePayload(
+                        BinaryEnvelopeCodec.readString(in),
+                        BinaryEnvelopeCodec.readString(in)));
+                }
+                out.add(new ProtocolPayloads.EntityStatePayload(
+                    entityId, entityType, dimensionId, worldX, worldY, removed, revision, components));
+            }
+        } catch (IOException ignored) {
+            // expected: v1 snapshots do not carry v2 entity sections
+        }
+        return out;
+    }
+
+    private void writeInventoryStates(DataOutputStream out, ProtocolPayloads.Snapshot snapshot) throws IOException {
+        int count = (snapshot == null || snapshot.inventories == null) ? 0 : snapshot.inventories.size();
+        out.writeInt(Math.max(0, count));
+        for (int i = 0; i < count; i++) {
+            ProtocolPayloads.InventoryStatePayload inv = snapshot.inventories.get(i);
+            out.writeLong(inv == null ? 0L : inv.inventoryId);
+            out.writeLong(inv == null ? 0L : inv.ownerEntityId);
+            BinaryEnvelopeCodec.writeString(out, inv == null ? "" : inv.inventoryType);
+            out.writeLong(inv == null ? 0L : inv.revision);
+            int slotCount = (inv == null || inv.slots == null) ? 0 : inv.slots.size();
+            out.writeInt(Math.max(0, slotCount));
+            for (int s = 0; s < slotCount; s++) {
+                ProtocolPayloads.ItemStackPayload stack = inv.slots.get(s);
+                BinaryEnvelopeCodec.writeString(out, stack == null ? "empty" : stack.itemType);
+                out.writeInt(stack == null ? 0 : stack.amount);
+            }
+        }
+    }
+
+    private ArrayList<ProtocolPayloads.InventoryStatePayload> readInventoryStates(DataInputStream in) {
+        ArrayList<ProtocolPayloads.InventoryStatePayload> out = new ArrayList<>();
+        try {
+            int count = Math.max(0, in.readInt());
+            for (int i = 0; i < count; i++) {
+                long inventoryId = in.readLong();
+                long ownerEntityId = in.readLong();
+                String inventoryType = BinaryEnvelopeCodec.readString(in);
+                long revision = in.readLong();
+                int slotCount = Math.max(0, in.readInt());
+                ArrayList<ProtocolPayloads.ItemStackPayload> slots = new ArrayList<>(slotCount);
+                for (int s = 0; s < slotCount; s++) {
+                    slots.add(new ProtocolPayloads.ItemStackPayload(
+                        BinaryEnvelopeCodec.readString(in),
+                        in.readInt()));
+                }
+                out.add(new ProtocolPayloads.InventoryStatePayload(
+                    inventoryId, ownerEntityId, inventoryType, revision, slots));
+            }
+        } catch (IOException ignored) {
+            // expected: v1 snapshots do not carry v2 inventory sections
+        }
+        return out;
+    }
+
+    private void writeTileMutations(DataOutputStream out, ProtocolPayloads.Snapshot snapshot) throws IOException {
+        int count = (snapshot == null || snapshot.tileMutations == null) ? 0 : snapshot.tileMutations.size();
+        out.writeInt(Math.max(0, count));
+        for (int i = 0; i < count; i++) {
+            ProtocolPayloads.TileMutationPayload tile = snapshot.tileMutations.get(i);
+            BinaryEnvelopeCodec.writeString(out, tile == null ? "" : tile.dimensionId);
+            out.writeInt(tile == null ? 0 : tile.tileX);
+            out.writeInt(tile == null ? 0 : tile.tileY);
+            BinaryEnvelopeCodec.writeString(out, tile == null ? "" : tile.tileType);
+            out.writeBoolean(tile != null && tile.watered);
+            BinaryEnvelopeCodec.writeString(out, tile == null ? "" : tile.cropType);
+            out.writeInt(tile == null ? 0 : tile.cropStage);
+            out.writeLong(tile == null ? 0L : tile.revision);
+        }
+    }
+
+    private ArrayList<ProtocolPayloads.TileMutationPayload> readTileMutations(DataInputStream in) {
+        ArrayList<ProtocolPayloads.TileMutationPayload> out = new ArrayList<>();
+        try {
+            int count = Math.max(0, in.readInt());
+            for (int i = 0; i < count; i++) {
+                out.add(new ProtocolPayloads.TileMutationPayload(
+                    BinaryEnvelopeCodec.readString(in),
+                    in.readInt(),
+                    in.readInt(),
+                    BinaryEnvelopeCodec.readString(in),
+                    in.readBoolean(),
+                    BinaryEnvelopeCodec.readString(in),
+                    in.readInt(),
+                    in.readLong()));
+            }
+        } catch (IOException ignored) {
+            // expected: v1 snapshots do not carry v2 tile sections
+        }
+        return out;
     }
 
     private byte[] encodeString(String value) {

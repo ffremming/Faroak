@@ -2,6 +2,7 @@ package resources.net.multiplayer.server.persistence;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -34,6 +35,11 @@ public final class InMemoryPersistenceStore implements PersistenceStore {
     @Override
     public synchronized void saveWorldChunk(long chunkKey, byte[] snapshotBytes) {
         world.put(chunkKey, snapshotBytes == null ? new byte[0] : snapshotBytes.clone());
+    }
+
+    @Override
+    public synchronized List<Long> listWorldChunkKeys() {
+        return new ArrayList<>(world.keySet());
     }
 
     @Override

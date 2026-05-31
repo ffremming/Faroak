@@ -73,9 +73,58 @@ public final class TileMaskGenerator {
         TileSpec[] tiles = tileSpecs();
         for (TileSpec t : tiles) composeTile(t);
 
+        composeFarmEdge();
+
         System.out.println("done: " + textures.length + " textures, "
                 + microSpecs().length + " micro masks, " + tiles.length
                 + " composed tiles in " + TILE_DIR);
+    }
+
+    // --------------------------------------------------------- farm plot edge
+
+    /**
+     * Border family drawn around a tilled {@code FarmTile} (see {@link
+     * resources.domain.tile.TileBorderResolver}). It borrows the {@code mud}
+     * border SILHOUETTE so it tiles/rotates like every other border, but fills
+     * it with a dark, raised tilled-earth ridge instead of the soil-coloured
+     * mud — the mud fill was the same brown as the farmland soil underneath, so
+     * the edge was drawn but invisible. This dark rim contrasts against both the
+     * brown soil and the green grass, so a tilled plot reads as framed.
+     *
+     * Writes {@code farmEdgeB1.png} / {@code farmEdgeC0.png}; the tile loader
+     * derives the other sides/corners by rotation.
+     */
+    private static final int FARM_EDGE_DARK  = 0x3E2C18; // shadowed base of the ridge
+    private static final int FARM_EDGE_LIGHT = 0x6B4F2C; // sunlit crest highlight
+
+    private static void composeFarmEdge() throws IOException {
+        BufferedImage b1 = ImageIO.read(new File(TILE_DIR + "mudB1.png"));
+        BufferedImage c0 = ImageIO.read(new File(TILE_DIR + "mudC0.png"));
+        writePng(fillRidge(b1, false), TILE_DIR + "farmEdgeB1.png");
+        writePng(fillRidge(c0, true),  TILE_DIR + "farmEdgeC0.png");
+    }
+
+    /**
+     * Fill a border silhouette with the dark ridge gradient. The crest highlight
+     * fades from the top edge (sides) or top-left corner (corners) so the rim
+     * reads as a raised lip catching light.
+     */
+    private static BufferedImage fillRidge(BufferedImage shape, boolean corner) {
+        int w = shape.getWidth(), h = shape.getHeight();
+        BufferedImage out = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        double cornerReach = Math.hypot(w, h) * 0.5;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int a = (shape.getRGB(x, y) >>> 24) & 0xFF;
+                if (a == 0) { out.setRGB(x, y, 0); continue; }
+                double t = corner
+                        ? 1.0 - Math.min(1.0, Math.hypot(x, y) / cornerReach)
+                        : 1.0 - Math.min(1.0, y / (h * 0.5));
+                int rgb = lerpRgb(FARM_EDGE_DARK, FARM_EDGE_LIGHT, t * 0.7);
+                out.setRGB(x, y, (a << 24) | (rgb & 0x00FFFFFF));
+            }
+        }
+        return out;
     }
 
     // ---------------------------------------------------------------- specs
