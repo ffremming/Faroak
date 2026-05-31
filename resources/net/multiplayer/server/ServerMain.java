@@ -15,6 +15,9 @@ public final class ServerMain {
     public static void main(String[] args) {
         MultiplayerConfig cfg = MultiplayerConfig.fromSystemProperties();
         PersistenceStore store = PersistenceStoreFactory.createDefault(cfg.sqlitePath());
+        System.out.println("[ServerMain] persistence=" + store.getClass().getSimpleName());
+        System.out.println("[ServerMain] tickRate=" + cfg.serverTickRate()
+            + " snapshotRate=" + cfg.snapshotRate() + " maxPlayers=" + cfg.maxPlayers());
         LobbyRuntime lobby = new AuthoritativeLobbyRuntime(
             cfg, new DefaultAuthorityService(), store, new DefaultSnapshotCodec());
         GameServerRuntime runtime = new GameServerRuntime(cfg, lobby);
@@ -24,8 +27,9 @@ public final class ServerMain {
             try {
                 gateway = new WebSocketGatewayServer(cfg, lobby);
                 gateway.start(gatewayPort());
+                System.out.println("[ServerMain] gateway listening on :" + gatewayPort());
             } catch (Exception ex) {
-                System.out.println("gateway failed to start: " + ex.getMessage());
+                System.out.println("[ServerMain] gateway failed to start: " + ex.getMessage());
             }
         }
         final WebSocketGatewayServer finalGateway = gateway;

@@ -9,12 +9,16 @@ import resources.testing.probes.MultiplayerReconnectProbe;
 import resources.testing.probes.MultiplayerTenClientProbe;
 import resources.testing.probes.MultiplayerTerrainRulesProbe;
 import resources.testing.probes.MultiplayerWorldReplicationProbe;
+import resources.testing.probes.AuthoritativeCombatGameplayProbe;
+import resources.testing.probes.AuthoritativeCraftingGameplayProbe;
+import resources.testing.probes.AuthoritativeFarmingGameplayProbe;
 import resources.testing.probes.AuthoritativeSharedStateProbe;
 import resources.testing.probes.AuthoritativeCommandGameplayProbe;
 import resources.testing.probes.ProtocolCodecProbe;
 import resources.testing.probes.ProtocolV2SnapshotProbe;
 import resources.testing.probes.WebSocketGatewayProbe;
 import resources.testing.probes.WebSocketTwoClientMovementProbe;
+import resources.testing.probes.MpPersistenceFileProbe;
 
 /**
  * Focused runner for multiplayer probes only.
@@ -31,12 +35,16 @@ public final class MultiplayerTestRunner {
         probes.add(new MultiplayerTerrainRulesProbe());
         probes.add(new AuthoritativeSharedStateProbe());
         probes.add(new AuthoritativeCommandGameplayProbe());
+        probes.add(new AuthoritativeFarmingGameplayProbe());
+        probes.add(new AuthoritativeCraftingGameplayProbe());
+        probes.add(new AuthoritativeCombatGameplayProbe());
         probes.add(new MultiplayerTenClientProbe());
         probes.add(new MultiplayerPersistenceProbe());
         probes.add(new MultiplayerWorldReplicationProbe());
         probes.add(new MultiplayerReconnectProbe());
         probes.add(new WebSocketGatewayProbe());
         probes.add(new WebSocketTwoClientMovementProbe());
+        probes.add(new MpPersistenceFileProbe());
 
         int failures = 0;
         try (TestHarness harness = new TestHarness()) {
