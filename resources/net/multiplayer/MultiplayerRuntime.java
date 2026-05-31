@@ -8,8 +8,11 @@ import java.awt.Point;
 
 import resources.app.GameContext;
 import resources.app.GamePanel;
+import resources.domain.combat.CombatService;
+import resources.domain.combat.WeaponProfile;
 import resources.domain.entity.BaseEntity;
 import resources.domain.entity.component.HealthComponent;
+import resources.geometry.Vector;
 import resources.domain.inventory.Inventory;
 import resources.domain.inventory.Item;
 import resources.domain.inventory.Stack;
@@ -53,6 +56,10 @@ public final class MultiplayerRuntime {
     private final MultiplayerServerAdapter adapter;
     private final RemotePlayerDirectory remotes;
     private final ReplicatedWorldState replicatedWorld;
+    // Client-side visual combat effects (swing arc / hit flash). Damage stays
+    // authoritative on the server; this only plays the local animation so the
+    // attacker sees feedback online, mirroring the offline path.
+    private final CombatService combatEffects = new CombatService();
     private final boolean reconnectEnabled;
     private final long reconnectDelayMs;
     private final boolean localReconcileEnabled;
@@ -93,8 +100,18 @@ public final class MultiplayerRuntime {
             "game.multiplayer.reconcileLocal", true);
         this.localInterpolationDelayMs = (int) parseLong(
             "game.multiplayer.localInterpolationDelayMs", 0L, 0L, 250L);
+        // While moving steadily the local (predicted) player legitimately leads the
+        // latest *received* server pose by roughly speed × pipeline-delay (interp delay
+        // + snapshot interval + network latency). Correcting within that lead causes a
+        // periodic backward snap as the lead rebuilds and re-trips the threshold. So
+        // the tolerance must exceed the expected lead: only a genuine desync (teleport,
+        // respawn, big lag) should snap. Default is derived from the move pipeline with
+        // generous headroom; override with -Dgame.multiplayer.localReconcileTolerance.
+        double pxPerMs = (config.serverMoveSpeedPerTick() * config.serverTickRate()) / 1000.0;
+        double pipelineMs = config.interpolationDelayMs() + (1000.0 / Math.max(1, config.snapshotRate())) + 120.0;
+        double derivedTolerance = Math.max(96.0, pxPerMs * pipelineMs * 1.5);
         this.localReconcileTolerance = parseDouble(
-            "game.multiplayer.localReconcileTolerance", 64.0, 1.0, 2048.0);
+            "game.multiplayer.localReconcileTolerance", derivedTolerance, 1.0, 4096.0);
     }
 
     public static MultiplayerRuntime createDefault(GameContext ctx) {
@@ -177,6 +194,18 @@ public final class MultiplayerRuntime {
         }
 
         long seq = submitCommand(ProtocolPayloads.CommandRequest.useEquippedAt(worldX, worldY, itemType, selectedSlot));
+        return seq > 0L;
+    }
+
+    /**
+     * Ask the server to respawn the local player. The authoritative alive-state
+     * flips back via the next snapshot, which is what actually clears the death
+     * UI — this just submits the request. Used by the death-screen "Respawn"
+     * button (the dead interact-key path in {@link #publishActions} does the same).
+     */
+    public boolean requestRespawn() {
+        if (closed || !config.online() || !joined) return false;
+        long seq = submitCommand(ProtocolPayloads.CommandRequest.respawn());
         return seq > 0L;
     }
 
@@ -298,10 +327,12 @@ public final class MultiplayerRuntime {
         for (InputAction action : actions) {
             if (InputAction.ATTACK.equals(action) || InputAction.ATTACK_LIGHT.equals(action)) {
                 submitAttackCommand(ProtocolPayloads.CommandRequest.ATTACK_LIGHT_AT);
+                playLocalSwing(false);
                 continue;
             }
             if (InputAction.ATTACK_HEAVY.equals(action)) {
                 submitAttackCommand(ProtocolPayloads.CommandRequest.ATTACK_HEAVY_AT);
+                playLocalSwing(true);
                 continue;
             }
             if (InputAction.ATTACK_RANGED.equals(action)) {
@@ -479,6 +510,28 @@ public final class MultiplayerRuntime {
         Stack equipped = ctx.player() == null ? null : ctx.player().getEquipped();
         return submitCommand(new ProtocolPayloads.CommandRequest(
             commandType, true, x, y, 0L, stackName(equipped), selectedInventorySlot(), 0L, -1, 0));
+    }
+
+    /**
+     * Play the local melee swing VFX online. Damage is authoritative on the server;
+     * this is the same visual the offline path spawns so the attacker gets immediate
+     * feedback (the swing arc + facing) instead of nothing. {@code heavy} widens the
+     * arc/duration to match the offline heavy attack.
+     */
+    private void playLocalSwing(boolean heavy) {
+        if (ctx.player() == null || ctx.input() == null) return;
+        Stack equipped = ctx.player().getEquipped();
+        String itemName = (equipped == null || equipped.isEmpty()) ? null : equipped.getName();
+        WeaponProfile weapon = WeaponProfile.forItem(itemName);
+        if (weapon.swingSpriteName == null || weapon.swingSpriteName.isBlank()) return;
+        Vector aim = ctx.input().combatAimVector();
+        combatEffects.spawnActionEffects(
+            ctx.player(), ctx, aim,
+            weapon.swingSpriteName,
+            heavy ? weapon.swingDurationTicks + 2 : weapon.swingDurationTicks,
+            heavy ? weapon.swingArcDegrees + 10.0 : weapon.swingArcDegrees,
+            weapon.swingRadiusPx,
+            null);
     }
 
     private BaseEntity entityAt(double worldX, double worldY) {
