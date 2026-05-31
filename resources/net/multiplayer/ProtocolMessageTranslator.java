@@ -97,7 +97,10 @@ final class ProtocolMessageTranslator {
             ProtocolPayloads.Snapshot snapshot = payloadCodec.decodeSnapshot(envelope.payload());
             ArrayList<PlayerStateMessage> players = new ArrayList<>();
             for (ProtocolPayloads.PlayerState s : snapshot.players) {
-                players.add(new PlayerStateMessage(s.playerId, s.worldX, s.worldY, s.velocityX, s.velocityY, s.processedSequence));
+                players.add(new PlayerStateMessage(
+                    s.playerId, s.worldX, s.worldY, s.velocityX, s.velocityY,
+                    s.processedSequence, s.health, s.maxHealth,
+                    s.facing, s.moving, s.spriteName, s.displayName, s.alive));
             }
             ArrayList<WorldObjectStateMessage> objects = new ArrayList<>();
             for (ProtocolPayloads.WorldObjectState s : snapshot.worldObjects) {

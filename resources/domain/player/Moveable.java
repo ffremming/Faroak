@@ -131,6 +131,28 @@ public class Moveable extends Entity {
         updateDirectionIndex();
     }
 
+    /**
+     * Drive facing + walk animation from a network-supplied velocity, for entities
+     * (e.g. {@code RemotePlayerAvatar}) whose motion comes from snapshots rather than
+     * the local {@link MovementController}. When {@code moving} is false the direction
+     * is left untouched so the avatar keeps its last facing while idle.
+     */
+    protected final void advanceNetworkAnimation(double vx, double vy, boolean moving) {
+        if (moving) {
+            direction.set(vx, vy);
+            animationIndex += 2;
+            if (animationIndex >= ANIM_WRAP) animationIndex = 1;
+            updateDirectionIndex();
+        } else {
+            animationIndex = 0;
+        }
+    }
+
+    /** Force the facing sprite row directly (0=up, 1=right, 2=down, 3=left). */
+    protected final void setDirectionIndex(int index) {
+        if (index >= 0 && index <= 3) directionIndex = index;
+    }
+
     private void updateDirectionIndex() {
         if      (direction.getX() > 0) directionIndex = ANIM_FRAME_RIGHT;
         else if (direction.getX() < 0) directionIndex = ANIM_FRAME_LEFT;

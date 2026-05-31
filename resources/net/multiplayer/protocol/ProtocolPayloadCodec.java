@@ -214,6 +214,8 @@ public final class ProtocolPayloadCodec {
                 out.writeDouble((state == null) ? 0.0 : state.velocityX);
                 out.writeDouble((state == null) ? 0.0 : state.velocityY);
                 out.writeLong((state == null) ? 0L : state.processedSequence);
+                out.writeInt((state == null) ? 20 : state.health);
+                out.writeInt((state == null) ? 20 : state.maxHealth);
             }
             int worldCount = (snapshot == null || snapshot.worldObjects == null) ? 0 : snapshot.worldObjects.size();
             out.writeInt(Math.max(0, worldCount));
@@ -229,11 +231,50 @@ public final class ProtocolPayloadCodec {
             writeEntityStates(out, snapshot);
             writeInventoryStates(out, snapshot);
             writeTileMutations(out, snapshot);
+            writePlayerAppearance(out, snapshot);
             out.flush();
             return baos.toByteArray();
         } catch (IOException e) {
             System.err.println("[ProtocolPayloadCodec] encodeSnapshot failed: " + e);
             return new byte[0];
+        }
+    }
+
+    /**
+     * Trailing, backward-compatible section carrying per-player appearance/status.
+     * Written in player-list order so the decoder zips it back on by index. Older
+     * decoders never reach it; when an older encoder omits it the decoder keeps the
+     * default appearance already on each row.
+     */
+    private void writePlayerAppearance(DataOutputStream out, ProtocolPayloads.Snapshot snapshot) throws IOException {
+        int count = (snapshot == null || snapshot.players == null) ? 0 : snapshot.players.size();
+        out.writeInt(Math.max(0, count));
+        for (int i = 0; i < count; i++) {
+            ProtocolPayloads.PlayerState s = snapshot.players.get(i);
+            out.writeInt(s == null ? 2 : s.facing);
+            out.writeBoolean(s != null && s.moving);
+            BinaryEnvelopeCodec.writeString(out, s == null ? "red" : s.spriteName);
+            BinaryEnvelopeCodec.writeString(out, s == null ? "" : s.displayName);
+            out.writeBoolean(s == null || s.alive);
+        }
+    }
+
+    /** Zip the trailing appearance section back onto the decoded player rows by index. */
+    private void readPlayerAppearance(DataInputStream in, ArrayList<ProtocolPayloads.PlayerState> players) {
+        try {
+            int count = Math.max(0, in.readInt());
+            for (int i = 0; i < count; i++) {
+                int facing = in.readInt();
+                boolean moving = in.readBoolean();
+                String spriteName = BinaryEnvelopeCodec.readString(in);
+                String displayName = BinaryEnvelopeCodec.readString(in);
+                boolean alive = in.readBoolean();
+                if (i < players.size() && players.get(i) != null) {
+                    players.set(i, players.get(i).withAppearance(facing, moving, spriteName, displayName, alive));
+                }
+            }
+        } catch (IOException ignored) {
+            // expected: older encoders omit the appearance section; keep defaults.
         }
     }
 
@@ -251,7 +292,9 @@ public final class ProtocolPayloadCodec {
                 double vx = in.readDouble();
                 double vy = in.readDouble();
                 long seq = in.readLong();
-                players.add(new ProtocolPayloads.PlayerState(playerId, x, y, vx, vy, seq));
+                int health = in.readInt();
+                int maxHealth = in.readInt();
+                players.add(new ProtocolPayloads.PlayerState(playerId, x, y, vx, vy, seq, health, maxHealth));
             }
             ArrayList<ProtocolPayloads.WorldObjectState> worldObjects = new ArrayList<>();
             try {
@@ -273,6 +316,7 @@ public final class ProtocolPayloadCodec {
             ArrayList<ProtocolPayloads.EntityStatePayload> entities = readEntityStates(in);
             ArrayList<ProtocolPayloads.InventoryStatePayload> inventories = readInventoryStates(in);
             ArrayList<ProtocolPayloads.TileMutationPayload> tileMutations = readTileMutations(in);
+            readPlayerAppearance(in, players);
             return new ProtocolPayloads.Snapshot(baseline, ack, players, worldObjects, entities, inventories, tileMutations);
         } catch (IOException e) {
             System.err.println("[ProtocolPayloadCodec] decodeSnapshot failed: " + e);

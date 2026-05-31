@@ -57,6 +57,9 @@ public final class ProtocolPayloads {
         public static final String INTERACT_ENTITY = "interact_entity";
         public static final String INTERACT_AT = "interact_at";
         public static final String ATTACK_AT = "attack_at";
+        public static final String ATTACK_LIGHT_AT = "attack_light_at";
+        public static final String ATTACK_HEAVY_AT = "attack_heavy_at";
+        public static final String ATTACK_RANGED_AT = "attack_ranged_at";
         public static final String INVENTORY_CLICK = "inventory_click";
 
         public final String commandType;
@@ -107,6 +110,18 @@ public final class ProtocolPayloads {
 
         public static CommandRequest attackAt(double x, double y) {
             return new CommandRequest(ATTACK_AT, true, x, y, 0L, "", -1, 0L, -1, 0);
+        }
+
+        public static CommandRequest lightAttackAt(double x, double y, String itemType, int selectedSlot) {
+            return new CommandRequest(ATTACK_LIGHT_AT, true, x, y, 0L, itemType, selectedSlot, 0L, -1, 0);
+        }
+
+        public static CommandRequest heavyAttackAt(double x, double y, String itemType, int selectedSlot) {
+            return new CommandRequest(ATTACK_HEAVY_AT, true, x, y, 0L, itemType, selectedSlot, 0L, -1, 0);
+        }
+
+        public static CommandRequest rangedAttackAt(double x, double y, String itemType, int selectedSlot) {
+            return new CommandRequest(ATTACK_RANGED_AT, true, x, y, 0L, itemType, selectedSlot, 0L, -1, 0);
         }
 
         public static CommandRequest inventoryClick(long inventoryId, int slotIndex, int button) {
@@ -164,6 +179,15 @@ public final class ProtocolPayloads {
         public final double velocityX;
         public final double velocityY;
         public final long processedSequence;
+        public final int health;
+        public final int maxHealth;
+        // Appearance / status — carried in a trailing, backward-compatible snapshot
+        // section. Defaults match a freshly-spawned local player.
+        public final int facing;          // 0=up,1=right,2=down,3=left
+        public final boolean moving;
+        public final String spriteName;
+        public final String displayName;
+        public final boolean alive;
 
         public PlayerState(
                 String playerId,
@@ -172,12 +196,57 @@ public final class ProtocolPayloads {
                 double velocityX,
                 double velocityY,
                 long processedSequence) {
+            this(playerId, worldX, worldY, velocityX, velocityY, processedSequence, 20, 20);
+        }
+
+        public PlayerState(
+                String playerId,
+                double worldX,
+                double worldY,
+                double velocityX,
+                double velocityY,
+                long processedSequence,
+                int health,
+                int maxHealth) {
+            this(playerId, worldX, worldY, velocityX, velocityY, processedSequence, health, maxHealth,
+                2, false, "red", "", true);
+        }
+
+        public PlayerState(
+                String playerId,
+                double worldX,
+                double worldY,
+                double velocityX,
+                double velocityY,
+                long processedSequence,
+                int health,
+                int maxHealth,
+                int facing,
+                boolean moving,
+                String spriteName,
+                String displayName,
+                boolean alive) {
             this.playerId = (playerId == null) ? "" : playerId;
             this.worldX = worldX;
             this.worldY = worldY;
             this.velocityX = velocityX;
             this.velocityY = velocityY;
             this.processedSequence = Math.max(0L, processedSequence);
+            this.maxHealth = Math.max(1, maxHealth);
+            this.health = Math.max(0, Math.min(this.maxHealth, health));
+            this.facing = (facing < 0 || facing > 3) ? 2 : facing;
+            this.moving = moving;
+            this.spriteName = (spriteName == null || spriteName.isBlank()) ? "red" : spriteName;
+            this.displayName = (displayName == null) ? "" : displayName;
+            this.alive = alive;
+        }
+
+        /** Copy this row with appearance/status fields overridden (used when zipping
+         *  the trailing appearance section back onto a decoded player list). */
+        public PlayerState withAppearance(int facing, boolean moving, String spriteName,
+                                          String displayName, boolean alive) {
+            return new PlayerState(playerId, worldX, worldY, velocityX, velocityY,
+                processedSequence, health, maxHealth, facing, moving, spriteName, displayName, alive);
         }
     }
 
