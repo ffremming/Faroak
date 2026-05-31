@@ -13,6 +13,7 @@ import resources.testing.probes.FactionProbe;
 import resources.testing.probes.WeaponLoadoutProbe;
 import resources.testing.probes.ShipKindRegistryProbe;
 import resources.testing.probes.WaterNavigatorProbe;
+import resources.testing.probes.ShipGoalProbe;
 import resources.testing.probes.CaveEntryProbe;
 import resources.testing.probes.CaveProbe;
 import resources.testing.probes.CaveWallSpriteProbe;
@@ -109,6 +110,7 @@ public final class TestRunner {
         probes.add(new WeaponLoadoutProbe());
         probes.add(new ShipKindRegistryProbe());
         probes.add(new WaterNavigatorProbe());
+        probes.add(new ShipGoalProbe());
         probes.add(new CaveEntryProbe());
         probes.add(new CaveProbe());
         probes.add(new CaveWallVariantProbe());
