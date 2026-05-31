@@ -28,6 +28,17 @@ public final class ShipKindRegistryProbe implements Probe {
             return ProbeResult.fail(name(), "sloop should not be boardable");
         if (ShipKindRegistry.byId("player_sloop") != sloop)
             return ProbeResult.fail(name(), "byId lookup failed");
-        return ProbeResult.pass(name(), "PLAYER_SLOOP matches legacy boat");
+
+        if (ShipKindRegistry.PIRATE_BRIG == null || !ShipKindRegistry.PIRATE_BRIG.loadout().armed())
+            return ProbeResult.fail(name(), "PIRATE_BRIG must exist and be armed");
+        if (ShipKindRegistry.PIRATE_BRIG.faction() != resources.domain.ship.Faction.PIRATE)
+            return ProbeResult.fail(name(), "PIRATE_BRIG must be PIRATE faction");
+        if (ShipKindRegistry.FISHER == null || ShipKindRegistry.FISHER.loadout().armed())
+            return ProbeResult.fail(name(), "FISHER must exist and be unarmed");
+        if (ShipKindRegistry.GALLEON == null
+                || ShipKindRegistry.GALLEON.maxHealth() <= ShipKindRegistry.PIRATE_BRIG.maxHealth())
+            return ProbeResult.fail(name(), "GALLEON must exist and be tankier than a brig");
+
+        return ProbeResult.pass(name(), "PLAYER_SLOOP + PIRATE_BRIG + FISHER + GALLEON present");
     }
 }
