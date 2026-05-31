@@ -10,9 +10,10 @@ import resources.core.registry.Registry;
  */
 public final class DimensionRegistry {
 
-    public static final Identifier OVERWORLD = Identifier.of("overworld");
-    public static final Identifier CAVE      = Identifier.of("cave");
-    public static final Identifier INTERIOR  = Identifier.of("interior");
+    public static final Identifier OVERWORLD     = Identifier.of("overworld");
+    public static final Identifier CAVE          = Identifier.of("cave");
+    public static final Identifier INTERIOR      = Identifier.of("interior");
+    public static final Identifier SHIP_INTERIOR = Identifier.of("ship_interior");
 
     private static final Registry<Dimension> REG = new Registry<>("dimension");
 

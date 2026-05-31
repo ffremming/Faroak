@@ -56,9 +56,24 @@ public final class InteriorRegistry {
         "######D#######"
     );
 
+    /** 12x9 galleon deck — wood floor, cargo + tables, door on south wall
+     *  returns the player to the overworld beside the ship. */
+    public static final Interior GALLEON_DECK = new Interior(
+        "galleon_deck", 5, 8,
+        "############",
+        "#..........#",
+        "#.B.B..T.B.#",
+        "#..........#",
+        "#.T......T.#",
+        "#..........#",
+        "#.B.B..B.B.#",
+        "#..........#",
+        "#####D######"
+    );
+
     /** Stable iteration order. */
     public static final java.util.List<Interior> ALL = Collections.unmodifiableList(
-        Arrays.asList(STARTER_HOUSE, STONE_HALL, LONG_CABIN));
+        Arrays.asList(STARTER_HOUSE, STONE_HALL, LONG_CABIN, GALLEON_DECK));
 
     private static final Map<String, Interior> BY_NAME;
     static {

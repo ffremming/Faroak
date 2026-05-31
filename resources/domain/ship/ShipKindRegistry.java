@@ -61,6 +61,7 @@ public final class ShipKindRegistry {
         .speed(2.4).maxHealth(140)
         .loadout(WeaponLoadout.HEAVY)
         .faction(Faction.NAVY)
+        .interior(resources.generation.dimension.DimensionRegistry.SHIP_INTERIOR)
         .goal(ctx -> new SailRouteGoal(galleonRouteAround(ctx), true))
         .build();
 

@@ -57,6 +57,11 @@ public final class ClickRouter {
             if (!(ent instanceof Boat)) continue;
             Boat boat = (Boat) ent;
             if (!boat.getHitBox().collision(at)) continue;
+            // Boardable ships (e.g. galleon) take the player into an interior
+            // scene instead of being ridden.
+            if (boat.kind() != null && boat.kind().boardable()) {
+                return boat.tryBoardInteriorFromClick(panel.player());
+            }
             return boat.tryBoardFromClick(panel.player());
         }
         return false;

@@ -101,6 +101,8 @@ public class GenerationManager {
             CaveBootstrap.register(panel));
         DimensionRegistry.instance().register(DimensionRegistry.INTERIOR,
             InteriorBootstrap.register(panel));
+        DimensionRegistry.instance().register(DimensionRegistry.SHIP_INTERIOR,
+            resources.generation.interior.ShipInteriorBootstrap.register(panel));
 
         DimensionService dimensions = new DimensionService(panel, panel.world);
         dimensions.subscribe(panel.events());
@@ -142,6 +144,10 @@ public class GenerationManager {
         // portal location, not (0,0).
         InteriorManager interiors = InteriorBootstrap.lastBuilt();
         if (interiors != null) interiors.setOverworldArrival(overworldDoor);
+        // Ship-deck doors should also return the player to the overworld door
+        // location for now (v1: exact ship position isn't tracked yet).
+        InteriorManager shipInteriors = resources.generation.interior.ShipInteriorBootstrap.lastBuilt();
+        if (shipInteriors != null) shipInteriors.setOverworldArrival(overworldDoor);
         // Scatter a handful of boats on the nearest patch of water.
         BoatSpawner.spawnBoatsNear(panel, p, 3);
         // A small welcoming committee: a few NPCs strolling near spawn.

@@ -328,6 +328,21 @@ public final class Boat extends Moveable {
         board(player);
     }
 
+    /** Click-to-enter for boardable ships. If this ship's kind has an interior
+     *  and the player is within boarding range, publish a dimension change into
+     *  the ship interior and return true. Non-boardable kinds return false so
+     *  the click chain can fall through to ordinary boarding. */
+    public boolean tryBoardInteriorFromClick(Playable player) {
+        if (player == null || isDestroyed() || kind == null || !kind.boardable()) return false;
+        if (!withinBoardingRange(player)) return false;
+        // Arrive a couple of tiles into the deck (slot 0 origin), on a floor cell.
+        java.awt.Point arrival = new java.awt.Point(2 * panel.tileSize, 2 * panel.tileSize);
+        panel.events().publish(new resources.core.event.DimensionChangeEvent(
+            resources.generation.dimension.DimensionRegistry.OVERWORLD,
+            kind.interiorDimension(), arrival));
+        return true;
+    }
+
     /** Click-to-board entry point; called from Mouse when the click lands on this boat. */
     public boolean tryBoardFromClick(Playable player) {
         if (player == null || rider != null || isDestroyed()) return false;
