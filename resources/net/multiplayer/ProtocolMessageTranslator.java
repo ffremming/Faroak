@@ -109,7 +109,8 @@ final class ProtocolMessageTranslator {
             }
             return new ServerSnapshotMessage(
                 envelope.serverTick(), snapshot.baseline, snapshot.acknowledgedSequence,
-                players, objects, snapshot.entities, snapshot.inventories, snapshot.tileMutations);
+                players, objects, snapshot.entities, snapshot.inventories, snapshot.tileMutations)
+                .withWorldTime(snapshot.worldTimeTicks);
         }
         return null;
     }

@@ -263,6 +263,9 @@ public final class ProtocolPayloads {
         public final List<EntityStatePayload> entities;
         public final List<InventoryStatePayload> inventories;
         public final List<TileMutationPayload> tileMutations;
+        /** Authoritative world-clock tick (server GameClock). 0 = unknown/legacy.
+         *  Carried in a trailing, backward-compatible codec section. */
+        public long worldTimeTicks;
 
         public Snapshot(boolean baseline, long acknowledgedSequence, List<PlayerState> players) {
             this(baseline, acknowledgedSequence, players, new ArrayList<>());
@@ -297,6 +300,11 @@ public final class ProtocolPayloads {
             this.inventories = Collections.unmodifiableList(safeInventories);
             List<TileMutationPayload> safeTiles = (tileMutations == null) ? new ArrayList<>() : new ArrayList<>(tileMutations);
             this.tileMutations = Collections.unmodifiableList(safeTiles);
+        }
+
+        public Snapshot withWorldTime(long worldTimeTicks) {
+            this.worldTimeTicks = Math.max(0L, worldTimeTicks);
+            return this;
         }
     }
 

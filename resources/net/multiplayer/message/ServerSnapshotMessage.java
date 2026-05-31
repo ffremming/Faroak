@@ -87,4 +87,12 @@ public final class ServerSnapshotMessage implements ServerMessage {
     public List<ProtocolPayloads.TileMutationPayload> tileMutations() {
         return tileMutations;
     }
+
+    /** Authoritative world-clock tick (server GameClock); 0 if unknown/legacy. */
+    private long worldTimeTicks;
+    public long worldTimeTicks() { return worldTimeTicks; }
+    public ServerSnapshotMessage withWorldTime(long ticks) {
+        this.worldTimeTicks = Math.max(0L, ticks);
+        return this;
+    }
 }

@@ -182,7 +182,11 @@ public class GamePanel extends JPanel implements GameContext {
         // Clock drives water-wave animation, plant growth, and day-night mob spawning.
         // The day-night LIGHT cycle stays frozen independently in LightingPass.ambientAlpha()
         // (it hard-returns 0 = full daylight), so ticking here does not darken the scene.
-        clock.tick();
+        // Online: the server owns the clock and drives it via snapshots
+        // (MultiplayerRuntime.applyWorldTime), so we must not also tick locally.
+        if (multiplayer == null || !multiplayer.drivesWorldClock()) {
+            clock.tick();
+        }
     }
 
     @Override

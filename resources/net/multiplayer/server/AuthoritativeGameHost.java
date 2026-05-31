@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import resources.core.time.GameClock;
 import resources.domain.farming.CropRegistry;
 import resources.domain.combat.WeaponProfile;
 import resources.net.multiplayer.MultiplayerAction;
@@ -55,6 +56,11 @@ final class AuthoritativeGameHost {
     private final double maxActionRange;
     private long respawnDelayTicks = 150L; // ~5s at 30Hz; overridden by the lobby
     private boolean pvpEnabled = true;
+    private final GameClock worldClock =
+        new GameClock(GameClock.DEFAULT_TICKS_PER_DAY, GameClock.NOON_TICK_OF_DAY);
+    // Clock-ticks advanced per server tick. The offline game advances ~1 clock tick
+    // per render frame (~60 FPS); at 30 server ticks/s, 2 keeps day length similar.
+    private long worldTimePerServerTick = 2L;
     private boolean dirty;
 
     AuthoritativeGameHost(ServerTerrainRules terrainRules, double maxActionRange) {
@@ -289,10 +295,17 @@ final class AuthoritativeGameHost {
 
     void tickWorld(Map<String, Session> sessions, long tick) {
         world.setTick(tick);
+        worldClock.advance(worldTimePerServerTick);
         advanceCrops(tick);
         tickProjectiles(tick);
         if (tick % MOB_AI_TICK_INTERVAL == 0L) tickMobs(sessions, tick);
     }
+
+    /** Authoritative world-clock tick count, replicated so all clients share time-of-day. */
+    long worldTimeTicks() { return worldClock.ticks(); }
+
+    /** Restore the world clock from persisted state on server start. */
+    void setWorldTimeTicks(long ticks) { worldClock.advance(Math.max(0L, ticks) - worldClock.ticks()); }
 
     CommandOutcome applyCommand(
             Session session,
@@ -388,7 +401,8 @@ final class AuthoritativeGameHost {
             }
 
             ProtocolPayloads.Snapshot snapshot = new ProtocolPayloads.Snapshot(
-                baseline, recipient.lastAcceptedSeq, players, compatibilityObjects, entities, inventories, tiles);
+                baseline, recipient.lastAcceptedSeq, players, compatibilityObjects, entities, inventories, tiles)
+                .withWorldTime(worldClock.ticks());
             byte[] payload = snapshotCodec.encode(snapshot);
             ProtocolMessageType type = baseline ? ProtocolMessageType.BASELINE_SNAPSHOT : ProtocolMessageType.DELTA_SNAPSHOT;
             sender.send(recipient.playerId, new ProtocolEnvelope(

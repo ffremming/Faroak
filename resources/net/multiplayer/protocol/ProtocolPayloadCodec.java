@@ -232,6 +232,7 @@ public final class ProtocolPayloadCodec {
             writeInventoryStates(out, snapshot);
             writeTileMutations(out, snapshot);
             writePlayerAppearance(out, snapshot);
+            out.writeLong(snapshot == null ? 0L : snapshot.worldTimeTicks);
             out.flush();
             return baos.toByteArray();
         } catch (IOException e) {
@@ -317,7 +318,16 @@ public final class ProtocolPayloadCodec {
             ArrayList<ProtocolPayloads.InventoryStatePayload> inventories = readInventoryStates(in);
             ArrayList<ProtocolPayloads.TileMutationPayload> tileMutations = readTileMutations(in);
             readPlayerAppearance(in, players);
-            return new ProtocolPayloads.Snapshot(baseline, ack, players, worldObjects, entities, inventories, tileMutations);
+            long worldTimeTicks = 0L;
+            try {
+                worldTimeTicks = in.readLong();
+            } catch (IOException ignored) {
+                // expected: older encoders omit the world-time section; default 0.
+            }
+            ProtocolPayloads.Snapshot result = new ProtocolPayloads.Snapshot(
+                baseline, ack, players, worldObjects, entities, inventories, tileMutations);
+            result.worldTimeTicks = Math.max(0L, worldTimeTicks);
+            return result;
         } catch (IOException e) {
             System.err.println("[ProtocolPayloadCodec] decodeSnapshot failed: " + e);
             return new ProtocolPayloads.Snapshot(false, 0L, new ArrayList<>(), new ArrayList<>());

@@ -332,6 +332,7 @@ public final class MultiplayerRuntime {
                     snapshot.tileMutations());
                 applyLocalPlayerInventorySnapshot();
                 applyLocalPlayerHealthSnapshot(snapshot.players());
+                applyWorldTime(snapshot.worldTimeTicks());
                 if (localReconcileEnabled) {
                     reconcileLocal(snapshot.players(), snapshot.acknowledgedSequence());
                 }
@@ -583,6 +584,24 @@ public final class MultiplayerRuntime {
     /** True while the local player is dead (server-authoritative); input is suppressed. */
     public boolean localPlayerDead() {
         return config.online() && !localAlive;
+    }
+
+    /** True once the server is authoritative for the world clock (online + joined),
+     *  so the local frame loop should stop ticking the clock itself. */
+    public boolean drivesWorldClock() {
+        return config.online() && joined;
+    }
+
+    /** Drive the client day/night clock from the authoritative server world time. */
+    private void applyWorldTime(long serverTicks) {
+        if (serverTicks <= 0L || ctx.clock() == null) return;
+        long local = ctx.clock().ticks();
+        long delta = serverTicks - local;
+        if (delta > 0L) {
+            ctx.clock().advance(delta);
+        }
+        // If the local clock is ahead (rare: a delta arrived out of order), leave it —
+        // GameClock only advances forward, and the next in-order snapshot realigns it.
     }
 
     private void toast(String text, long durationMs) {
