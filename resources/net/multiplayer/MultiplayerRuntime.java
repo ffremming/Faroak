@@ -57,8 +57,11 @@ public final class MultiplayerRuntime {
     private final long reconnectDelayMs;
     private final boolean localReconcileEnabled;
     private final int localInterpolationDelayMs;
-    private final double localReconcileWarpDistance;
-    private final double localReconcileBlend;
+    // Divergence (px) the local player may differ from the server before we snap-
+    // correct. Below this, crisp local movement is left fully in charge (no mushy
+    // lerp); at/above it, a genuine desync is corrected by a single collision-safe
+    // snap rather than a glide.
+    private final double localReconcileTolerance;
 
     private long sequence;
     private boolean started;
@@ -90,10 +93,8 @@ public final class MultiplayerRuntime {
             "game.multiplayer.reconcileLocal", true);
         this.localInterpolationDelayMs = (int) parseLong(
             "game.multiplayer.localInterpolationDelayMs", 0L, 0L, 250L);
-        this.localReconcileWarpDistance = parseDouble(
-            "game.multiplayer.localReconcileWarpDistance", 96.0, 1.0, 2048.0);
-        this.localReconcileBlend = parseDouble(
-            "game.multiplayer.localReconcileBlend", 0.15, 0.01, 1.0);
+        this.localReconcileTolerance = parseDouble(
+            "game.multiplayer.localReconcileTolerance", 64.0, 1.0, 2048.0);
     }
 
     public static MultiplayerRuntime createDefault(GameContext ctx) {
@@ -419,13 +420,41 @@ public final class MultiplayerRuntime {
         LocalSnapshotSample server = localSamples.peekLast();
         if (server == null) return;
 
-        double[] corrected = reconcileStep(
-            ctx.player().getWorldX(), ctx.player().getWorldY(),
-            server.x, server.y,
-            localReconcileBlend, localReconcileWarpDistance);
-        ctx.player().setWorldX(corrected[0]);
-        ctx.player().setWorldY(corrected[1]);
+        double curX = ctx.player().getWorldX();
+        double curY = ctx.player().getWorldY();
+
+        // Local prediction uses the same move speed + collision as the server, so in
+        // normal play the two track each other closely. Leave the player entirely to
+        // crisp local movement until divergence exceeds a tolerance — this avoids the
+        // mushy "coasting" feel a continuous lerp produced. Only a genuine desync
+        // (teleport, dropped inputs) triggers a correction, and then we snap rather
+        // than glide so start/stop stays sharp.
+        if (!needsReconcileSnap(curX, curY, server.x, server.y, localReconcileTolerance)) return;
+
+        // Snap to the authoritative pose — but NEVER into a tile the client treats as
+        // solid (water/walls). Reconciliation bypasses the movement collision loop, so
+        // without this guard a correction near a shoreline can place the player on
+        // water. If the target is solid, hold the current (collision-valid) position.
+        if (!correctedPositionIsSolid(server.x, server.y)) {
+            ctx.player().setWorldX(server.x);
+            ctx.player().setWorldY(server.y);
+            ctx.player().getHitBox().updateCoords();
+        }
+    }
+
+    /** True if moving the local player to (x,y) would put its hitbox in solid terrain
+     *  (e.g. water). Restores the player's position afterward — pure query. */
+    private boolean correctedPositionIsSolid(double x, double y) {
+        double savedX = ctx.player().getWorldX();
+        double savedY = ctx.player().getWorldY();
+        ctx.player().setWorldX(x);
+        ctx.player().setWorldY(y);
         ctx.player().getHitBox().updateCoords();
+        boolean solid = ctx.world().solidCollision(ctx.player().getHitBox(), ctx.player());
+        ctx.player().setWorldX(savedX);
+        ctx.player().setWorldY(savedY);
+        ctx.player().getHitBox().updateCoords();
+        return solid;
     }
 
     private long movementMask(InputHandlingSystem input) {
@@ -680,24 +709,19 @@ public final class MultiplayerRuntime {
     }
 
     /**
-     * Pure reconciliation step, extracted for testing. Moves the current pose a
-     * fraction ({@code blend}) of the way TOWARD the authoritative {@code target}
-     * pose. Because the delta is measured against the current pose, repeated
-     * application converges to the target and then settles — no perpetual drift.
-     * Within the dead-zone it returns the current pose unchanged (no jitter);
-     * beyond {@code warpDistance} it snaps straight to the target.
-     * Result layout: [x, y].
+     * Pure reconciliation decision, extracted for testing. Crisp local movement owns
+     * the player until it diverges from the server by more than {@code tolerance} px;
+     * only then does the client correct, and it does so by a single snap (collision
+     * safety is applied by the caller). Returns true when a snap to the server pose
+     * is warranted, false to leave the local (predicted) pose untouched.
      */
-    public static double[] reconcileStep(
+    public static boolean needsReconcileSnap(
             double curX, double curY,
-            double targetX, double targetY,
-            double blend, double warpDistance) {
-        double dx = targetX - curX;
-        double dy = targetY - curY;
-        double dist2 = (dx * dx) + (dy * dy);
-        if (dist2 < 0.25) return new double[] { curX, curY };
-        if (dist2 >= warpDistance * warpDistance) return new double[] { targetX, targetY };
-        return new double[] { curX + (dx * blend), curY + (dy * blend) };
+            double serverX, double serverY,
+            double tolerance) {
+        double dx = serverX - curX;
+        double dy = serverY - curY;
+        return (dx * dx + dy * dy) > (tolerance * tolerance);
     }
 
     private static final class PredictedInput {
