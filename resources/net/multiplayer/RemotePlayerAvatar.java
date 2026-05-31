@@ -3,21 +3,36 @@ package resources.net.multiplayer;
 import java.util.ArrayDeque;
 
 import resources.app.GamePanel;
+import resources.domain.entity.component.HealthBarComponent;
+import resources.domain.entity.component.LabelComponent;
 import resources.domain.player.Moveable;
 import resources.net.multiplayer.message.PlayerStateMessage;
 
 /**
- * Rendered representation of a remote player on the local client.
+ * Rendered representation of a remote player on the local client. Position comes
+ * from interpolated snapshots; facing, walk animation, name tag, and health bar
+ * are driven from the latest authoritative {@link PlayerStateMessage}.
  */
 public final class RemotePlayerAvatar extends Moveable {
 
     private final String playerId;
     private final ArrayDeque<StateSample> samples = new ArrayDeque<>();
+    private final LabelComponent nameLabel;
+    private final HealthBarComponent healthBar;
 
-    public RemotePlayerAvatar(GamePanel panel, String playerId, double worldX, double worldY) {
-        super(panel, "red", (int) worldX, (int) worldY,
+    private int facing = 2;
+    private boolean moving;
+    private boolean alive = true;
+
+    public RemotePlayerAvatar(GamePanel panel, String playerId, String spriteName,
+                              String displayName, double worldX, double worldY) {
+        super(panel, (spriteName == null || spriteName.isBlank()) ? "red" : spriteName,
+            (int) worldX, (int) worldY,
             (short) 48, (short) 96, (short) 36, (short) 32, (short) 6, (short) 64);
         this.playerId = playerId;
+        this.nameLabel = addComponent(new LabelComponent(
+            (displayName == null || displayName.isBlank()) ? playerId : displayName));
+        this.healthBar = addComponent(new HealthBarComponent(20, 20));
     }
 
     @Override
@@ -29,12 +44,27 @@ public final class RemotePlayerAvatar extends Moveable {
         return playerId;
     }
 
+    public boolean alive() {
+        return alive;
+    }
+
     public void pushSnapshot(long serverTick, PlayerStateMessage state) {
         if (state == null) return;
         long nowMs = System.currentTimeMillis();
         samples.addLast(new StateSample(serverTick, nowMs,
             state.worldX(), state.worldY(), state.velocityX(), state.velocityY()));
         while (samples.size() > 20) samples.removeFirst();
+
+        // Appearance / status from the authoritative row.
+        this.facing = state.facing();
+        this.moving = state.moving();
+        this.alive = state.alive();
+        healthBar.set(state.health(), state.maxHealth());
+        // Hide the bar (and dim the avatar visually via the death flag) when dead.
+        healthBar.setVisible(alive);
+        if (state.displayName() != null && !state.displayName().isBlank()) {
+            nameLabel.setText(state.displayName());
+        }
     }
 
     public void advanceInterpolation(int interpolationDelayMs, int serverTickRate) {
@@ -63,6 +93,13 @@ public final class RemotePlayerAvatar extends Moveable {
             setWorldY(only.y + (only.vy * ticksAhead));
         }
         getHitBox().updateCoords();
+
+        // Drive facing + walk animation from the authoritative appearance.
+        setDirectionIndex(facing);
+        StateSample latest = samples.peekLast();
+        double vx = latest == null ? 0.0 : latest.vx;
+        double vy = latest == null ? 0.0 : latest.vy;
+        advanceNetworkAnimation(vx, vy, moving && alive);
     }
 
     private StateSample sampleAt(int index) {

@@ -49,7 +49,8 @@ final class RemotePlayerDirectory {
 
     private RemotePlayerAvatar spawn(String playerId, PlayerStateMessage state) {
         GamePanel panel = ctx.player().panel;
-        RemotePlayerAvatar avatar = new RemotePlayerAvatar(panel, playerId, state.worldX(), state.worldY());
+        RemotePlayerAvatar avatar = new RemotePlayerAvatar(
+            panel, playerId, state.spriteName(), state.displayName(), state.worldX(), state.worldY());
         ctx.world().placeEntityAuthoritative(avatar);
         return avatar;
     }

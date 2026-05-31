@@ -11,6 +11,7 @@ import resources.app.GamePanel;
 import resources.domain.entity.BaseEntity;
 import resources.domain.entity.Entity;
 import resources.domain.entity.component.AnimationComponent;
+import resources.domain.entity.component.HealthBarComponent;
 import resources.domain.entity.component.LabelComponent;
 import resources.domain.object.BoatRideComponent;
 import resources.domain.tile.Tile;
@@ -106,10 +107,32 @@ public final class CameraSceneRenderer {
             g2.drawImage(img, x, y, entity.getWidth(), entity.getHeight(), null);
         }
 
+        HealthBarComponent bar = entity.getComponent(HealthBarComponent.class);
+        if (bar != null && bar.visible()) {
+            drawHealthBar(g2, bar, x, y, entity.getWidth());
+        }
+
         LabelComponent label = entity.getComponent(LabelComponent.class);
         if (label != null && label.text() != null && !label.text().isEmpty()) {
             drawLabel(g2, label, x, y, entity.getWidth());
         }
+    }
+
+    /** Thin health bar just above the entity, below where a label would sit. */
+    private void drawHealthBar(Graphics2D g2, HealthBarComponent bar, int x, int y, int entityW) {
+        int barW = Math.max(24, entityW - 8);
+        int barH = 5;
+        int barX = x + (entityW - barW) / 2;
+        int barY = y - 8;
+        g2.setColor(new Color(0, 0, 0, 180));
+        g2.fillRoundRect(barX - 1, barY - 1, barW + 2, barH + 2, 4, 4);
+        int fillW = (int) Math.round(barW * Math.max(0.0, Math.min(1.0, bar.fraction())));
+        double f = bar.fraction();
+        Color fill = (f > 0.5) ? new Color(80, 200, 90)
+                   : (f > 0.25) ? new Color(220, 190, 60)
+                   : new Color(210, 70, 60);
+        g2.setColor(fill);
+        g2.fillRoundRect(barX, barY, fillW, barH, 3, 3);
     }
 
     /** Pill-shaped text label sitting just above the entity's top edge. */
