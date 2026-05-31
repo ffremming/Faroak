@@ -10,6 +10,7 @@ import resources.testing.probes.WaterDepthProbe;
 import resources.testing.probes.WaterRenderProbe;
 import resources.testing.probes.BoatProbe;
 import resources.testing.probes.FactionProbe;
+import resources.testing.probes.WeaponLoadoutProbe;
 import resources.testing.probes.CaveEntryProbe;
 import resources.testing.probes.CaveProbe;
 import resources.testing.probes.CaveWallSpriteProbe;
@@ -103,6 +104,7 @@ public final class TestRunner {
         probes.add(new PlacementPreviewProbe());
         probes.add(new BoatProbe());
         probes.add(new FactionProbe());
+        probes.add(new WeaponLoadoutProbe());
         probes.add(new CaveEntryProbe());
         probes.add(new CaveProbe());
         probes.add(new CaveWallVariantProbe());
