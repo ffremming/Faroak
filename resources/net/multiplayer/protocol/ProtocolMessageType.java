@@ -22,7 +22,11 @@ public enum ProtocolMessageType {
     // Protocol v2 typed command path. Kept at the end so existing ordinal
     // values remain stable for older probes using v1 ACTION messages.
     COMMAND,
-    COMMAND_RESULT;
+    COMMAND_RESULT,
+
+    // Chat. Appended last to keep all earlier ordinals stable.
+    CHAT,            // Client -> Server: a chat line from a player
+    CHAT_BROADCAST;  // Server -> Client: a chat line relayed to everyone
 
     public static ProtocolMessageType fromOrdinal(int ordinal) {
         ProtocolMessageType[] values = values();

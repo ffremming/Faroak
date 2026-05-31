@@ -24,6 +24,7 @@ import resources.testing.probes.MpAppearanceServerProbe;
 import resources.testing.probes.MpWorldPopulationProbe;
 import resources.testing.probes.MpDeathRespawnProbe;
 import resources.testing.probes.MpWorldTimeProbe;
+import resources.testing.probes.MpChatProbe;
 
 /**
  * Focused runner for multiplayer probes only.
@@ -55,6 +56,7 @@ public final class MultiplayerTestRunner {
         probes.add(new MpWorldPopulationProbe());
         probes.add(new MpDeathRespawnProbe());
         probes.add(new MpWorldTimeProbe());
+        probes.add(new MpChatProbe());
 
         int failures = 0;
         try (TestHarness harness = new TestHarness()) {

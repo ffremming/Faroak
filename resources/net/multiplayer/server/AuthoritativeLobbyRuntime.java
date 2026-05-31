@@ -125,6 +125,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
             gameHost.removePlayer(playerId);
             presence(playerId, false);
             event(playerId, "disconnect", "");
+            broadcastChat("", removed.displayName + " left", true);
         }
     }
 
@@ -190,6 +191,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
             else if (ProtocolMessageType.INPUT_STATE.equals(type)) onInput(envelope);
             else if (ProtocolMessageType.ACTION.equals(type)) onAction(envelope);
             else if (ProtocolMessageType.COMMAND.equals(type)) onCommand(envelope);
+            else if (ProtocolMessageType.CHAT.equals(type)) onChat(envelope);
             else if (ProtocolMessageType.PING.equals(type)) ack(envelope.playerId(), envelope.sequence());
         }
     }
@@ -226,6 +228,7 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         send(playerId, new ProtocolEnvelope(protocolVersion, playerId, 0L, session.lastAcceptedSeq, tick, ProtocolMessageType.WELCOME, new byte[0]));
         presence(playerId, true);
         event(playerId, "join", "");
+        if (freshSession) broadcastChat("", session.displayName + " joined", true);
     }
 
     private void onInput(ProtocolEnvelope envelope) {
@@ -399,6 +402,24 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         byte[] payload = payloadCodec.encodeCommandResult(new ProtocolPayloads.CommandResult(seq, accepted, reason));
         send(playerId, new ProtocolEnvelope(
             protocolVersion, playerId, 0L, accepted ? seq : 0L, tick, ProtocolMessageType.COMMAND_RESULT, payload));
+    }
+
+    private void onChat(ProtocolEnvelope envelope) {
+        Session s = sessions.get(envelope.playerId());
+        if (s == null) return;
+        String text = payloadCodec.decodeChat(envelope.payload());
+        if (text == null) return;
+        text = text.strip();
+        if (text.isEmpty() || text.length() > 240) return;
+        broadcastChat(s.displayName, text, false);
+        event(s.playerId, "chat", text);
+    }
+
+    /** Relay a chat line to every connected client. System lines have no sender. */
+    private void broadcastChat(String senderName, String text, boolean system) {
+        byte[] payload = payloadCodec.encodeChatBroadcast(senderName, text, system);
+        broadcast(new ProtocolEnvelope(
+            protocolVersion, "", 0L, 0L, tick, ProtocolMessageType.CHAT_BROADCAST, payload));
     }
 
     private void send(String playerId, ProtocolEnvelope envelope) {

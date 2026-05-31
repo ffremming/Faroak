@@ -174,6 +174,57 @@ public final class ProtocolPayloadCodec {
         }
     }
 
+    public byte[] encodeChat(String text) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DataOutputStream out = new DataOutputStream(baos);
+            BinaryEnvelopeCodec.writeString(out, text == null ? "" : text);
+            out.flush();
+            return baos.toByteArray();
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] encodeChat failed: " + e);
+            return new byte[0];
+        }
+    }
+
+    public String decodeChat(byte[] payload) {
+        try {
+            return BinaryEnvelopeCodec.readString(stream(payload));
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] decodeChat failed: " + e);
+            return "";
+        }
+    }
+
+    public byte[] encodeChatBroadcast(String senderName, String text, boolean system) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DataOutputStream out = new DataOutputStream(baos);
+            BinaryEnvelopeCodec.writeString(out, senderName == null ? "" : senderName);
+            BinaryEnvelopeCodec.writeString(out, text == null ? "" : text);
+            out.writeBoolean(system);
+            out.flush();
+            return baos.toByteArray();
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] encodeChatBroadcast failed: " + e);
+            return new byte[0];
+        }
+    }
+
+    /** Decoded chat broadcast: [senderName, text, "true"/"false" system]. */
+    public String[] decodeChatBroadcast(byte[] payload) {
+        try {
+            DataInputStream in = stream(payload);
+            String sender = BinaryEnvelopeCodec.readString(in);
+            String text = BinaryEnvelopeCodec.readString(in);
+            boolean system = in.readBoolean();
+            return new String[] { sender, text, Boolean.toString(system) };
+        } catch (IOException e) {
+            System.err.println("[ProtocolPayloadCodec] decodeChatBroadcast failed: " + e);
+            return new String[] { "", "", "false" };
+        }
+    }
+
     public byte[] encodePresence(ProtocolPayloads.Presence presence) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();

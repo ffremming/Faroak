@@ -3,6 +3,7 @@ package resources.net.multiplayer;
 import java.util.ArrayList;
 
 import resources.net.multiplayer.message.ClientActionMessage;
+import resources.net.multiplayer.message.ClientChatMessage;
 import resources.net.multiplayer.message.ClientCommandMessage;
 import resources.net.multiplayer.message.ClientInputMessage;
 import resources.net.multiplayer.message.ClientJoinMessage;
@@ -11,6 +12,7 @@ import resources.net.multiplayer.message.ClientMessage;
 import resources.net.multiplayer.message.ClientPingMessage;
 import resources.net.multiplayer.message.PlayerStateMessage;
 import resources.net.multiplayer.message.ServerAckMessage;
+import resources.net.multiplayer.message.ServerChatMessage;
 import resources.net.multiplayer.message.ServerCommandResultMessage;
 import resources.net.multiplayer.message.ServerMessage;
 import resources.net.multiplayer.message.ServerPlayerPresenceMessage;
@@ -65,6 +67,11 @@ final class ProtocolMessageTranslator {
             byte[] payload = payloadCodec.encodeAck(new ProtocolPayloads.Ack(ping.clientTimeMillis()));
             return envelope(ping.playerId(), ping.sequence(), 0L, 0L, ProtocolMessageType.PING, payload);
         }
+        if (message instanceof ClientChatMessage) {
+            ClientChatMessage chat = (ClientChatMessage) message;
+            byte[] payload = payloadCodec.encodeChat(chat.text());
+            return envelope(chat.playerId(), chat.sequence(), 0L, 0L, ProtocolMessageType.CHAT, payload);
+        }
         return null;
     }
 
@@ -92,6 +99,10 @@ final class ProtocolMessageTranslator {
         if (ProtocolMessageType.PLAYER_JOIN_LEAVE.equals(type)) {
             ProtocolPayloads.Presence p = payloadCodec.decodePresence(envelope.payload());
             return new ServerPlayerPresenceMessage(p.playerId, p.joined, envelope.serverTick());
+        }
+        if (ProtocolMessageType.CHAT_BROADCAST.equals(type)) {
+            String[] c = payloadCodec.decodeChatBroadcast(envelope.payload());
+            return new ServerChatMessage(c[0], c[1], Boolean.parseBoolean(c[2]));
         }
         if (ProtocolMessageType.BASELINE_SNAPSHOT.equals(type) || ProtocolMessageType.DELTA_SNAPSHOT.equals(type)) {
             ProtocolPayloads.Snapshot snapshot = payloadCodec.decodeSnapshot(envelope.payload());

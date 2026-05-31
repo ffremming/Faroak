@@ -26,6 +26,8 @@ import resources.net.multiplayer.message.ClientLeaveMessage;
 import resources.net.multiplayer.message.ClientPingMessage;
 import resources.net.multiplayer.message.PlayerStateMessage;
 import resources.net.multiplayer.message.ServerAckMessage;
+import resources.net.multiplayer.message.ClientChatMessage;
+import resources.net.multiplayer.message.ServerChatMessage;
 import resources.net.multiplayer.message.ServerCommandResultMessage;
 import resources.net.multiplayer.message.ServerMessage;
 import resources.net.multiplayer.message.ServerPlayerPresenceMessage;
@@ -68,6 +70,8 @@ public final class MultiplayerRuntime {
     private long pingCounter;
     private long lastAckedSeq;
     private boolean localAlive = true;
+    private final java.util.ArrayDeque<String> chatLog = new java.util.ArrayDeque<>();
+    private final java.util.Set<String> roster = new java.util.LinkedHashSet<>();
     private final ArrayDeque<PredictedInput> pendingInputs = new ArrayDeque<>();
     private final ArrayDeque<LocalSnapshotSample> localSamples = new ArrayDeque<>();
     private final Map<Long, Runnable> commandAcceptedHandlers = new HashMap<>();
@@ -341,8 +345,9 @@ public final class MultiplayerRuntime {
             } else if (message instanceof ServerCommandResultMessage) {
                 onCommandResult((ServerCommandResultMessage) message);
             } else if (message instanceof ServerPlayerPresenceMessage) {
-                // Presence events are consumed by UI later; current runtime only
-                // needs snapshots for simulation.
+                onPresence((ServerPlayerPresenceMessage) message);
+            } else if (message instanceof ServerChatMessage) {
+                onChat((ServerChatMessage) message);
             }
         }
     }
@@ -610,6 +615,39 @@ public final class MultiplayerRuntime {
         } catch (RuntimeException ignored) {
             // UI not ready yet (early frames) — a missed toast is harmless.
         }
+    }
+
+    private void onPresence(ServerPlayerPresenceMessage presence) {
+        if (presence.playerId() == null || presence.playerId().isBlank()) return;
+        if (presence.joined()) roster.add(presence.playerId());
+        else roster.remove(presence.playerId());
+    }
+
+    private void onChat(ServerChatMessage chat) {
+        String line = chat.system()
+            ? "* " + chat.text()
+            : chat.senderName() + ": " + chat.text();
+        chatLog.addLast(line);
+        while (chatLog.size() > 50) chatLog.removeFirst();
+        toast(line, 5000L);
+    }
+
+    /** Send a chat line to the server for relay to everyone. No-op if offline/empty. */
+    public void sendChat(String text) {
+        if (!config.online() || text == null) return;
+        String trimmed = text.strip();
+        if (trimmed.isEmpty() || trimmed.length() > 240) return;
+        adapter.submit(new ClientChatMessage(config.playerId(), trimmed));
+    }
+
+    /** Recent chat lines (oldest first), for a chat overlay. */
+    public java.util.List<String> recentChat() {
+        return new java.util.ArrayList<>(chatLog);
+    }
+
+    /** Connected player ids (roster), for a player-list overlay. */
+    public java.util.List<String> roster() {
+        return new java.util.ArrayList<>(roster);
     }
 
     private Stack toLocalStack(GamePanel panel, ProtocolPayloads.ItemStackPayload slot) {
