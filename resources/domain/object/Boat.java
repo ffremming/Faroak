@@ -82,6 +82,20 @@ public final class Boat extends Moveable {
     /** Last non-zero heading index into DIR_NAMES so a stopped boat keeps facing where it was. */
     private int facingIndex = 0;
     private Playable rider;
+
+    // --- smoothed AI facing ---
+    /** Position {@link #FACE_WINDOW} ticks ago, used to derive a smoothed travel
+     *  direction for the sprite. Snapping facing to each tick's raw step angle
+     *  makes an AI boat's sprite twitch every frame while it hunts a legal
+     *  detour around a coastline; averaging over a window fixes that. */
+    private static final int FACE_WINDOW = 8;
+    /** Net travel (px) required within the window before the facing re-aims —
+     *  a deadzone so tiny back-and-forth nudges don't re-snap the sprite. */
+    private static final double FACE_DEADZONE_PX = 24.0;
+    private final double[] faceHistX = new double[FACE_WINDOW];
+    private final double[] faceHistY = new double[FACE_WINDOW];
+    private int faceHistCount;
+    private int faceHistHead;
     /** Data definition for this vessel: footprint, speed, HP, loadout, faction,
      *  boardability. The legacy player boat is {@link ShipKindRegistry#PLAYER_SLOOP}. */
     private final ShipKind kind;
@@ -170,6 +184,10 @@ public final class Boat extends Moveable {
         tickComponents();
         if (rider != null) {
             steerByInput();
+        } else {
+            // Unmanned: AI moved us in tickComponents(); derive a smoothed,
+            // twitch-free facing from net travel rather than the raw step angle.
+            updateFacingFromTravel();
         }
         // Skip Moveable.update(): boats bypass the velocity/path pipeline.
         getHitBox().updateCoords();
@@ -269,12 +287,41 @@ public final class Boat extends Moveable {
     public int facingIndexPublic() { return facingIndex; }
 
     /** Point the 8-direction sprite along the given heading (screen space, y down).
-     *  Used by {@link resources.domain.ai.WaterNavigator} so AI ships face travel. */
+     *  Used for immediate facing (e.g. tests / instantaneous aims). AI boats use
+     *  {@link #updateFacingFromTravel()} for a smoothed, twitch-free facing. */
     public void faceToward(double dx, double dy) {
         int ix = (dx > 0.3 ? 1 : 0) - (dx < -0.3 ? 1 : 0);
         int iy = (dy > 0.3 ? 1 : 0) - (dy < -0.3 ? 1 : 0);
         if (ix == 0 && iy == 0) return;
         facingIndex = directionIndexFor(ix, iy);
+    }
+
+    /**
+     * Re-aim the sprite along the ship's <i>net</i> travel over the last
+     * {@link #FACE_WINDOW} ticks, not this tick's raw step. While an AI ship
+     * wall-follows a coastline the navigator's per-tick heading swings wildly
+     * (45°↔90°↔135° as it hunts a legal detour); snapping the sprite to that
+     * every frame makes it twitch. Averaging the displacement and only re-aiming
+     * once net travel clears {@link #FACE_DEADZONE_PX} keeps the facing stable.
+     * Call once per tick from {@link #update()} for unmanned boats.
+     */
+    private void updateFacingFromTravel() {
+        // Compare current position against the oldest sample in the window.
+        if (faceHistCount >= FACE_WINDOW) {
+            int tail = faceHistHead; // oldest slot (head points at next write = oldest)
+            double dx = getWorldX() - faceHistX[tail];
+            double dy = getWorldY() - faceHistY[tail];
+            if (Math.hypot(dx, dy) >= FACE_DEADZONE_PX) {
+                int ix = (dx >  FACE_DEADZONE_PX * 0.42 ? 1 : 0) - (dx < -FACE_DEADZONE_PX * 0.42 ? 1 : 0);
+                int iy = (dy >  FACE_DEADZONE_PX * 0.42 ? 1 : 0) - (dy < -FACE_DEADZONE_PX * 0.42 ? 1 : 0);
+                if (ix != 0 || iy != 0) facingIndex = directionIndexFor(ix, iy);
+            }
+        }
+        // Record current position into the ring buffer.
+        faceHistX[faceHistHead] = getWorldX();
+        faceHistY[faceHistHead] = getWorldY();
+        faceHistHead = (faceHistHead + 1) % FACE_WINDOW;
+        if (faceHistCount < FACE_WINDOW) faceHistCount++;
     }
 
     void clearRiderForSink() { rider = null; }

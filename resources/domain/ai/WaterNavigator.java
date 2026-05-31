@@ -81,7 +81,12 @@ public final class WaterNavigator {
         return false; // penned in on all sides — hold this tick.
     }
 
-    /** Try one heading; if the hull stays on water, move + face and return true. */
+    /** Try one heading; if the hull stays on water, move and return true.
+     *  Facing is deliberately NOT set here — snapping the sprite to each tick's
+     *  raw probe angle makes it flip every tick while wall-following (the angle
+     *  legitimately swings 45°↔90° as the navigator hunts a legal detour). The
+     *  Boat instead derives a smoothed facing from its net travel over a window
+     *  (see {@link Boat#updateFacingFromTravel()}). */
     private boolean tryMove(BaseEntity host, double cx, double cy, double angle, GameContext ctx) {
         double nx = cx + Math.cos(angle) * stepPixels;
         double ny = cy + Math.sin(angle) * stepPixels;
@@ -89,7 +94,6 @@ public final class WaterNavigator {
         host.setWorldX(nx);
         host.setWorldY(ny);
         host.getHitBox().updateCoords();
-        if (host instanceof Boat) ((Boat) host).faceToward(Math.cos(angle), Math.sin(angle));
         return true;
     }
 
