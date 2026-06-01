@@ -48,7 +48,8 @@ final class ProtocolMessageTranslator {
         if (message instanceof ClientInputMessage) {
             ClientInputMessage input = (ClientInputMessage) message;
             byte[] payload = payloadCodec.encodeInputState(new ProtocolPayloads.InputState(
-                input.up(), input.left(), input.down(), input.right()));
+                input.up(), input.left(), input.down(), input.right(),
+                input.hasPosition(), input.posX(), input.posY()));
             return envelope(input.playerId(), input.sequence(), 0L, 0L, ProtocolMessageType.INPUT_STATE, payload);
         }
         if (message instanceof ClientActionMessage) {

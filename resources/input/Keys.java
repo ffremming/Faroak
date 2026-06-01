@@ -178,21 +178,21 @@ public class Keys implements KeyListener{
         }
     } 
 
-    private void handleAttack(Consumer<BoatRideComponent> offlineAction) {
+    private void handleAttack(InputAction onlineAction, Consumer<BoatRideComponent> offlineAction) {
         BoatRideComponent ride = activeRide();
         if (isOnline()) {
             if (ride != null) {
                 showOnlineBoatCombatToast();
                 return;
             }
-            panel.input().enqueueAction(InputAction.ATTACK);
+            panel.input().enqueueAction(onlineAction);
             return;
         }
         offlineAction.accept(ride);
     }
 
     private void handleLightAttack() {
-        handleAttack(ride -> {
+        handleAttack(InputAction.ATTACK_LIGHT, ride -> {
             if (ride != null && ride.boat() != null) {
                 ride.boat().fireBroadside();
                 return;
@@ -202,7 +202,7 @@ public class Keys implements KeyListener{
     }
 
     private void handleHeavyAttack() {
-        handleAttack(ride -> {
+        handleAttack(InputAction.ATTACK_HEAVY, ride -> {
             if (ride == null || ride.boat() == null) {
                 panel.player().requestHeavyAttack();
             }
@@ -210,7 +210,7 @@ public class Keys implements KeyListener{
     }
 
     private void handleRangedAttack() {
-        handleAttack(ride -> {
+        handleAttack(InputAction.ATTACK_RANGED, ride -> {
             if (ride == null || ride.boat() == null) {
                 panel.player().requestRangedAttack();
             }

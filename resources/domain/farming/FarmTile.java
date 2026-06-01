@@ -64,6 +64,35 @@ public final class FarmTile extends Tile {
         return true;
     }
 
+    /**
+     * Apply authoritative multiplayer crop state to this tile. The local crop
+     * entity is only a render replica; server snapshots decide whether it
+     * exists and which growth stage it displays.
+     */
+    public void syncCrop(String cropName, int stage) {
+        if (cropName == null || cropName.isBlank()) {
+            clearCropEntity();
+            return;
+        }
+        String normalized = cropName.trim().toLowerCase();
+        if (crop == null) {
+            plant(normalized);
+        } else if (!normalized.equals(crop.baseName())) {
+            panel.world().removeEntity(crop);
+            crop = null;
+            plant(normalized);
+        }
+        if (crop != null) crop.syncStage(stage);
+    }
+
+    /** Remove the local replicated crop entity when the server clears it. */
+    public void clearCropEntity() {
+        if (crop == null) return;
+        Crop existing = crop;
+        crop = null;
+        panel.world().addToRemovalQueue(existing);
+    }
+
     /** Clear the crop reference once it has been harvested/removed, freeing the
      *  tile for replanting. The crop entity itself is removed via the normal
      *  harvest removal queue. */

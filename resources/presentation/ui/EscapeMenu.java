@@ -27,8 +27,10 @@ import resources.app.GamePanel;
  *   - Resume            → close the menu
  *   - Music: N%         → cycle music volume
  *   - Sound: N%         → cycle SFX volume
- *   - Respawn           → revive at spawn point (via PlayerLifecycle)
  *   - Main Menu         → leave the game and return to the title screen
+ *
+ * Respawn lives on the dedicated {@link DeathScreen} overlay (shown only while
+ * dead), not here — the pause menu is for a living player.
  *
  * Mouse handling is self-contained — the menu intercepts presses inside its
  * panel and dispatches to the relevant button. Outside the panel, presses
@@ -90,7 +92,6 @@ public final class EscapeMenu extends Component {
         soundButton = new WoodenButton("", randomBoard(boards, rng), this::actionSound);
         buttons.add(musicButton);
         buttons.add(soundButton);
-        buttons.add(new WoodenButton("Respawn",       randomBoard(boards, rng), this::actionRespawn));
         buttons.add(new WoodenButton("Main Menu",      randomBoard(boards, rng), this::actionQuit));
         signBoard = tryLoad(BOARDS_DIR + "board" + SIGN_BOARD_INDEX + ".png");
         refreshAudioLabels();
@@ -244,13 +245,6 @@ public final class EscapeMenu extends Component {
 
     private void actionSound() {
         cycleAudio(() -> panel.audioSettings().cycleSoundVolume());
-    }
-
-    private void actionRespawn() {
-        if (panel.player() != null && panel.player().lifecycle() != null) {
-            panel.player().lifecycle().respawn();
-        }
-        hide();
     }
 
     /**

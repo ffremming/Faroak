@@ -80,6 +80,12 @@ public class EntityFactory implements resources.generation.WorldGenerator {
 
     /** Optional decorative / interactive entity on the given tile. Returns null on empty tiles. */
     public BaseEntity getEntity(int worldX, int worldY) {
+        // Online: the client generates the SAME procedural world the server uses
+        // (shared seed), so both agree on object positions. With client-authoritative
+        // movement the client owns its collision, so locally-generated objects no
+        // longer cause position divergence. We keep client generation so the world has
+        // its real, sprited objects (the server's generic "tree"/"rock" entities have
+        // no client sprite and render as placeholders).
         Biome biome = proceduralGen.biomeAt(worldX, worldY);
         if (biome.vegetation.isEmpty()) return null;
 

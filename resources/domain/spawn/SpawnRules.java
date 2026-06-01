@@ -44,6 +44,12 @@ public final class SpawnRules {
             0.10,
             (panel, point) -> MobFactory.hostileSpider(panel, point.x, point.y, ctx)));
 
+        rules.add(new SpawnRule(
+            "pirate_skeleton",
+            EnumSet.of(GameClock.Phase.NIGHT),
+            0.08,
+            (panel, point) -> MobFactory.hostilePirateSkeleton(panel, point.x, point.y, ctx)));
+
         return rules;
     }
 }

@@ -53,6 +53,10 @@ public final class ProtocolPayloadCodec {
             out.writeBoolean(input != null && input.left);
             out.writeBoolean(input != null && input.down);
             out.writeBoolean(input != null && input.right);
+            // Trailing, backward-compatible position section (client-authoritative move).
+            out.writeBoolean(input != null && input.hasPosition);
+            out.writeDouble(input == null ? 0.0 : input.posX);
+            out.writeDouble(input == null ? 0.0 : input.posY);
             out.flush();
             return baos.toByteArray();
         } catch (IOException e) {
@@ -64,7 +68,20 @@ public final class ProtocolPayloadCodec {
     public ProtocolPayloads.InputState decodeInputState(byte[] payload) {
         try {
             DataInputStream in = stream(payload);
-            return new ProtocolPayloads.InputState(in.readBoolean(), in.readBoolean(), in.readBoolean(), in.readBoolean());
+            boolean up = in.readBoolean();
+            boolean left = in.readBoolean();
+            boolean down = in.readBoolean();
+            boolean right = in.readBoolean();
+            boolean hasPosition = false;
+            double posX = 0.0, posY = 0.0;
+            try {
+                hasPosition = in.readBoolean();
+                posX = in.readDouble();
+                posY = in.readDouble();
+            } catch (IOException ignored) {
+                // expected: legacy keys-only input message without a position section.
+            }
+            return new ProtocolPayloads.InputState(up, left, down, right, hasPosition, posX, posY);
         } catch (IOException e) {
             System.err.println("[ProtocolPayloadCodec] decodeInputState failed: " + e);
             return new ProtocolPayloads.InputState(false, false, false, false);

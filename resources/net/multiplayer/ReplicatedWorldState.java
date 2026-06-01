@@ -190,6 +190,14 @@ final class ReplicatedWorldState {
             boat.getHitBox().updateCoords();
             return boat;
         }
+        if ("combat_bolt".equals(objectType) || "boat_projectile".equals(objectType)) {
+            return new GameObject(panel, objectType, 0, 0,
+                28, 28, 20, 20, 4, 4, false);
+        }
+        if ("goblin".equals(objectType) || "spider".equals(objectType) || "deer".equals(objectType)) {
+            return new GameObject(panel, objectType, 0, 0,
+                48, 64, 32, 48, 8, 8, false);
+        }
 
         return new GameObject(panel, objectType.isBlank() ? "block" : objectType, 0, 0,
             FALLBACK_SIZE, FALLBACK_SIZE, FALLBACK_SIZE, FALLBACK_SIZE, 0, 0, true);
@@ -221,6 +229,7 @@ final class ReplicatedWorldState {
             FarmTile farm = ctx.world().farmTileAt(center);
             if (farm == null) farm = ctx.world().tillTileAt(center);
             if (farm != null && tile.watered) farm.water();
+            if (farm != null) farm.syncCrop(tile.cropType, tile.cropStage);
         }
     }
 

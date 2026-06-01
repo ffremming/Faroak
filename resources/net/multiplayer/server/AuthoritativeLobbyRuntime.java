@@ -86,6 +86,11 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         long respawnSeconds = ServerParse.parseLong(System.getProperty("game.multiplayer.respawnSeconds", "5"), 5L);
         this.gameHost.setRespawnDelayTicks(Math.max(1L, respawnSeconds * config.serverTickRate()));
         this.gameHost.setPvpEnabled(!"false".equalsIgnoreCase(System.getProperty("game.multiplayer.pvp", "true")));
+        // Trust the client for ground-object placement terrain by default (matches
+        // client-authoritative movement). Avoids client/server shoreline-tile
+        // disagreement rejecting valid placements.
+        this.gameHost.setTrustClientPlacement(
+            !"false".equalsIgnoreCase(System.getProperty("game.multiplayer.trustClientPlacement", "true")));
         this.gameHost.setActiveSessions(this.sessions);
         this.gameHost.setCounters(this.tick, this.worldRevision, this.nextObjectId);
         restoreWorldObjects();
@@ -100,8 +105,14 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
     private void populateFreshWorld(long worldSeed) {
         boolean alreadyPopulated = "true".equals(persistence.getMeta(META_WORLD_POPULATED, "false"));
         if (alreadyPopulated) return;
+        // Default OFF: the client generates the real, sprited world from the shared
+        // seed and (with client-authoritative movement) owns its own collision, so
+        // server-seeded generic "tree"/"rock" objects only render as placeholder
+        // swatches that clutter the client's real trees. Opt in for a dedicated
+        // server that wants server-authoritative harvestables via worldObjectCount.
         int count = (int) ServerParse.parseLong(
-            System.getProperty("game.multiplayer.worldObjectCount", "120"), 120L);
+            System.getProperty("game.multiplayer.worldObjectCount", "0"), 0L);
+        if (count <= 0) { persistence.putMeta(META_WORLD_POPULATED, "true"); return; }
         int radiusTiles = (int) ServerParse.parseLong(
             System.getProperty("game.multiplayer.worldRadiusTiles", "40"), 40L);
         ServerWorldPopulator populator = new ServerWorldPopulator(
@@ -250,7 +261,11 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         if (!authority.acceptsSequence(envelope.sequence(), s.lastAcceptedSeq)) return;
         ProtocolPayloads.ActionRequest action = payloadCodec.decodeAction(envelope.payload());
         if (action.action == null || !authority.canPerformAction(s.playerId, action.action, tick)) return;
-        if (action.hasTarget && !authority.withinRange(s.x, s.y, action.targetX, action.targetY, maxActionRange)) return;
+        // Measure from the player CENTER (corner + 24,48), matching the client's
+        // cursor-relative targeting and the command-path range checks. Using the raw
+        // corner here under-reported range and rejected edge-of-range targets.
+        if (action.hasTarget && !authority.withinRange(
+                s.x + 24.0, s.y + 48.0, action.targetX, action.targetY, maxActionRange)) return;
         boolean applied = gameHost.applyAction(s, action, tick, this::event);
         nextObjectId = gameHost.nextEntityId();
         worldRevision = gameHost.revision();

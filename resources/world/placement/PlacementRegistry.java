@@ -7,6 +7,7 @@ import resources.app.GamePanel;
 import resources.domain.object.Barrel;
 import resources.domain.object.CraftingTable;
 import resources.domain.object.Fence;
+import resources.domain.object.StoneWall;
 import resources.domain.object.Torch;
 import resources.world.placement.PlacementSpec.SnapPolicy;
 
@@ -49,6 +50,15 @@ public final class PlacementRegistry {
         register(new PlacementSpec(
             "fence",
             p -> new Fence(p, 0, 0),
+            SurfaceRule.ANY,
+            SnapPolicy.TILE,
+            PlacementAction.PLACE_ENTITY,
+            null,
+            true));
+
+        register(new PlacementSpec(
+            "stone_wall",
+            p -> new StoneWall(p, 0, 0),
             SurfaceRule.ANY,
             SnapPolicy.TILE,
             PlacementAction.PLACE_ENTITY,

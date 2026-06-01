@@ -63,6 +63,7 @@ public final class MultiplayerRuntime {
     private final boolean reconnectEnabled;
     private final long reconnectDelayMs;
     private final boolean localReconcileEnabled;
+    private final boolean clientAuthoritativeMovement;
     private final int localInterpolationDelayMs;
     // Divergence (px) the local player may differ from the server before we snap-
     // correct. Below this, crisp local movement is left fully in charge (no mushy
@@ -77,6 +78,8 @@ public final class MultiplayerRuntime {
     private boolean closed;
     private long nextReconnectAttemptAtMs;
     private long lastMovementMask = -1L;
+    private double lastSentPosX = Double.NaN;
+    private double lastSentPosY = Double.NaN;
     private long pingCounter;
     private long lastAckedSeq;
     private boolean localAlive = true;
@@ -98,6 +101,12 @@ public final class MultiplayerRuntime {
             "game.multiplayer.reconnectDelayMs", DEFAULT_RECONNECT_DELAY_MS, 0L, 60_000L);
         this.localReconcileEnabled = parseBoolean(
             "game.multiplayer.reconcileLocal", true);
+        // Client-authoritative movement (default on): the client reports its own
+        // collision-resolved position and the server adopts it, so the local player is
+        // never snapped to a re-simulated server pose. Set false to revert to the old
+        // server-simulated movement + reconciliation.
+        this.clientAuthoritativeMovement = parseBoolean(
+            "game.multiplayer.clientAuthoritativeMovement", true);
         this.localInterpolationDelayMs = (int) parseLong(
             "game.multiplayer.localInterpolationDelayMs", 0L, 0L, 250L);
         // While moving steadily the local (predicted) player legitimately leads the
@@ -222,7 +231,11 @@ public final class MultiplayerRuntime {
         ensureStarted();
         adapter.tick();
         consume(adapter.poll());
-        if (localReconcileEnabled) applyLocalAuthoritativePose();
+        // Client-authoritative movement: the server mirrors the client's reported
+        // position, so the local player must NOT be snapped toward the server pose
+        // (that was the teleport). Reconciliation only runs as a fallback if the
+        // client-authoritative path is explicitly disabled.
+        if (localReconcileEnabled && !clientAuthoritativeMovement) applyLocalAuthoritativePose();
         if (!adapter.isConnected()) {
             reconnectIfDue();
             return;
@@ -292,24 +305,38 @@ public final class MultiplayerRuntime {
 
     private void publishMovement() {
         InputHandlingSystem input = ctx.input();
-        // While dead, force a stopped input so the corpse doesn't drift, and don't
-        // resend until alive again.
+        // Client-authoritative movement: the client owns its own collision-resolved
+        // position and reports it to the server. The server adopts it (clamped)
+        // instead of re-simulating with a different collision model.
+        double px = localPlayerX();
+        double py = localPlayerY();
+
         if (!localAlive) {
+            // Dead: report a stopped input once, holding the current position.
             if (lastMovementMask != 0L) {
                 long seq = ++sequence;
-                adapter.submit(new ClientInputMessage(config.playerId(), seq, false, false, false, false));
+                adapter.submit(new ClientInputMessage(config.playerId(), seq,
+                    false, false, false, false, true, px, py));
                 pendingInputs.addLast(new PredictedInput(seq));
                 lastMovementMask = 0L;
             }
             return;
         }
+
         long mask = movementMask(input);
-        if (mask == lastMovementMask) return;
+        // Send when the keys changed OR the player actually moved since the last
+        // report, so the server position tracks the client continuously (needed for
+        // range-gated actions and to keep remotes in sync) without flooding when idle.
+        boolean moved = Math.abs(px - lastSentPosX) > 0.5 || Math.abs(py - lastSentPosY) > 0.5;
+        if (mask == lastMovementMask && !moved) return;
+
         long seq = ++sequence;
         adapter.submit(new ClientInputMessage(config.playerId(), seq,
-            input.isUp(), input.isLeft(), input.isDown(), input.isRight()));
+            input.isUp(), input.isLeft(), input.isDown(), input.isRight(), true, px, py));
         pendingInputs.addLast(new PredictedInput(seq));
         lastMovementMask = mask;
+        lastSentPosX = px;
+        lastSentPosY = py;
     }
 
     private void publishActions() {

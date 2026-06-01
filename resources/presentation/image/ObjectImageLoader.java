@@ -119,6 +119,12 @@ public final class ObjectImageLoader {
             if (fenceDir != null) return new File(fenceDir, remainder + ".png");
             return new File(OBJECTS_DIR + "structures/walls/" + FENCE_FOLDER + "/" + remainder + ".png");
         }
+        if (name != null && name.startsWith(STONE_WALL_VARIANT_PREFIX)) {
+            String remainder = name.substring(STONE_WALL_VARIANT_PREFIX.length());
+            File wallDir = objectIndex().get(STONE_WALL_FOLDER);
+            if (wallDir != null) return new File(wallDir, remainder + ".png");
+            return new File(OBJECTS_DIR + "structures/walls/" + STONE_WALL_FOLDER + "/" + remainder + ".png");
+        }
         File dir = name == null ? null : objectIndex().get(name);
         if (dir != null) return new File(dir, name + ".png");
         // Fall back to the flat convention so a freshly added top-level folder
@@ -129,6 +135,10 @@ public final class ObjectImageLoader {
     private static final String FENCE_VARIANT_PREFIX = "fence_v";
     /** Folder name for the shared fence variant pack (under structures/walls/). */
     private static final String FENCE_FOLDER = "fences";
+
+    private static final String STONE_WALL_VARIANT_PREFIX = "stone_wall_v";
+    /** Folder name for the shared stone-wall variant pack (under structures/walls/). */
+    private static final String STONE_WALL_FOLDER = "stone_walls";
 
     /**
      * Lazily-built map from object-folder name → that folder on disk, found by

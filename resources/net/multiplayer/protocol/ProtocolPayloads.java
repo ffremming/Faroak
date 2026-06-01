@@ -18,12 +18,28 @@ public final class ProtocolPayloads {
         public final boolean left;
         public final boolean down;
         public final boolean right;
+        // Client-authoritative movement: the client (which does precise local
+        // collision) reports its actual resolved position. The server adopts it
+        // (clamped) instead of re-simulating movement with a different collision
+        // model — that mismatch caused the reconciliation teleport near obstacles.
+        // hasPosition=false on legacy/keys-only messages.
+        public final boolean hasPosition;
+        public final double posX;
+        public final double posY;
 
         public InputState(boolean up, boolean left, boolean down, boolean right) {
+            this(up, left, down, right, false, 0.0, 0.0);
+        }
+
+        public InputState(boolean up, boolean left, boolean down, boolean right,
+                          boolean hasPosition, double posX, double posY) {
             this.up = up;
             this.left = left;
             this.down = down;
             this.right = right;
+            this.hasPosition = hasPosition;
+            this.posX = posX;
+            this.posY = posY;
         }
     }
 

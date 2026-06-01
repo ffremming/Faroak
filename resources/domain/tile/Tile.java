@@ -145,6 +145,24 @@ public class Tile extends BaseEntity {
         if (computeCliff()) cliff = true;
     }
 
+    /**
+     * Re-wire all four neighbour links from the world index and drop the cached
+     * border image stack so it re-resolves on the next draw. Unlike
+     * {@link #setNeighBors()} (which only wires once, then early-returns), this
+     * forces a refresh — call it on a tile whose neighbour set changed because an
+     * adjacent cell was replaced in the grid by in-place tile mutation (e.g. a
+     * neighbour was hoed into farmland). The owning chunk's render bake must also
+     * be invalidated (see {@link resources.world.WorldInteraction}).
+     */
+    public void refreshBorders() {
+        north = neighborAt(NORTH);
+        east  = neighborAt(EAST);
+        south = neighborAt(SOUTH);
+        west  = neighborAt(WEST);
+        images.clear();
+        lastBuiltFrame = -1;
+    }
+
     private Tile neighborAt(int direction) {
         Point p = neighborPoint(direction);
         return panel.world().getTile(p);

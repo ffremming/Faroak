@@ -58,6 +58,8 @@ public class Playable extends Moveable {
         addItem(new Item(panel, "pickaxe"));
         // Fences — full stack
         addItem(new Item(panel, "fence"), 64);
+        // Stone walls — full stack (autotiling, same as fence)
+        addItem(new Item(panel, "stone_wall"), 64);
         // Misc starter pack
         addItem(new Item(panel, "demoHouse"));
         addItem(new Item(panel, "block"), 300);

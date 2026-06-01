@@ -87,9 +87,28 @@ public final class WorldInteraction {
 
         FarmTile farm = FarmTile.from(tile);
         chunk.addTile(farm);            // overwrites the grid slot for this cell
-        farm.setNeighBors();            // wire the new tile to its neighbours
-        if (panel.camera() != null) panel.camera().invalidateChunkBake(chunk);
+        refreshTileBorders(farm, chunk); // re-resolve this tile + its neighbours
         return farm;
+    }
+
+    /**
+     * After a tile is replaced in the grid (in-place tile mutation), re-resolve
+     * its borders <em>and</em> its four neighbours' borders so the connection is
+     * mutual: the new tile borders against its neighbours, and each neighbour
+     * re-draws its edge toward the new tile. Each affected tile's chunk render
+     * bake is invalidated (a neighbour may live in an adjacent chunk).
+     */
+    private void refreshTileBorders(Tile placed, Chunk placedChunk) {
+        placed.refreshBorders();
+        if (panel.camera() != null) panel.camera().invalidateChunkBake(placedChunk);
+        for (Tile neighbor : placed.getNeighbors()) {
+            if (neighbor == null) continue;
+            neighbor.refreshBorders();
+            if (panel.camera() == null) continue;
+            Point np = new Point((int) neighbor.getWorldX(), (int) neighbor.getWorldY());
+            Chunk nc = chunkContaining(np);
+            if (nc != null) panel.camera().invalidateChunkBake(nc);
+        }
     }
 
     /** The {@link FarmTile} under the point, or null if that cell isn't tilled. */

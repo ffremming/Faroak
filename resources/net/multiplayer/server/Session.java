@@ -16,6 +16,12 @@ final class Session {
     long lastSentTick;
     long lastChangedTick;
     boolean baselineSent;
+    // Set once the client has reported its own collision-resolved position
+    // (client-authoritative movement). While true the server NEVER re-simulates
+    // movement from keys for this player — it only adopts the client's reported
+    // position. Sticky for the session so held keys don't cause the server to keep
+    // walking after a position update.
+    boolean clientAuthoritative;
     MultiplayerAction lastAction;
     int health = 20;
     int maxHealth = 20;

@@ -72,6 +72,19 @@ public final class Crop extends GameObject {
     /** Current stage (0..stageCount-1). */
     public int stage() { return currentStage; }
 
+    /** Stable crop key without the rendered _stage suffix. */
+    public String baseName() { return baseName; }
+
+    /**
+     * Snap this local crop replica to an authoritative multiplayer stage.
+     * Single-player growth still flows through GrowableComponent.
+     */
+    public void syncStage(int stage) {
+        int next = Math.max(0, Math.min(STAGES - 1, stage));
+        if (currentStage == next) return;
+        onStageChanged(next);
+    }
+
     /** True once the crop has reached its final growth stage. */
     public boolean isMature() {
         GrowableComponent g = getComponent(GrowableComponent.class);

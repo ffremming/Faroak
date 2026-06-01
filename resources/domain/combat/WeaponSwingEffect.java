@@ -1,6 +1,5 @@
 package resources.domain.combat;
 
-import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
@@ -16,7 +15,6 @@ import resources.presentation.image.ImageContainer;
 public final class WeaponSwingEffect extends Entity implements TransientWorldEntity {
 
     private final BaseEntity owner;
-    private final BufferedImage source;
     private final ArrayList<BufferedImage> slashFrames;
     private final int lifeTicks;
     private final double startAngleRad;
@@ -39,15 +37,8 @@ public final class WeaponSwingEffect extends Entity implements TransientWorldEnt
         this.lifeTicks = Math.max(1, lifeTicks);
         this.radiusPx = Math.max(10.0, radiusPx);
 
-        BufferedImage raw = panel.images().getItemImage(spriteName);
-        if (raw == null) {
-            ArrayList<BufferedImage> fallback = panel.images().getObjectImages(spriteName);
-            raw = fallback.isEmpty() ? null : fallback.get(0);
-        }
-        if (raw == null) {
-            raw = panel.images().getItemImage("axe");
-        }
-        this.source = ImageContainer.scaleImage(raw, 40, 40);
+        // spriteName (the equipped weapon) is intentionally ignored: the swing
+        // shows only the slash arc, not the weapon icon orbiting the player.
         this.slashFrames = CombatSpriteSheet.slashFrames(56);
 
         double baseAngle = Math.atan2(direction.y, direction.x);
@@ -57,6 +48,15 @@ public final class WeaponSwingEffect extends Entity implements TransientWorldEnt
 
         this.solid = false;
         refreshPose(0.0);
+    }
+
+    @Override
+    public ArrayList<BufferedImage> getImages() {
+        // The scene renderer draws getImages(); the inherited BaseEntity version
+        // resolves our name ("weapon_swing") through the tile loader and returns
+        // a flat green placeholder. Expose the rotated slash arc that
+        // refreshPose() builds into the image list instead.
+        return images;
     }
 
     @Override
@@ -74,15 +74,15 @@ public final class WeaponSwingEffect extends Entity implements TransientWorldEnt
         double eased = smooth(progress);
         double angle = startAngleRad + (endAngleRad - startAngleRad) * eased;
 
-        BufferedImage rotated = ImageContainer.rotateImage(source, Math.toDegrees(angle) + 90.0);
         BufferedImage slash = slashFrame(progress);
-        if (slash != null) slash = ImageContainer.rotateImage(slash, Math.toDegrees(angle) + 90.0);
-        BufferedImage visual = composeVisual(rotated, slash);
+        BufferedImage visual = slash != null
+            ? ImageContainer.rotateImage(slash, Math.toDegrees(angle) + 90.0)
+            : null;
         images.clear();
-        images.add(visual);
+        if (visual != null) images.add(visual);
 
-        width = visual.getWidth();
-        height = visual.getHeight();
+        width = visual != null ? visual.getWidth() : 40;
+        height = visual != null ? visual.getHeight() : 40;
 
         double cx = owner.getWorldX() + owner.getWidth() / 2.0;
         double cy = owner.getWorldY() + owner.getHeight() / 2.0;
@@ -96,18 +96,6 @@ public final class WeaponSwingEffect extends Entity implements TransientWorldEnt
         int idx = (int) Math.floor(Math.max(0.0, Math.min(0.999, progress)) * slashFrames.size());
         idx = Math.max(0, Math.min(slashFrames.size() - 1, idx));
         return slashFrames.get(idx);
-    }
-
-    private static BufferedImage composeVisual(BufferedImage weapon, BufferedImage slash) {
-        if (slash == null) return weapon;
-        int w = Math.max(weapon.getWidth(), slash.getWidth());
-        int h = Math.max(weapon.getHeight(), slash.getHeight());
-        BufferedImage out = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = out.createGraphics();
-        g.drawImage(slash, (w - slash.getWidth()) / 2, (h - slash.getHeight()) / 2, null);
-        g.drawImage(weapon, (w - weapon.getWidth()) / 2, (h - weapon.getHeight()) / 2, null);
-        g.dispose();
-        return out;
     }
 
     private static double smooth(double t) {

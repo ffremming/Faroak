@@ -65,6 +65,7 @@ public final class NetworkContainerUIBridge {
             int y) {
         String type = inventoryType == null ? "" : inventoryType.trim().toLowerCase();
         if ("barrel".equals(type)) return new BarrelContainerUI(panel, inventory, x, y);
+        if ("crafting_table".equals(type)) return new ItemContainer(panel, 2, 9, x, y, inventory);
         return new ChestContainerUI(panel, inventory, x, y);
     }
 }

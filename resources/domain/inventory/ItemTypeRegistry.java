@@ -27,6 +27,7 @@ public final class ItemTypeRegistry {
     // Placeables
     public static final ItemType TORCH        = define("torch",        "torch",        16, "torch");
     public static final ItemType FENCE        = define("fence",        "fence",        64, "fence");
+    public static final ItemType STONE_WALL   = define("stone_wall",   "stone_wall",   64, "stone_wall");
     public static final ItemType BARREL       = define("barrel",       "barrel",       16, "barrel");
     public static final ItemType CHEST        = define("chest",        "chest",        16, "chest");
     public static final ItemType FARMLAND     = define("farmland",     "farmland",     16, "farmland");

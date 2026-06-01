@@ -124,6 +124,10 @@ public class GenerationManager {
      */
     public void seedWorldEntities() {
         if (panel.player() == null) return;
+        // Online: the server owns all world objects (replicated via ReplicatedWorldState).
+        // Seeding local-only solids here causes client/server collision divergence and
+        // the reconciliation teleport. Skip the whole local seed.
+        if (isOnline()) return;
         Point p = new Point((int) panel.player().getWorldX(), (int) panel.player().getWorldY());
         Portal toCave = new Portal(panel, "cave_portal",
             p.x + 128, p.y,
@@ -226,7 +230,9 @@ public class GenerationManager {
         panel.player = (new Playable(panel, "red",p.x,p.y,(short)48,(short)96,(short)36,(short)32,(short)6,(short)64));
         panel.world().placeEntity(panel.player());
         panel.player().components().add(new LightSourceComponent(200, 1.0f, new Color(255, 220, 160)));
-        placeStarterChest(p);
+        // Online: the starter chest (a solid, client-only object) would desync collision
+        // with the server. The server provides starter inventory instead.
+        if (!isOnline()) placeStarterChest(p);
     }
 
     /**
@@ -303,8 +309,19 @@ public class GenerationManager {
             try { return Long.parseLong(configured); }
             catch (NumberFormatException ignored) {} // expected: non-numeric seed config falls through to default
         }
+        return isOnline() ? DEFAULT_MULTIPLAYER_SEED : System.nanoTime();
+    }
+
+    /**
+     * Online play is server-authoritative: the world's solid objects (trees, rocks,
+     * the starter chest, NPCs, ships, the plant grid) come from the server via
+     * {@link resources.net.multiplayer.ReplicatedWorldState}. The client must NOT
+     * seed its own copies — if it does, the player collides with local-only objects
+     * the server walks straight through, the positions diverge, and reconciliation
+     * snaps the player hundreds of pixels (the "teleport past collision" bug).
+     */
+    static boolean isOnline() {
         String mode = System.getProperty("game.multiplayer.mode", "offline");
-        boolean online = mode != null && !"offline".equalsIgnoreCase(mode.trim());
-        return online ? DEFAULT_MULTIPLAYER_SEED : System.nanoTime();
+        return mode != null && !"offline".equalsIgnoreCase(mode.trim());
     }
 }

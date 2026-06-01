@@ -97,6 +97,11 @@ public final class RecipeRegistry {
             .produces("fence", 2)
             .build());
 
+        register(ShapelessRecipe.of("stone_wall_from_stone")
+            .ingredient("stone", 3)
+            .produces("stone_wall", 2)
+            .build());
+
         register(ShapelessRecipe.of("torch_from_meat")
             .ingredient("meat", 1)
             .ingredient("wheat", 1)

@@ -46,6 +46,10 @@ final class AuthoritativeGameHost {
     private static final int CROP_HARVEST_AMOUNT = 1;
     private static final double PLAYER_CENTER_OFFSET_X = 24.0;
     private static final double PLAYER_CENTER_OFFSET_Y = 48.0;
+    // Player body radius for object collision. Small enough to stand adjacent to a
+    // harvestable (so harvest/interact still reach) and squeeze between tile-spaced
+    // objects, large enough to block walking into a footprint.
+    private static final double PLAYER_COLLISION_RADIUS = 14.0;
     private static final int PROJECTILE_SIZE = 28;
     private static final double PROJECTILE_HIT_RADIUS = 20.0;
     private static final long MOB_AI_TICK_INTERVAL = 2L;
@@ -56,6 +60,10 @@ final class AuthoritativeGameHost {
     private final double maxActionRange;
     private long respawnDelayTicks = 150L; // ~5s at 30Hz; overridden by the lobby
     private boolean pvpEnabled = true;
+    // When true, the server trusts the client for ground-object placement terrain
+    // (skips its own land/water check), avoiding client/server shoreline-tile
+    // disagreement that rejects valid placements. Boats still require water.
+    private boolean trustClientPlacement = true;
     private final GameClock worldClock =
         new GameClock(GameClock.DEFAULT_TICKS_PER_DAY, GameClock.NOON_TICK_OF_DAY);
     // Clock-ticks advanced per server tick. The offline game advances ~1 clock tick
@@ -70,6 +78,7 @@ final class AuthoritativeGameHost {
 
     void setRespawnDelayTicks(long ticks) { this.respawnDelayTicks = Math.max(1L, ticks); }
     void setPvpEnabled(boolean enabled) { this.pvpEnabled = enabled; }
+    void setTrustClientPlacement(boolean trust) { this.trustClientPlacement = trust; }
 
     /** Live sessions map (owned by the lobby) so combat can target players for PvP. */
     private Map<String, Session> activeSessions = java.util.Collections.emptyMap();
@@ -257,10 +266,37 @@ final class AuthoritativeGameHost {
         world.removePlayer(playerId);
     }
 
+    // Max distance the client-reported position may jump in one input message before
+    // we treat it as suspicious and clamp toward it instead of teleporting. Generous:
+    // covers a few frames of movement + latency, but rejects gross teleport hacks.
+    private static final double CLIENT_MOVE_CLAMP = 256.0;
+
     void setInput(Session session, ProtocolPayloads.InputState input, long sequence, long tick) {
         if (session == null || input == null) return;
         PlayerReplicaState player = ensurePlayer(session.playerId, true, session.x, session.y, session.lastAcceptedSeq, tick);
         player.setInput(input.up, input.left, input.down, input.right, sequence, tick);
+        // Client-authoritative movement: adopt the client's collision-resolved position
+        // directly. The client does precise local collision (it cannot walk into water
+        // or solids), so we TRUST its position rather than re-validating against the
+        // server's terrain — the server's ProceduralGen can classify shoreline tiles
+        // differently from the client's generated tiles, and rejecting the client
+        // position there strands the session away from the player (every range-gated
+        // action then fails "too far away"). Only clamp the per-message delta so a
+        // hacked client can't teleport arbitrarily. Riding players are server-driven.
+        if (input.hasPosition && session.alive && player.ridingEntityId() <= 0L) {
+            double dx = input.posX - session.x;
+            double dy = input.posY - session.y;
+            double dist = Math.hypot(dx, dy);
+            double tx = input.posX, ty = input.posY;
+            if (dist > CLIENT_MOVE_CLAMP && dist > 0.0) {
+                tx = session.x + dx / dist * CLIENT_MOVE_CLAMP;
+                ty = session.y + dy / dist * CLIENT_MOVE_CLAMP;
+            }
+            session.x = tx;
+            session.y = ty;
+            session.clientAuthoritative = true;
+            player.moveTo(player.dimensionId(), tx, ty, 0.0, 0.0, tick);
+        }
     }
 
     void integratePlayers(Map<String, Session> sessions, AuthorityService authority, double moveSpeedPerTick, long tick) {
@@ -275,6 +311,14 @@ final class AuthoritativeGameHost {
             player.setInput(session.up, session.left, session.down, session.right, session.lastAcceptedSeq, tick);
             if (player.ridingEntityId() > 0L) {
                 integrateRidingPlayer(session, player, authority, moveSpeedPerTick, tick);
+                continue;
+            }
+            // Client-authoritative movement: once the client has reported its own
+            // collision-resolved position, the server NEVER re-simulates movement from
+            // keys for this player (that dual-collision-model mismatch caused the
+            // teleport). The session position is set directly in setInput; held keys
+            // must not keep walking the server position here.
+            if (session.clientAuthoritative) {
                 continue;
             }
             ensureOnLand(player, tick);
@@ -490,7 +534,20 @@ final class AuthoritativeGameHost {
         if (isWatering(type)) return waterTile(session, x, y, tick, events);
         if (isSeed(type)) return plantSeed(session, type, x, y, tick, events);
 
-        if (terrainRules != null && !terrainRules.canPlaceObject(type, x, y)) return false;
+        // Terrain validation. When trusting the client for placement (client-
+        // authoritative mode), the server skips its OWN land/water check for ground
+        // objects — the client and server can classify shoreline tiles differently
+        // (client "beach" = land, server "ocean" = water), which otherwise rejects
+        // valid placements as "cannot use item here". Boats still require water
+        // (the client can't fabricate that, and a boat on land is clearly wrong).
+        boolean isBoat = "boat".equals(type);
+        if (terrainRules != null) {
+            if (isBoat) {
+                if (!terrainRules.canPlaceObject(type, x, y)) return false;
+            } else if (!trustClientPlacement && !terrainRules.canPlaceObject(type, x, y)) {
+                return false;
+            }
+        }
         if (placementBlocked(x, y)) return false;
 
         long revision = world.bumpRevision();
@@ -804,7 +861,12 @@ final class AuthoritativeGameHost {
             long tick,
             ActionResolver.EventSink events) {
         if (!command.hasTarget) return CommandOutcome.reject("missing target");
-        if (!withinRange(session.x, session.y, command.targetX, command.targetY, maxActionRange)) {
+        // Measure from the player's CENTER (not the top-left corner). The client sends
+        // the cursor world position, which is relative to where the player visually is
+        // (its center). Using session.x/y here added a ~54px offset that pushed valid
+        // clicks — especially boat placement at the edge of range — out of range.
+        if (!withinRange(playerCenterX(session), playerCenterY(session),
+                command.targetX, command.targetY, maxActionRange)) {
             return CommandOutcome.reject("too far away");
         }
         InventoryState inventory = playerInventory(session.playerId);
@@ -866,7 +928,8 @@ final class AuthoritativeGameHost {
                 command.hasTarget ? command.targetY : session.y,
                 maxActionRange);
         if (target == null || target.removed()) return CommandOutcome.reject("nothing to interact with");
-        if (!withinRange(session.x, session.y, target.worldX(), target.worldY(), maxActionRange)) {
+        if (!withinRange(playerCenterX(session), playerCenterY(session),
+                target.worldX(), target.worldY(), maxActionRange)) {
             return CommandOutcome.reject("too far away");
         }
         CommandOutcome outcome = interactWithEntity(session, target, tick, events);
@@ -939,7 +1002,8 @@ final class AuthoritativeGameHost {
         if (rider != null && !rider.isBlank() && !session.playerId.equals(rider)) {
             return CommandOutcome.reject("boat already occupied");
         }
-        if (!withinRange(session.x, session.y, boat.worldX(), boat.worldY(), maxActionRange * 2.0)) {
+        if (!withinRange(playerCenterX(session), playerCenterY(session),
+                boat.worldX(), boat.worldY(), maxActionRange * 2.0)) {
             return CommandOutcome.reject("too far from boat");
         }
         player.setRidingEntityId(boat.entityId(), tick);
@@ -1169,6 +1233,9 @@ final class AuthoritativeGameHost {
         setSlot(inventory, 11, "wheat", 6, revision, tick);
         setSlot(inventory, 12, "stone", 4, revision, tick);
         setSlot(inventory, 13, "crafting_table", 1, revision, tick);
+        // Stone wall starting stack. The hotbar (+0..+8) is full, so it spawns
+        // in the main inventory next to the other building materials.
+        setSlot(inventory, 14, "stone_wall", 64, revision, tick);
         setSlot(inventory, PLAYER_HOTBAR_OFFSET, "hoe", 1, revision, tick);
         setSlot(inventory, PLAYER_HOTBAR_OFFSET + 1, "watering_can", 1, revision, tick);
         setSlot(inventory, PLAYER_HOTBAR_OFFSET + 2, "seeds_wheat", 16, revision, tick);
@@ -1191,7 +1258,8 @@ final class AuthoritativeGameHost {
         if (cursorInventoryType(session.playerId).equals(type)) return true;
         EntityState owner = world.entity(inventory.ownerEntityId());
         return owner != null && !owner.removed()
-            && withinRange(session.x, session.y, owner.worldX(), owner.worldY(), maxActionRange);
+            && withinRange(playerCenterX(session), playerCenterY(session),
+                owner.worldX(), owner.worldY(), maxActionRange);
     }
 
     private boolean leftClickSlot(InventoryState inventory, InventoryState cursor, int slot, long revision, long tick) {
@@ -1457,11 +1525,82 @@ final class AuthoritativeGameHost {
 
     private boolean canPlayerOccupy(PlayerReplicaState player, double x, double y) {
         if (player != null && player.ridingEntityId() > 0L) return true;
-        return terrainRules == null || terrainRules.canPlayerOccupy(x, y);
+        if (terrainRules != null && !terrainRules.canPlayerOccupy(x, y)) return false;
+        // Object collision: the authoritative position must respect solid placed
+        // objects the same way the client does. Without this the server walks the
+        // player straight through trees/walls/chests while the client is blocked,
+        // the two positions diverge, and reconciliation later snaps the client past
+        // the obstacle (and range-gated actions like placing fail because the server
+        // thinks the player is elsewhere).
+        return !blockedBySolidEntity(player, x, y);
+    }
+
+    /** True if a player standing at (x,y) would overlap a solid placed object. Uses
+     *  circle footprints (player radius vs entity radius) — cheap and matches the
+     *  client's effective blocking closely enough for prediction to stay in sync. */
+    private boolean blockedBySolidEntity(PlayerReplicaState player, double x, double y) {
+        // Use the SAME player-center convention (worldX+24, worldY+48) and raw entity
+        // worldX/Y that the rest of the server uses for proximity (nearestEntity,
+        // playerCenter range checks), so collision, targeting and range all agree.
+        double cx = x + PLAYER_CENTER_OFFSET_X;
+        double cy = y + PLAYER_CENTER_OFFSET_Y;
+        for (EntityState entity : world.entities()) {
+            if (entity == null || entity.removed() || !blocksPlayer(entity)) continue;
+            if (player != null && entity.entityId() == player.ridingEntityId()) continue;
+            double r = PLAYER_COLLISION_RADIUS + playerBlockRadius(entity.entityType());
+            double dx = entity.worldX() - cx;
+            double dy = entity.worldY() - cy;
+            if ((dx * dx + dy * dy) < (r * r)) return true;
+        }
+        return false;
+    }
+
+    /** Collision footprint an object presents to a walking player. Deliberately
+     *  smaller than the visual/combat {@link #entityRadius}: seeded objects sit on a
+     *  64px tile grid, so the combined player+object radius must stay under 32px or
+     *  the player couldn't squeeze between two tile-adjacent objects. */
+    private double playerBlockRadius(String type) {
+        switch (type) {
+            case "fence":
+            case "stone_wall":
+            case "block":
+                return 16.0;     // structural — block firmly
+            default:
+                return 14.0;     // trees/rocks/ore/containers — slim trunk/footprint
+        }
+    }
+
+    /** Solid placed objects that block player walking — structural/world objects.
+     *  Excludes boats (ridden / on water), projectiles, mobs, and ground items. */
+    private boolean blocksPlayer(EntityState entity) {
+        String type = entity.entityType();
+        switch (type) {
+            case "tree":
+            case "rock":
+            case "ore":
+            case "chest":
+            case "barrel":
+            case "crafting_table":
+            case "fence":
+            case "stone_wall":
+            case "block":
+            case "demohouse":
+                return true;
+            default:
+                return false;
+        }
     }
 
     private void ensureOnLand(PlayerReplicaState player, long tick) {
-        if (player == null || terrainRules == null || canPlayerOccupy(player, player.worldX(), player.worldY())) return;
+        // Safety net for TERRAIN only (water). Object collision is enforced per-step
+        // in moveWithTerrainSteps; we must NOT relocate the player for merely standing
+        // beside/over an object here, since nearestLand only resolves terrain and a
+        // per-tick relocation would teleport players standing next to objects.
+        if (player == null || terrainRules == null
+                || player.ridingEntityId() > 0L
+                || terrainRules.canPlayerOccupy(player.worldX(), player.worldY())) {
+            return;
+        }
         double[] spawn = nearestLand(player.worldX(), player.worldY());
         player.moveTo(player.dimensionId(), spawn[0], spawn[1], 0.0, 0.0, tick);
     }
@@ -1787,6 +1926,7 @@ final class AuthoritativeGameHost {
             || isSeed(type)
             || "boat".equals(type)
             || "fence".equals(type)
+            || "stone_wall".equals(type)
             || "torch".equals(type)
             || "barrel".equals(type)
             || "chest".equals(type)
@@ -1895,6 +2035,7 @@ final class AuthoritativeGameHost {
         recipes.add(recipe("hammer", 1, "stone", 4, "hide", 1));
         recipes.add(recipe("barrel", 1, "wheat", 6));
         recipes.add(recipe("fence", 2, "wheat", 2));
+        recipes.add(recipe("stone_wall", 2, "stone", 3));
         recipes.add(recipe("torch", 4, "meat", 1, "wheat", 1));
         recipes.add(recipe("sword", 1, "iron_ore", 2, "wheat", 1));
         recipes.add(recipe("crafting_table", 1, "wheat", 4));

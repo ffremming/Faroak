@@ -52,6 +52,12 @@ public final class TileMutationState {
         touch(newRevision, tick);
     }
 
+    public void clearCrop(long newRevision, long tick) {
+        cropType = "";
+        cropStage = 0;
+        touch(newRevision, tick);
+    }
+
     public boolean changedSince(long sentTick) {
         return sentTick <= 0L || lastChangedTick > sentTick;
     }

@@ -11,6 +11,7 @@ public class UserInterface extends Container{
 
     private PlayerInventory inventoryUI;
     private final EscapeMenu menu;
+    private final DeathScreen deathScreen;
     private final HealthHUD hud;
 
     /**
@@ -49,6 +50,12 @@ public class UserInterface extends Container{
         menu = new EscapeMenu(panel);
         menu.hide();
         add(menu);
+
+        // Death overlay: a permanent fixture like the escape menu (so it
+        // survives clear()), driven on/off each frame from the death state.
+        deathScreen = new DeathScreen(panel);
+        deathScreen.hide();
+        add(deathScreen);
     }
 
     public void addInventory(Inventory inventory){
@@ -122,6 +129,9 @@ public class UserInterface extends Container{
     }
 
     public void toggleMenu(){
+        // While dead, the death overlay owns the screen — don't let ESC stack the
+        // pause menu on top of it. Respawn / Main Menu are the only ways forward.
+        if (deathScreen.isOpen()) return;
         if (menu.isOpen()) {
             menu.hide();
         } else {
@@ -176,10 +186,47 @@ public class UserInterface extends Container{
     }
 
 
+    /**
+     * True when the locally-controlled player is dead. Online defers to the
+     * server-authoritative flag; single-player reads the player's lifecycle.
+     * Mirrors the same gate the input layer uses so the death UI and the
+     * movement freeze agree on "dead".
+     */
+    private boolean isLocalPlayerDead() {
+        if (panel.multiplayer() != null && panel.multiplayer().isOnline()) {
+            return panel.multiplayer().localPlayerDead();
+        }
+        return panel.player() != null
+            && panel.player().lifecycle() != null
+            && panel.player().lifecycle().isDead();
+    }
+
+    /**
+     * Show the death overlay whenever the local player is dead and hide it once
+     * alive again. Driven every frame so it tracks both single-player respawns
+     * (lifecycle flips immediately) and online ones (server snapshot flips the
+     * alive flag a few frames after the request). Opening it closes the pause
+     * menu so the two full-screen overlays never stack.
+     */
+    private void syncDeathScreen() {
+        boolean dead = isLocalPlayerDead();
+        if (dead && !deathScreen.isOpen()) {
+            menu.hide();
+            deathScreen.show();
+        } else if (!dead && deathScreen.isOpen()) {
+            deathScreen.hide();
+        }
+    }
+
+    /** True while the death overlay is showing — used to suppress the HUD banner. */
+    public boolean isDeathScreenOpen() { return deathScreen.isOpen(); }
+
     @Override
     public void draw(Graphics2D g2){
         width = panel.width;
         height = panel.height;
+
+        syncDeathScreen();
         if (inventoryUI!= null){
             inventoryUI.center(getCenter());
             inventoryUI.setWidth((int)(0.8*panel.width/2));
@@ -325,6 +372,9 @@ public class UserInterface extends Container{
     /** True when the escape menu is currently shown — used to pause input. */
     public boolean isMenuOpen() { return menu.isOpen(); }
 
+    /** Test/probe hook: the death overlay instance. */
+    public DeathScreen deathScreen() { return deathScreen; }
+
     /**
      * True when a modal UI that wants the mouse wheel for its own scrolling is
      * open (the full inventory grid, or the escape menu). The hotbar wheel-cycle
@@ -334,6 +384,10 @@ public class UserInterface extends Container{
      */
     public boolean isModalUIOpen() {
         if (menu.isOpen()) return true;
+        // The death overlay is modal: clicks must route to its Respawn / Main
+        // Menu buttons (Mouse.mousePressed only forwards to the UI when this is
+        // true) instead of falling through to a world action on the corpse.
+        if (deathScreen.isOpen()) return true;
         if (!overlays.isEmpty()) return true;
         return inventoryUI != null && inventoryUI.visible;
     }
@@ -348,16 +402,17 @@ public class UserInterface extends Container{
     }
 
     /**
-     * Wipe the UI back to its baseline. The escape menu is a permanent fixture
-     * (added in the constructor) so it must survive a clear — otherwise the
-     * player setup path ({@link resources.domain.player.Playable}) calls
-     * {@code clear()} then re-adds only the inventory, dropping the menu out of
-     * the draw list and leaving it invisible even though {@code isOpen()} reads
-     * true. Re-register it after clearing so it keeps rendering.
+     * Wipe the UI back to its baseline. The escape menu and death overlay are
+     * permanent fixtures (added in the constructor) so they must survive a clear
+     * — otherwise the player setup path ({@link resources.domain.player.Playable})
+     * calls {@code clear()} then re-adds only the inventory, dropping them out of
+     * the draw list and leaving them invisible even though {@code isOpen()} reads
+     * true. Re-register them after clearing so they keep rendering.
      */
     public void clear() {
         content.clear();
         add(menu);
+        add(deathScreen);
     }
 
     /** Test/probe hook: number of child components currently registered. */

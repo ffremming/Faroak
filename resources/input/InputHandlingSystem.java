@@ -22,6 +22,19 @@ public class InputHandlingSystem {
     }
 
     public void update(double delta){
+        // A dead player is frozen: held movement keys must not keep feeding
+        // velocity into the corpse. Without this the input system kept adding
+        // velocity every frame regardless of death — invisible in single-player
+        // (Playable.update early-returns and never drains it, so the player
+        // lurched on respawn) and a live drift online (where reconciliation runs
+        // against the server pose). Gate at the source and zero any residual so
+        // both paths stay still. See DeadInputFreezeProbe.
+        if (isLocalPlayerDead()) {
+            if (panel.player() != null) panel.player().setVelocity(new Vector(0, 0));
+            panel.world().setHoveredEntity(panel.mouse().x, panel.mouse().y);
+            return;
+        }
+
         // While the player is riding a boat, the boat reads these flags
         // directly to steer; routing them into player velocity too would
         // both drift the player off the boat and double-handle the input.
@@ -54,6 +67,20 @@ public class InputHandlingSystem {
 
         //setting the hovered entities from mouse input
         panel.world().setHoveredEntity(panel.mouse().x,panel.mouse().y);
+    }
+
+    /**
+     * True when the locally-controlled player is dead. Online play defers to the
+     * server-authoritative flag ({@code MultiplayerRuntime.localPlayerDead});
+     * single-player reads the player's own {@link PlayerLifecycle}.
+     */
+    private boolean isLocalPlayerDead() {
+        if (panel.multiplayer() != null && panel.multiplayer().isOnline()) {
+            return panel.multiplayer().localPlayerDead();
+        }
+        return panel.player() != null
+            && panel.player().lifecycle() != null
+            && panel.player().lifecycle().isDead();
     }
 
     public void setDown(boolean val){

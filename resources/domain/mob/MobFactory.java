@@ -23,6 +23,8 @@ public final class MobFactory {
         new DropSpec("stone", 1, 2));
     private static final DropTable SPIDER_DROPS = DropTable.of(
         new DropSpec("stone", 1, 1));
+    private static final DropTable PIRATE_SKELETON_DROPS = DropTable.of(
+        new DropSpec("stone", 1, 3), new DropSpec("sword", 0, 1));
 
     public static Mob peacefulDeer(GamePanel panel, int x, int y, GameContext ctx) {
         Mob m = new Mob(panel, "deer", x, y, 8,
@@ -50,6 +52,17 @@ public final class MobFactory {
                 34, 1, 28, "hammer",
                 220, 2, 45, 10.0, 50, "block"));
         attachLoot(m, SPIDER_DROPS);
+        return m;
+    }
+
+    public static Mob hostilePirateSkeleton(GamePanel panel, int x, int y, GameContext ctx) {
+        Mob m = new Mob(panel, "pirate_skeleton", x, y, 16,
+            new CombatChaseBehavior(
+                ctx.player(),
+                1.0,
+                46, 3, 18, "sword",
+                0, 0, 0, 0.0, 0, null));
+        attachLoot(m, PIRATE_SKELETON_DROPS);
         return m;
     }
 

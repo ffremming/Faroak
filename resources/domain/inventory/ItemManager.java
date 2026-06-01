@@ -12,6 +12,7 @@ import resources.domain.object.Boat;
 import resources.domain.object.Chest;
 import resources.domain.object.CraftingTable;
 import resources.domain.object.Fence;
+import resources.domain.object.StoneWall;
 import resources.domain.object.PlaceAble;
 import resources.domain.object.Torch;
 import resources.app.GamePanel;
@@ -74,6 +75,18 @@ public class ItemManager {
                 panel.imageContainer.itemImages.put("fence", imgs.get(0));
             }
         }
+        // Stone wall: same trick as fence — its art lives in the shared
+        // stone_walls/ variant pack under "stone_wall_v<variant>" names, so the
+        // plain "stone_wall" item key would otherwise resolve to the "?"
+        // placeholder. The template wall has no neighbours, so its variant is
+        // the isolated block, which reads well as an inventory icon.
+        BaseEntity stoneWallRep = physicalRepresentations.get("stone_wall");
+        if (stoneWallRep != null) {
+            java.util.ArrayList<java.awt.image.BufferedImage> imgs = stoneWallRep.getImages();
+            if (!imgs.isEmpty()) {
+                panel.imageContainer.itemImages.put("stone_wall", imgs.get(0));
+            }
+        }
 
         // Sliced misc sprite-sheet objects ship no dedicated items/<name>.png
         // icon — reuse their world-object sprite as the inventory/catalog icon,
@@ -101,6 +114,7 @@ public class ItemManager {
 
         // New placeables (phase 4)
         physicalRepresentations.put("fence",    new Fence(panel, 0, 0));
+        physicalRepresentations.put("stone_wall", new StoneWall(panel, 0, 0));
         physicalRepresentations.put("torch",    new Torch(panel, 0, 0));
         physicalRepresentations.put("barrel",   new Barrel(panel, 0, 0));
         physicalRepresentations.put("chest",    new Chest(panel, 0, 0));
