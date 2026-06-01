@@ -77,6 +77,7 @@ public class GamePanel extends JPanel implements GameContext {
     private DimensionService       dimensions;
     private MultiplayerRuntime     multiplayer;
     private TestTelemetryServer    telemetry;
+    private double                 frameDelta = 1.0;
 
     public final JFrame frame;
     final boolean newGame;
@@ -174,6 +175,7 @@ public class GamePanel extends JPanel implements GameContext {
 
     /** One simulation step. Called by {@link GameLoop} from the EDT. */
     public void update(double delta) {
+        this.frameDelta = (delta <= 0.0) ? 1.0 : delta;
         environmentM.updateTicks();
         inputHandlingSystem.update(delta);
         if (multiplayer != null) multiplayer.update(delta);
@@ -213,6 +215,18 @@ public class GamePanel extends JPanel implements GameContext {
     @Override public NetworkChannel      network()       { return network; }
     @Override public ServerAuthority     authority()     { return authority; }
     @Override public MultiplayerRuntime  multiplayer()   { return multiplayer; }
+
+    /** Current frame's delta (1.0 == one 60 FPS frame). Used to make the online
+     *  local player's walk speed frame-rate-independent so it doesn't drift from
+     *  the fixed-rate authoritative server. */
+    public double frameDelta() { return frameDelta; }
+
+    /** True when the local player's movement should be time-corrected to match the
+     *  server (i.e. we are online). Offline play keeps the original per-frame model. */
+    public boolean movementIsTimeCorrected() {
+        return multiplayer != null && multiplayer.isOnline();
+    }
+
     @Override public WorldRuntime        world()         { return world; }
     @Override public TileManager         tiles()         { return tileM; }
     @Override public ItemManager         items()         { return itemM; }
