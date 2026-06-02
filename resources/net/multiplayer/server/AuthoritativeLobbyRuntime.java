@@ -94,6 +94,9 @@ public final class AuthoritativeLobbyRuntime implements LobbyRuntime {
         this.gameHost.setActiveSessions(this.sessions);
         this.gameHost.setCounters(this.tick, this.worldRevision, this.nextObjectId);
         restoreWorldObjects();
+        // No players are connected at construction, so any rider on a restored boat is
+        // an orphan from a previous session — clear it so boats are boardable on boot.
+        gameHost.clearOrphanRiders(sessions.keySet());
         populateFreshWorld(worldSeed);
     }
 

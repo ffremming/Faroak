@@ -262,7 +262,34 @@ final class AuthoritativeGameHost {
         session.lastChangedTick = Math.max(session.lastChangedTick, player.lastChangedTick());
     }
 
+    /** Blank the rider on any boat whose rider id is not in {@code activePlayerIds}.
+     *  Persisted/restored worlds can carry riders for players who are not connected
+     *  (server crashed mid-ride, or old saves) — those boats would be unboardable. */
+    void clearOrphanRiders(java.util.Set<String> activePlayerIds) {
+        for (EntityState entity : world.entities()) {
+            if (entity == null || !"boat".equals(entity.entityType())) continue;
+            String rider = entity.component("rider");
+            if (rider == null || rider.isBlank()) continue;
+            if (activePlayerIds == null || !activePlayerIds.contains(rider)) {
+                entity.putComponent("rider", "", world.bumpRevision(), world.tick());
+                dirty = true;
+            }
+        }
+    }
+
     void removePlayer(String playerId) {
+        if (playerId != null) {
+            // Free any boat this player was riding so others can board it. Without this,
+            // a disconnect leaves rider=playerId forever and toggleBoatRide rejects
+            // everyone else with "boat already occupied".
+            for (EntityState entity : world.entities()) {
+                if (entity == null || !"boat".equals(entity.entityType())) continue;
+                if (playerId.equals(entity.component("rider"))) {
+                    entity.putComponent("rider", "", world.bumpRevision(), world.tick());
+                    dirty = true;
+                }
+            }
+        }
         world.removePlayer(playerId);
     }
 

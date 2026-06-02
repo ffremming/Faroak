@@ -22,6 +22,7 @@ import resources.domain.object.Chest;
 import resources.domain.object.CraftingTable;
 import resources.input.InputAction;
 import resources.input.InputHandlingSystem;
+import resources.net.multiplayer.hostauth.HostAuthoritativeLobby;
 import resources.net.multiplayer.message.ClientCommandMessage;
 import resources.net.multiplayer.message.ClientInputMessage;
 import resources.net.multiplayer.message.ClientJoinMessage;
@@ -83,6 +84,7 @@ public final class MultiplayerRuntime {
     private long pingCounter;
     private long lastAckedSeq;
     private boolean localAlive = true;
+    private String lastCommandReason = "";
     private final java.util.ArrayDeque<String> chatLog = new java.util.ArrayDeque<>();
     private final java.util.Set<String> roster = new java.util.LinkedHashSet<>();
     private final ArrayDeque<PredictedInput> pendingInputs = new ArrayDeque<>();
@@ -125,6 +127,14 @@ public final class MultiplayerRuntime {
 
     public static MultiplayerRuntime createDefault(GameContext ctx) {
         MultiplayerConfig config = MultiplayerConfig.fromSystemProperties();
+        // Host-authoritative loopback host: register the real engine context BEFORE the
+        // adapter is created, because the loopback adapter builds the shared lobby in its
+        // constructor — the context must be available by then for a HostAuthoritativeLobby.
+        if (config.mode() == MultiplayerMode.HOST
+                && "hostauth".equals(config.lobby())
+                && !isWebSocketBackend(config.backend())) {
+            LoopbackServerHub.setHostContext(ctx);
+        }
         MultiplayerServerAdapter adapter = config.online()
             ? MultiplayerAdapterRegistry.create(config)
             : new NoopServerAdapter();
@@ -179,6 +189,26 @@ public final class MultiplayerRuntime {
         return replicatedWorld.ridingEntityIdFor(config.playerId()) > 0L;
     }
 
+    /** Test-only: server entity id the client has mapped for this entity (0 = unmapped/client-only). */
+    public long debugEntityId(BaseEntity entity) {
+        return replicatedWorld.entityIdFor(entity);
+    }
+
+    /** Test-only: reason from the most recent server command result. */
+    public String debugLastCommandReason() {
+        return lastCommandReason;
+    }
+
+    /** Test-only: dump the replicated type+components for a server entity id. */
+    public String debugEntityState(long entityId) {
+        return replicatedWorld.debugEntityState(entityId);
+    }
+
+    /** Test-only: true if a host-authoritative lobby was built for this loopback host. */
+    public boolean debugHostAuthoritative() {
+        return LoopbackServerHub.hostLobby() != null;
+    }
+
     public boolean submitWorldClick(double worldX, double worldY) {
         if (closed || !config.online() || !joined) return false;
         BaseEntity clicked = entityAt(worldX, worldY);
@@ -229,6 +259,11 @@ public final class MultiplayerRuntime {
     public void update(double delta) {
         if (closed || !config.online()) return;
         ensureStarted();
+        // Host-authoritative lobby: this client's frame thread owns the real engine, so
+        // build + queue snapshots here (not on the server thread) to avoid racing
+        // world.simulate(). No-op for guests / legacy lobby.
+        HostAuthoritativeLobby hostLobby = LoopbackServerHub.hostLobby();
+        if (hostLobby != null) hostLobby.produceSnapshots();
         adapter.tick();
         consume(adapter.poll());
         // Client-authoritative movement: the server mirrors the client's reported
@@ -438,6 +473,7 @@ public final class MultiplayerRuntime {
     private void onCommandResult(ServerCommandResultMessage result) {
         if (!config.playerId().equals(result.playerId())) return;
         lastAckedSeq = Math.max(lastAckedSeq, result.commandSequence());
+        lastCommandReason = (result.accepted() ? "accepted" : "rejected:") + (result.reason() == null ? "" : result.reason());
         Runnable accepted = commandAcceptedHandlers.remove(result.commandSequence());
         if (result.accepted()) {
             if (accepted != null) accepted.run();
@@ -563,16 +599,31 @@ public final class MultiplayerRuntime {
 
     private BaseEntity entityAt(double worldX, double worldY) {
         if (ctx.world() == null) return null;
-        ArrayDeque<BaseEntity> hits = new ArrayDeque<>();
+        // When several boats overlap the click, prefer the FREE boat whose hitbox center
+        // is closest to the cursor — otherwise an occupied neighbour can win the click and
+        // the server rejects boarding with "boat already occupied".
+        BaseEntity bestBoat = null;
+        double bestBoatD = Double.MAX_VALUE;
+        BaseEntity container = null;
+        BaseEntity fallback = null;
         for (BaseEntity entity : ctx.world().getEntitiesCollidedWith(new Point((int) Math.round(worldX), (int) Math.round(worldY)))) {
             if (entity == null || entity == ctx.player()) continue;
-            hits.addLast(entity);
+            if (entity instanceof Boat) {
+                long id = replicatedWorld.entityIdFor(entity);
+                String rider = replicatedWorld.riderOf(id);
+                boolean free = rider == null || rider.isBlank() || rider.equals(config.playerId());
+                if (!free) continue;
+                double d = Math.hypot(entity.getHitBox().getCenterX() - worldX,
+                                      entity.getHitBox().getCenterY() - worldY);
+                if (d < bestBoatD) { bestBoatD = d; bestBoat = entity; }
+            } else if (isContainer(entity)) {
+                container = entity;
+            } else {
+                fallback = entity;
+            }
         }
-        BaseEntity fallback = null;
-        for (BaseEntity entity : hits) {
-            if (isContainer(entity) || entity instanceof Boat) return entity;
-            fallback = entity;
-        }
+        if (bestBoat != null) return bestBoat;
+        if (container != null) return container;
         return fallback;
     }
 

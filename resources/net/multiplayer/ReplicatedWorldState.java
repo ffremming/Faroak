@@ -83,6 +83,22 @@ final class ReplicatedWorldState {
         return entitiesById.size();
     }
 
+    /** Test-only: human-readable dump of an entity's replicated type + components. */
+    String debugEntityState(long entityId) {
+        ProtocolPayloads.EntityStatePayload s = entityStateById.get(entityId);
+        if (s == null) return "id=" + entityId + " <no snapshot state>";
+        StringBuilder sb = new StringBuilder();
+        sb.append("id=").append(s.entityId).append(" type=").append(s.entityType)
+          .append(" removed=").append(s.removed).append(" comps={");
+        if (s.components != null) {
+            for (ProtocolPayloads.ComponentStatePayload c : s.components) {
+                if (c == null) continue;
+                sb.append(c.key).append('=').append(c.value).append(", ");
+            }
+        }
+        return sb.append('}').toString();
+    }
+
     int inventoryCount() {
         return inventoriesById.size();
     }
@@ -126,6 +142,16 @@ final class ReplicatedWorldState {
         if (entity == null) return 0L;
         Long id = idsByEntity.get(entity);
         return id == null ? 0L : id.longValue();
+    }
+
+    /** Replicated rider id for an entity (null if unknown), used to skip occupied boats. */
+    String riderOf(long entityId) {
+        ProtocolPayloads.EntityStatePayload s = entityStateById.get(entityId);
+        if (s == null || s.components == null) return null;
+        for (ProtocolPayloads.ComponentStatePayload c : s.components) {
+            if (c != null && "rider".equals(c.key)) return c.value;
+        }
+        return null;
     }
 
     long ridingEntityIdFor(String playerId) {

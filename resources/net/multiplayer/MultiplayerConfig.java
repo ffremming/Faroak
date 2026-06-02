@@ -101,4 +101,15 @@ public final class MultiplayerConfig {
     public double serverInterestRadius() { return serverInterestRadius; }
     public String sqlitePath() { return sqlitePath; }
     public boolean online()         { return mode != MultiplayerMode.OFFLINE; }
+
+    /**
+     * Which authoritative lobby implementation hosts the world: {@code "legacy"}
+     * (the SimObject {@code AuthoritativeLobbyRuntime}, default) or {@code "hostauth"}
+     * (the host's real game engine via {@code HostAuthoritativeLobby}). Read live from
+     * {@code game.multiplayer.lobby} so it can be flipped without reconstructing config.
+     */
+    public String lobby() {
+        String raw = System.getProperty("game.multiplayer.lobby", "legacy");
+        return (raw == null || raw.isBlank()) ? "legacy" : raw.trim().toLowerCase();
+    }
 }
