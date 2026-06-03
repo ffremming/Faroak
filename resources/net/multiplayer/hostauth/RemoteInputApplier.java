@@ -5,6 +5,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import resources.app.GameContext;
+import resources.app.GamePanel;
+import resources.domain.player.Playable;
+import resources.input.click.ClickRouter;
 import resources.net.multiplayer.protocol.ProtocolPayloads;
 
 /**
@@ -28,10 +31,40 @@ public final class RemoteInputApplier {
     static final double CLIENT_MOVE_CLAMP = 256.0;
 
     private final GameContext ctx;
+    private final ClickRouter clickRouter = new ClickRouter();
     private final Map<String, RemoteAvatar> avatars = new LinkedHashMap<>();
 
     public RemoteInputApplier(GameContext ctx) {
         this.ctx = ctx;
+    }
+
+    /**
+     * Run a remote player's cursor interaction through the REAL engine, so board /
+     * open-container / place / harvest behave exactly as they do offline. The engine's
+     * interaction code is hardwired to {@code panel.player()}, so we temporarily swap the
+     * panel's player to this guest's headless {@link Playable} actor, route the click, and
+     * restore. MUST be called on the host frame thread (single-threaded with simulation).
+     *
+     * @return true if the click was consumed.
+     */
+    public synchronized boolean applyInteraction(String playerId, double worldX, double worldY) {
+        RemoteAvatar a = avatars.get(playerId);
+        if (a == null || !(ctx instanceof GamePanel)) return false;
+        GamePanel panel = (GamePanel) ctx;
+        Playable actor = a.actor(panel);
+        // Position the actor at the avatar's authoritative location so reach/range checks
+        // measure from where the guest actually is.
+        actor.setWorldX(a.x);
+        actor.setWorldY(a.y);
+        actor.getHitBox().updateCoords();
+
+        Playable previous = panel.player;
+        try {
+            panel.player = actor;
+            return clickRouter.route(panel, new java.awt.Point((int) Math.round(worldX), (int) Math.round(worldY)));
+        } finally {
+            panel.player = previous;
+        }
     }
 
     /** Register a joining remote player at a spawn position. Idempotent. */
@@ -108,11 +141,23 @@ public final class RemoteInputApplier {
         public int health = 20, maxHealth = 20;
         public boolean alive = true;
         public long lastSequence;
+        // Real engine actor for running interactions (board/open/harvest/place) on this
+        // guest's behalf. Built lazily, headless (local=false) so it never touches the
+        // host UI. NOT added to the world entity list — it is a stand-in actor only.
+        private Playable actor;
 
         RemoteAvatar(String playerId, double x, double y) {
             this.playerId = playerId;
             this.x = x;
             this.y = y;
+        }
+
+        Playable actor(GamePanel panel) {
+            if (actor == null) {
+                actor = new Playable(panel, "red", (int) x, (int) y,
+                    (short) 48, (short) 96, (short) 36, (short) 32, (short) 6, (short) 64, false);
+            }
+            return actor;
         }
 
         ProtocolPayloads.PlayerState toPayload() {

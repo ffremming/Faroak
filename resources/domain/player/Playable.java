@@ -42,11 +42,28 @@ public class Playable extends Moveable {
 
     public Playable(GamePanel panel, String name, int worldX, int worldY, short width, short height,
                     short hitBoxWidth, short hitBoxHeight, short relativeXPlus, short relativeYPlus) {
+        this(panel, name, worldX, worldY, width, height, hitBoxWidth, hitBoxHeight,
+            relativeXPlus, relativeYPlus, true);
+    }
+
+    /**
+     * @param local true for THE local player (binds its inventory to the on-screen UI);
+     *              false for a remote/headless player (host-authoritative replica of a
+     *              connected guest) — it still has an inventory, items, health and
+     *              lifecycle, but must NOT seize the local UI. Used by the
+     *              host-authoritative multiplayer lobby to give each guest a real engine
+     *              actor without corrupting the host's screen.
+     */
+    public Playable(GamePanel panel, String name, int worldX, int worldY, short width, short height,
+                    short hitBoxWidth, short hitBoxHeight, short relativeXPlus, short relativeYPlus,
+                    boolean local) {
         super(panel, name, worldX, worldY, width, height, hitBoxWidth, hitBoxHeight, relativeXPlus, relativeYPlus);
 
         inventory = new Inventory(this);
-        panel.userInterface().clear();
-        panel.userInterface().addInventory(inventory);
+        if (local) {
+            panel.userInterface().clear();
+            panel.userInterface().addInventory(inventory);
+        }
 
         // All equipment (tools/weapons)
         addItem(new Item(panel, "hammer"));

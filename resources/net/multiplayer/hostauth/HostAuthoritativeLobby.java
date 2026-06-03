@@ -50,6 +50,9 @@ public final class HostAuthoritativeLobby implements LobbyRuntime {
     private final String hostPlayerId;
 
     private final ArrayDeque<ProtocolEnvelope> inbound = new ArrayDeque<>();
+    // Interaction commands are buffered on the server thread and applied on the host
+    // frame thread (in applyInteractions) so engine mutation stays single-threaded.
+    private final ArrayDeque<ProtocolEnvelope> pendingCommands = new ArrayDeque<>();
     private final Map<String, ArrayDeque<ProtocolEnvelope>> outbound = new HashMap<>();
     private final Set<String> joined = new LinkedHashSet<>();
     private final Set<String> needsBaseline = new LinkedHashSet<>();
