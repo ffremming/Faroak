@@ -76,6 +76,7 @@ public final class ProtocolPayloads {
         public static final String ATTACK_LIGHT_AT = "attack_light_at";
         public static final String ATTACK_HEAVY_AT = "attack_heavy_at";
         public static final String ATTACK_RANGED_AT = "attack_ranged_at";
+        public static final String FIRE_BROADSIDE = "fire_broadside";
         public static final String INVENTORY_CLICK = "inventory_click";
         public static final String RESPAWN = "respawn";
 
@@ -127,6 +128,10 @@ public final class ProtocolPayloads {
 
         public static CommandRequest attackAt(double x, double y) {
             return new CommandRequest(ATTACK_AT, true, x, y, 0L, "", -1, 0L, -1, 0);
+        }
+
+        public static CommandRequest fireBroadside(double x, double y) {
+            return new CommandRequest(FIRE_BROADSIDE, true, x, y, 0L, "", -1, 0L, -1, 0);
         }
 
         public static CommandRequest lightAttackAt(double x, double y, String itemType, int selectedSlot) {
@@ -209,6 +214,10 @@ public final class ProtocolPayloads {
         public final String spriteName;
         public final String displayName;
         public final boolean alive;
+        // Item the player currently has selected in their hotbar (the equipped tool/weapon),
+        // by item name; "" when nothing is equipped. Carried in the trailing appearance
+        // section so guests can render what a remote player is holding. Default empty.
+        public final String equippedItem;
 
         public PlayerState(
                 String playerId,
@@ -247,6 +256,25 @@ public final class ProtocolPayloads {
                 String spriteName,
                 String displayName,
                 boolean alive) {
+            this(playerId, worldX, worldY, velocityX, velocityY, processedSequence, health, maxHealth,
+                facing, moving, spriteName, displayName, alive, "");
+        }
+
+        public PlayerState(
+                String playerId,
+                double worldX,
+                double worldY,
+                double velocityX,
+                double velocityY,
+                long processedSequence,
+                int health,
+                int maxHealth,
+                int facing,
+                boolean moving,
+                String spriteName,
+                String displayName,
+                boolean alive,
+                String equippedItem) {
             this.playerId = (playerId == null) ? "" : playerId;
             this.worldX = worldX;
             this.worldY = worldY;
@@ -260,14 +288,23 @@ public final class ProtocolPayloads {
             this.spriteName = (spriteName == null || spriteName.isBlank()) ? "red" : spriteName;
             this.displayName = (displayName == null) ? "" : displayName;
             this.alive = alive;
+            this.equippedItem = (equippedItem == null) ? "" : equippedItem;
         }
 
         /** Copy this row with appearance/status fields overridden (used when zipping
          *  the trailing appearance section back onto a decoded player list). */
         public PlayerState withAppearance(int facing, boolean moving, String spriteName,
                                           String displayName, boolean alive) {
+            return withAppearance(facing, moving, spriteName, displayName, alive, this.equippedItem);
+        }
+
+        /** As {@link #withAppearance(int,boolean,String,String,boolean)} but also carries the
+         *  equipped item name (the trailing appearance section now includes it). */
+        public PlayerState withAppearance(int facing, boolean moving, String spriteName,
+                                          String displayName, boolean alive, String equippedItem) {
             return new PlayerState(playerId, worldX, worldY, velocityX, velocityY,
-                processedSequence, health, maxHealth, facing, moving, spriteName, displayName, alive);
+                processedSequence, health, maxHealth, facing, moving, spriteName, displayName, alive,
+                equippedItem);
         }
     }
 

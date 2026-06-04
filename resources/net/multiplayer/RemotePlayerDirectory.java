@@ -47,6 +47,16 @@ final class RemotePlayerDirectory {
         }
     }
 
+    /** Hide remote players who are riding a boat (anchor them to the deck and skip drawing
+     *  the rider sprite), mirroring the offline BoatRideComponent render-skip. Called after
+     *  snapshots are applied, using the replicated boats' rider components. */
+    void applyRidingState(ReplicatedWorldState replicatedWorld) {
+        if (replicatedWorld == null) return;
+        for (Map.Entry<String, RemotePlayerAvatar> e : byPlayerId.entrySet()) {
+            e.getValue().setRidingBoat(replicatedWorld.ridingBoatFor(e.getKey()));
+        }
+    }
+
     private RemotePlayerAvatar spawn(String playerId, PlayerStateMessage state) {
         GamePanel panel = ctx.player().panel;
         RemotePlayerAvatar avatar = new RemotePlayerAvatar(

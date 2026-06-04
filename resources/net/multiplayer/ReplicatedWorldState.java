@@ -168,6 +168,15 @@ final class ReplicatedWorldState {
         return 0L;
     }
 
+    /** The replicated Boat entity the given player is riding, or null. Used by the client
+     *  to glue its own local player to the boat after the boat's snapshot position lands. */
+    Boat ridingBoatFor(String playerId) {
+        long id = ridingEntityIdFor(playerId);
+        if (id <= 0L) return null;
+        BaseEntity e = entitiesById.get(id);
+        return (e instanceof Boat) ? (Boat) e : null;
+    }
+
     private void upsertCompatibility(WorldObjectStateMessage state) {
         BaseEntity entity = entitiesById.get(state.objectId());
         if (entity == null) {

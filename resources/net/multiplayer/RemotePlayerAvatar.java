@@ -44,6 +44,27 @@ public final class RemotePlayerAvatar extends Moveable {
         return playerId;
     }
 
+    /**
+     * Mark this remote player as riding the given boat (or not, if null). While riding we
+     * attach a {@link resources.domain.object.BoatRideComponent} so the scene renderer skips
+     * drawing the rider sprite (same mechanism as the local rider), and anchor the avatar to
+     * the boat's deck so its name tag / health bar track the boat.
+     */
+    public void setRidingBoat(resources.domain.object.Boat boat) {
+        boolean ridingNow = boat != null;
+        boolean hasComp = hasComponent(resources.domain.object.BoatRideComponent.class);
+        if (ridingNow && !hasComp) {
+            addComponent(new resources.domain.object.BoatRideComponent(boat));
+        } else if (!ridingNow && hasComp) {
+            components().remove(resources.domain.object.BoatRideComponent.class);
+        }
+        if (ridingNow) {
+            setWorldX(boat.getWorldX() + (boat.getWidth() - getWidth()) / 2.0);
+            setWorldY(boat.getWorldY() + (boat.getHeight() - getHeight()) / 2.0 - 16);
+            getHitBox().updateCoords();
+        }
+    }
+
     public boolean alive() {
         return alive;
     }

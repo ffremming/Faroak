@@ -1,0 +1,18 @@
+Test: Host-authoritative cursor inventory replication
+Setup:
+1. Start a hostauth lobby with host (p1) and guest (p2)
+2. Have guest craft something (crafting pulls item into cursor)
+3. Host snapshots should include guest's cursor inventory (keyed "cursor:p2")
+4. Guest receives snapshot and applies it to tempInHand
+
+Current Reality:
+- HostAuthoritativeLobby.produceSnapshots() builds playerInventories but never adds cursor inventories
+- For guests: remotes.actorInventory(joinedId) returns the Playable's inventory, not its cursor
+- For host: ctx.player().getTempInHand() is never serialized
+- Result: Guests will not see what's in their own cursor after crafting
+
+This is a genuine gap because:
+1. MultiplayerRuntime.applyLocalPlayerInventorySnapshot() code exists and expects cursor inventories (lines 684-688)
+2. ReplicatedWorldState.cursorForPlayer() exists to search for them (lines 131-139)
+3. Legacy AuthoritativeGameHost.ensurePlayerInventories() creates cursor inventories (lines 1211-1217)
+4. But HostAuthoritativeLobby never emits them

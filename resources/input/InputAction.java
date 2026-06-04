@@ -23,6 +23,7 @@ public final class InputAction {
     public static final InputAction ATTACK_LIGHT   = of("attack_light");
     public static final InputAction ATTACK_HEAVY   = of("attack_heavy");
     public static final InputAction ATTACK_RANGED  = of("attack_ranged");
+    public static final InputAction FIRE_BROADSIDE = of("fire_broadside");
     public static final InputAction PLACE          = of("place");
     public static final InputAction TOGGLE_DEBUG   = of("toggle_debug");
     public static final InputAction NEW_SEED       = of("new_seed");

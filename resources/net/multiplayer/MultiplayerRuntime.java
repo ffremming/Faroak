@@ -189,6 +189,17 @@ public final class MultiplayerRuntime {
         return replicatedWorld.ridingEntityIdFor(config.playerId()) > 0L;
     }
 
+    /** Online: place the local player on the boat it rides, using the same offset as
+     *  {@link Boat#syncRider()} so the player tracks the deck and the camera follows. */
+    private void syncLocalRiderToBoat() {
+        if (!config.online() || ctx.player() == null) return;
+        Boat boat = replicatedWorld.ridingBoatFor(config.playerId());
+        if (boat == null) return;
+        ctx.player().setWorldX(boat.getWorldX() + (boat.getWidth() - ctx.player().getWidth()) / 2.0);
+        ctx.player().setWorldY(boat.getWorldY() + (boat.getHeight() - ctx.player().getHeight()) / 2.0 - 16);
+        ctx.player().getHitBox().updateCoords();
+    }
+
     /** Test-only: server entity id the client has mapped for this entity (0 = unmapped/client-only). */
     public long debugEntityId(BaseEntity entity) {
         return replicatedWorld.entityIdFor(entity);
@@ -263,9 +274,17 @@ public final class MultiplayerRuntime {
         // build + queue snapshots here (not on the server thread) to avoid racing
         // world.simulate(). No-op for guests / legacy lobby.
         HostAuthoritativeLobby hostLobby = LoopbackServerHub.hostLobby();
-        if (hostLobby != null) hostLobby.produceSnapshots();
+        if (hostLobby != null) {
+            hostLobby.applyInteractions();
+            hostLobby.produceSnapshots();
+        }
         adapter.tick();
         consume(adapter.poll());
+        // While riding online, glue the local player to its boat AFTER the boat's snapshot
+        // position has been applied — otherwise the boat sails off while the player (and the
+        // camera, which follows the player) is left behind. The boat is authoritative over
+        // the rider's position online, exactly as it is offline via Boat.syncRider().
+        syncLocalRiderToBoat();
         // Client-authoritative movement: the server mirrors the client's reported
         // position, so the local player must NOT be snapped toward the server pose
         // (that was the teleport). Reconciliation only runs as a fallback if the
@@ -401,6 +420,12 @@ public final class MultiplayerRuntime {
                 submitAttackCommand(ProtocolPayloads.CommandRequest.ATTACK_RANGED_AT);
                 continue;
             }
+            if (InputAction.FIRE_BROADSIDE.equals(action)) {
+                // Boat cannon: resolved server-side on the boat the player rides. Target is
+                // the player position (the boat derives broadside direction from its facing).
+                submitCommand(ProtocolPayloads.CommandRequest.fireBroadside(localPlayerX(), localPlayerY()));
+                continue;
+            }
             MultiplayerAction mapped = MultiplayerAction.fromInput(action);
             if (mapped == null) continue;
             if (MultiplayerAction.PLACE.equals(mapped) && ctx.mouse() != null) {
@@ -428,6 +453,9 @@ public final class MultiplayerRuntime {
                     snapshot.entities(),
                     snapshot.inventories(),
                     snapshot.tileMutations());
+                // After boats are positioned, hide/anchor any remote rider so a riding
+                // player shows as on the deck (not a duplicate sprite beside the boat).
+                remotes.applyRidingState(replicatedWorld);
                 applyLocalPlayerInventorySnapshot();
                 applyLocalPlayerHealthSnapshot(snapshot.players());
                 applyWorldTime(snapshot.worldTimeTicks());

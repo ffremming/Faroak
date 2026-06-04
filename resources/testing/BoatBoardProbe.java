@@ -23,6 +23,10 @@ public final class BoatBoardProbe {
         System.setProperty("game.multiplayer.mode", "host");
         System.setProperty("game.multiplayer.backend", "loopback");
         System.setProperty("game.multiplayer.serverActionRange", "768.0");
+        // This probe is the Phase-0 regression test for the LEGACY client->server boarding
+        // flow (submitWorldClick against server-seeded boats). Pin it to the legacy lobby so
+        // it keeps testing that path even though the default is now host-authoritative.
+        System.setProperty("game.multiplayer.lobby", "legacy");
 
         JFrame frame = new JFrame();
         GamePanel panel = new GamePanel(frame, true);

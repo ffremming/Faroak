@@ -181,11 +181,9 @@ public class Keys implements KeyListener{
     private void handleAttack(InputAction onlineAction, Consumer<BoatRideComponent> offlineAction) {
         BoatRideComponent ride = activeRide();
         if (isOnline()) {
-            if (ride != null) {
-                showOnlineBoatCombatToast();
-                return;
-            }
-            panel.input().enqueueAction(onlineAction);
+            // While riding online, an attack fires the boat broadside (resolved server-side
+            // on the boat the player rides); otherwise it's a normal melee/ranged action.
+            panel.input().enqueueAction(ride != null ? InputAction.FIRE_BROADSIDE : onlineAction);
             return;
         }
         offlineAction.accept(ride);
@@ -227,10 +225,4 @@ public class Keys implements KeyListener{
         return panel.multiplayer() != null && panel.multiplayer().isOnline();
     }
 
-    private void showOnlineBoatCombatToast() {
-        if (panel.userInterface() != null) {
-            panel.userInterface().showToast("Boat combat is offline-only for now", 1500);
-        }
-    }
-    
 }

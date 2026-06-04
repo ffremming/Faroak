@@ -202,14 +202,25 @@ public final class Boat extends Moveable {
     private void steerByInput() {
         InputHandlingSystem in = panel.input();
         if (in == null) return;
+        int ix = (in.isRight() ? 1 : 0) - (in.isLeft() ? 1 : 0);
+        int iy = (in.isDown()  ? 1 : 0) - (in.isUp()   ? 1 : 0);
+        steer(ix, iy);
+    }
+
+    /**
+     * Move the boat one step in the 8-direction input (ix,iy each -1/0/+1),
+     * enforcing water-only collision and dragging the rider along. Public so the
+     * host-authoritative multiplayer lobby can steer a guest-ridden boat from that
+     * guest's input the same way the local pilot steers via {@link #steerByInput()}.
+     * No-op while there is no rider or the rider is dead.
+     */
+    public void steer(int ix, int iy) {
+        if (rider == null) return;
         // Defensive: a dead rider should not steer. PlayerLifecycle.damage
         // already force-detaches on the death tick, but if anything else
         // ever flips the dead flag without going through there we still
         // want the boat to drift instead of being driven by a corpse.
         if (rider.lifecycle() != null && rider.lifecycle().isDead()) return;
-
-        int ix = (in.isRight() ? 1 : 0) - (in.isLeft() ? 1 : 0);
-        int iy = (in.isDown()  ? 1 : 0) - (in.isUp()   ? 1 : 0);
 
         if (ix == 0 && iy == 0) return; // idle, keep last facing
 
@@ -349,7 +360,9 @@ public final class Boat extends Moveable {
         return true;
     }
 
-    private void syncRider() {
+    /** Glue the rider to the boat (centered, slightly up). Public so the online client
+     *  can re-attach its local rider after the boat's position arrives via snapshot. */
+    public void syncRider() {
         if (rider == null) return;
         rider.setWorldX(getWorldX() + (getWidth() - rider.getWidth()) / 2.0);
         rider.setWorldY(getWorldY() + (getHeight() - rider.getHeight()) / 2.0 - 16);

@@ -34,8 +34,10 @@ import resources.net.multiplayer.server.codec.SnapshotCodec;
  *   <li>{@link #produceSnapshots} reads the engine and MUST be called on the host
  *       frame thread (wired in Phase 3.3 from {@code MultiplayerRuntime.update}).</li>
  *   <li>{@link #tick} (the {@link LobbyRuntime} contract called by the server loop)
- *       only drains inbound control messages and emits welcomes/presence — it does
- *       NOT read the engine, so it cannot race with simulation.</li>
+ *       only drains inbound control messages and emits welcomes/presence. It does
+ *       NOT read or mutate the engine: interaction commands AND movement input are
+ *       buffered and replayed on the frame thread by {@link #applyInteractions}, so it
+ *       cannot race with simulation.</li>
  * </ul>
  */
 public final class HostAuthoritativeLobby implements LobbyRuntime {
@@ -53,6 +55,12 @@ public final class HostAuthoritativeLobby implements LobbyRuntime {
     // Interaction commands are buffered on the server thread and applied on the host
     // frame thread (in applyInteractions) so engine mutation stays single-threaded.
     private final ArrayDeque<ProtocolEnvelope> pendingCommands = new ArrayDeque<>();
+    // Input-state messages are likewise buffered on the server thread and applied on the
+    // host frame thread (in applyInteractions). RemoteInputApplier.apply() reads the live
+    // world via solidCollision() to validate remote positions; doing that on the server
+    // thread would race world.simulate() on the frame thread (the world has no internal
+    // synchronization). Deferring keeps every engine read single-threaded.
+    private final ArrayDeque<ProtocolEnvelope> pendingInputs = new ArrayDeque<>();
     private final Map<String, ArrayDeque<ProtocolEnvelope>> outbound = new HashMap<>();
     private final Set<String> joined = new LinkedHashSet<>();
     private final Set<String> needsBaseline = new LinkedHashSet<>();
@@ -67,11 +75,15 @@ public final class HostAuthoritativeLobby implements LobbyRuntime {
         this.ctx = ctx;
         this.config = config;
         this.snapshotCodec = snapshotCodec;
-        this.builder = new EngineSnapshotBuilder(ctx, ids);
         this.remotes = new RemoteInputApplier(ctx);
+        this.builder = new EngineSnapshotBuilder(ctx, ids);
         this.protocolVersion = config.protocolVersion();
         this.hostPlayerId = config.playerId();
+        this.builder.withRiderResolution(this.remotes, this.hostPlayerId);
     }
+
+    /** Test-only: equipped item reported for a guest. */
+    public synchronized String debugEquipped(String playerId) { return remotes.debugEquipped(playerId); }
 
     @Override public synchronized void onConnect(String playerId) { /* join handled on JOIN message */ }
 
@@ -109,11 +121,56 @@ public final class HostAuthoritativeLobby implements LobbyRuntime {
             } else if (ProtocolMessageType.LEAVE.equals(type)) {
                 onDisconnect(playerId);
             } else if (ProtocolMessageType.INPUT_STATE.equals(type)) {
-                if (joined.contains(playerId)) {
-                    remotes.apply(playerId, payloadCodec.decodeInputState(envelope.payload()), envelope.sequence());
+                // Defer to the frame thread: applying input reads the live world
+                // (solidCollision) which must not race world.simulate().
+                if (joined.contains(playerId)) pendingInputs.addLast(envelope);
+            } else if (ProtocolMessageType.COMMAND.equals(type)) {
+                if (joined.contains(playerId)) pendingCommands.addLast(envelope);
+            }
+        }
+    }
+
+    /**
+     * Host-frame tick: drain buffered interaction commands and run each through the real
+     * engine on the acting guest's behalf. MUST run on the host frame thread (it mutates
+     * the world via the real ClickRouter). Sends a COMMAND_RESULT per command.
+     */
+    public synchronized void applyInteractions() {
+        // Apply buffered movement input first (on the frame thread) so any subsequent
+        // interaction this frame measures reach from the avatar's updated position, and
+        // so the solidCollision() world read never races world.simulate().
+        while (!pendingInputs.isEmpty()) {
+            ProtocolEnvelope envelope = pendingInputs.removeFirst();
+            String playerId = envelope.playerId();
+            if (!joined.contains(playerId)) continue;
+            remotes.apply(playerId, payloadCodec.decodeInputState(envelope.payload()), envelope.sequence());
+        }
+        while (!pendingCommands.isEmpty()) {
+            ProtocolEnvelope envelope = pendingCommands.removeFirst();
+            String playerId = envelope.playerId();
+            ProtocolPayloads.CommandRequest command = payloadCodec.decodeCommand(envelope.payload());
+            boolean accepted = false;
+            if (command != null && command.hasTarget) {
+                if (ProtocolPayloads.CommandRequest.FIRE_BROADSIDE.equals(command.commandType)) {
+                    resources.domain.player.Playable host = playerId.equals(hostPlayerId) ? ctx.player() : null;
+                    accepted = remotes.applyBroadside(playerId, host);
+                } else if (RemoteInputApplier.isAttackCommand(command.commandType)) {
+                    // Combat (incl. PvP) resolves through the real CombatService. The HOST is
+                    // the engine and has no guest avatar, so it attacks via its own player.
+                    if (playerId.equals(hostPlayerId)) {
+                        accepted = remotes.applyHostAttack(ctx.player(), command.commandType, command.targetX, command.targetY);
+                    } else {
+                        accepted = remotes.applyAttack(playerId, command.commandType, command.targetX, command.targetY);
+                    }
+                } else {
+                    accepted = remotes.applyInteraction(playerId, command.targetX, command.targetY);
                 }
             }
-            // ACTION / COMMAND handled in Phase 5.
+            enqueue(playerId, new ProtocolEnvelope(
+                protocolVersion, playerId, 0L, accepted ? envelope.sequence() : 0L, serverTick,
+                ProtocolMessageType.COMMAND_RESULT,
+                payloadCodec.encodeCommandResult(new ProtocolPayloads.CommandResult(
+                    envelope.sequence(), accepted, accepted ? "" : "no interaction"))));
         }
     }
 
@@ -123,26 +180,80 @@ public final class HostAuthoritativeLobby implements LobbyRuntime {
      */
     public synchronized void produceSnapshots() {
         if (joined.isEmpty()) return;
-        // Each recipient should see the OTHER remote players (not itself — the client
-        // renders its own local player). So players are filtered per recipient.
+        // Each recipient sees the OTHER remote players (its own client renders itself).
         java.util.List<ProtocolPayloads.PlayerState> allRemotes = new ArrayList<>();
         for (RemoteInputApplier.RemoteAvatar a : remotes.avatars()) allRemotes.add(a.toPayload());
+
+        // Player inventories: the host's own, plus each guest's headless-actor inventory,
+        // each keyed "player:<id>" so a client maps it back to its own bag.
+        java.util.List<ProtocolPayloads.InventoryStatePayload> playerInventories = new ArrayList<>();
+        if (ctx.player() != null && ctx.player().getInventory() != null) {
+            playerInventories.add(builder.inventoryPayload(
+                ctx.player().getInventory(), builder.inventoryId(ctx.player().getInventory()),
+                0L, "player:" + hostPlayerId.toLowerCase()));
+        }
+        for (String joinedId : joined) {
+            if (joinedId.equals(hostPlayerId)) continue;
+            resources.domain.inventory.Inventory inv = remotes.actorInventory(joinedId);
+            if (inv != null) {
+                playerInventories.add(builder.inventoryPayload(
+                    inv, builder.inventoryId(inv), 0L, "player:" + joinedId.toLowerCase()));
+            }
+        }
+
+        // Cursor inventories: the single item each player holds on the mouse (tempInHand),
+        // keyed "cursor:<id>" so a client maps it back via setTempInHand(). The cursor id is
+        // a stable token distinct from the main bag id so the two never collide on the client.
+        if (ctx.player() != null) {
+            // intern() the key so the IdentityHashMap-backed id registry hands out a stable
+            // cursor inventory id every frame instead of churning (and leaking) one per frame.
+            String hostCursorKey = ("cursor:" + hostPlayerId.toLowerCase()).intern();
+            playerInventories.add(builder.cursorPayload(
+                ctx.player().getTempInHand(), builder.inventoryId(hostCursorKey), hostCursorKey));
+        }
+        for (String joinedId : joined) {
+            if (joinedId.equals(hostPlayerId)) continue;
+            if (remotes.actorInventory(joinedId) == null) continue;
+            String cursorKey = ("cursor:" + joinedId.toLowerCase()).intern();
+            playerInventories.add(builder.cursorPayload(
+                remotes.actorTempInHand(joinedId), builder.inventoryId(cursorKey), cursorKey));
+        }
+
+        // Build the shared world delta AT MOST ONCE per frame so the delta-signature cache
+        // is advanced a single time — otherwise the first recipient's delta would consume
+        // the change and later recipients would miss it. Baselines are per joining player.
+        ProtocolPayloads.Snapshot sharedDelta = null;
         for (String playerId : joined) {
             java.util.List<ProtocolPayloads.PlayerState> peers = new ArrayList<>();
             for (ProtocolPayloads.PlayerState p : allRemotes) {
                 if (!p.playerId.equals(playerId)) peers.add(p);
             }
             boolean wantsBaseline = needsBaseline.remove(playerId);
-            ProtocolPayloads.Snapshot snapshot = wantsBaseline
-                ? builder.buildBaseline(0L, peers)
-                : builder.buildDelta(0L, peers);
-            ProtocolMessageType type = wantsBaseline
-                ? ProtocolMessageType.BASELINE_SNAPSHOT
-                : ProtocolMessageType.DELTA_SNAPSHOT;
-            byte[] payload = snapshotCodec.encode(snapshot);
+            ProtocolPayloads.Snapshot worldPart;
+            ProtocolMessageType type;
+            if (wantsBaseline) {
+                worldPart = builder.buildBaseline(0L, peers, playerInventories);
+                type = ProtocolMessageType.BASELINE_SNAPSHOT;
+            } else {
+                // Build the shared world delta once; carry player inventories on it so each
+                // client keeps its bag synced. The builder delta-filters inventories (by id +
+                // contents signature), so an unchanged bag is omitted from deltas.
+                if (sharedDelta == null) sharedDelta = builder.buildDelta(0L, null, playerInventories);
+                worldPart = withPlayers(sharedDelta, peers);
+                type = ProtocolMessageType.DELTA_SNAPSHOT;
+            }
+            byte[] payload = snapshotCodec.encode(worldPart);
             enqueue(playerId, new ProtocolEnvelope(
                 protocolVersion, playerId, 0L, 0L, serverTick, type, payload));
         }
+    }
+
+    /** Reuse a built world delta but swap in this recipient's peer player list. */
+    private ProtocolPayloads.Snapshot withPlayers(
+            ProtocolPayloads.Snapshot base, java.util.List<ProtocolPayloads.PlayerState> players) {
+        return new ProtocolPayloads.Snapshot(
+            base.baseline, base.acknowledgedSequence, players, base.worldObjects,
+            base.entities, base.inventories, base.tileMutations).withWorldTime(base.worldTimeTicks);
     }
 
     @Override
@@ -157,6 +268,8 @@ public final class HostAuthoritativeLobby implements LobbyRuntime {
     @Override
     public synchronized void close() {
         inbound.clear();
+        pendingCommands.clear();
+        pendingInputs.clear();
         outbound.clear();
         joined.clear();
         needsBaseline.clear();

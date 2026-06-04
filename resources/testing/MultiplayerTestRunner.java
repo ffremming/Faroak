@@ -31,6 +31,7 @@ import resources.testing.probes.MpObjectCollisionProbe;
 import resources.testing.probes.MpPlacementRangeProbe;
 import resources.testing.probes.MpClientWorldGenProbe;
 import resources.testing.probes.MpClientAuthMoveProbe;
+import resources.testing.probes.HostAuthDefaultProbe;
 
 /**
  * Focused runner for multiplayer probes only.
@@ -69,6 +70,7 @@ public final class MultiplayerTestRunner {
         probes.add(new MpPlacementRangeProbe());
         probes.add(new MpClientWorldGenProbe());
         probes.add(new MpClientAuthMoveProbe());
+        probes.add(new HostAuthDefaultProbe());
 
         int failures = 0;
         try (TestHarness harness = new TestHarness()) {

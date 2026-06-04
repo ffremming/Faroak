@@ -325,6 +325,7 @@ public final class ProtocolPayloadCodec {
             BinaryEnvelopeCodec.writeString(out, s == null ? "red" : s.spriteName);
             BinaryEnvelopeCodec.writeString(out, s == null ? "" : s.displayName);
             out.writeBoolean(s == null || s.alive);
+            BinaryEnvelopeCodec.writeString(out, s == null ? "" : s.equippedItem);
         }
     }
 
@@ -338,8 +339,10 @@ public final class ProtocolPayloadCodec {
                 String spriteName = BinaryEnvelopeCodec.readString(in);
                 String displayName = BinaryEnvelopeCodec.readString(in);
                 boolean alive = in.readBoolean();
+                String equippedItem = BinaryEnvelopeCodec.readString(in);
                 if (i < players.size() && players.get(i) != null) {
-                    players.set(i, players.get(i).withAppearance(facing, moving, spriteName, displayName, alive));
+                    players.set(i, players.get(i).withAppearance(
+                        facing, moving, spriteName, displayName, alive, equippedItem));
                 }
             }
         } catch (IOException ignored) {

@@ -109,7 +109,10 @@ public final class MultiplayerConfig {
      * {@code game.multiplayer.lobby} so it can be flipped without reconstructing config.
      */
     public String lobby() {
-        String raw = System.getProperty("game.multiplayer.lobby", "legacy");
-        return (raw == null || raw.isBlank()) ? "legacy" : raw.trim().toLowerCase();
+        // Default: host-authoritative lobby (the host's real engine drives online play, so
+        // online behaves like offline). Override with -Dgame.multiplayer.lobby=legacy to
+        // fall back to the SimObject AuthoritativeLobbyRuntime.
+        String raw = System.getProperty("game.multiplayer.lobby", "hostauth");
+        return (raw == null || raw.isBlank()) ? "hostauth" : raw.trim().toLowerCase();
     }
 }

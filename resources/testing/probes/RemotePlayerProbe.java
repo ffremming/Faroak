@@ -45,6 +45,9 @@ public final class RemotePlayerProbe {
         lobby.receive(new ProtocolEnvelope(v, "guest-A", 1L, 0L, 0L,
             ProtocolMessageType.INPUT_STATE, pc.encodeInputState(mv)));
         lobby.tick();
+        // INPUT_STATE is buffered on tick() (server thread) and applied on the host frame
+        // thread in applyInteractions() to avoid racing world.simulate(). Drive that here.
+        lobby.applyInteractions();
         lobby.produceSnapshots();
 
         // Inspect what Guest B receives.
