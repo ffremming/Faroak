@@ -191,6 +191,30 @@ public final class Boat extends Moveable {
         }
         // Skip Moveable.update(): boats bypass the velocity/path pipeline.
         getHitBox().updateCoords();
+        debugReportIfOnLand();
+    }
+
+    // Diagnostic (enabled with -Dgame.debug.boatland=1): log once per second when this
+    // boat's hitbox center sits on a non-water (or unloaded) tile, with enough context to
+    // identify which mover put it there. Zero cost when the flag is off.
+    private long lastLandLogMs;
+    private void debugReportIfOnLand() {
+        if (System.getProperty("game.debug.boatland") == null) return;
+        java.awt.Rectangle hb = getHitBox();
+        int cx = (int) hb.getCenterX(), cy = (int) hb.getCenterY();
+        Tile t = panel.world().getTile(new Point(cx, cy));
+        String tile = (t == null) ? "<null/unloaded>" : t.getName();
+        boolean water = t != null && TileRules.isWater(tile);
+        if (water) return;
+        long now = System.currentTimeMillis();
+        if (now - lastLandLogMs < 1000L) return;
+        lastLandLogMs = now;
+        boolean online = panel.multiplayer() != null && panel.multiplayer().isOnline();
+        System.out.println("[BOATLAND] name=" + getName() + " kind=" + (kind == null ? "?" : kind.id())
+            + " center=(" + cx + "," + cy + ") tile=" + tile
+            + " ridden=" + (rider != null) + " online=" + online
+            + " mode=" + System.getProperty("game.multiplayer.mode", "offline")
+            + " hasAI=" + hasComponent(resources.domain.entity.component.AIComponent.class));
     }
 
     private void tickComponents() {

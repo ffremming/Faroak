@@ -273,6 +273,16 @@ final class ReplicatedWorldState {
         entity.setWorldX(centerX - (entity.getWidth() / 2.0));
         entity.setWorldY(centerY - (entity.getHeight() / 2.0));
         if (entity.getHitBox() != null) entity.getHitBox().updateCoords();
+        // Diagnostic: snapshot-positioned boats apply server coords with NO local collision.
+        // Log when that lands a boat on a non-water tile (the prime suspect for boat-on-land).
+        if (System.getProperty("game.debug.boatland") != null && entity instanceof Boat) {
+            resources.domain.tile.Tile t = ctx.world() == null ? null : ctx.world().getTile(new Point((int) centerX, (int) centerY));
+            String tile = (t == null) ? "<null/unloaded>" : t.getName();
+            if (t == null || !resources.world.placement.TileRules.isWater(tile)) {
+                System.out.println("[BOATLAND-SNAPSHOT] boat snapped to center=(" + (int) centerX + "," + (int) centerY
+                    + ") tile=" + tile + " (server position applied with no collision)");
+            }
+        }
     }
 
     private GamePanel panel() {
